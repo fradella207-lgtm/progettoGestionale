@@ -9,7 +9,8 @@ import {
   Sparkles, 
   CheckCircle2, 
   AlertTriangle,
-  Database
+  Database,
+  LogOut
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount } from '../types';
 
@@ -22,6 +23,7 @@ interface TopRightMenuProps {
   onOpenAccount: () => void;
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
+  onLogout?: () => void;
 }
 
 export const TopRightMenu: React.FC<TopRightMenuProps> = ({
@@ -32,7 +34,8 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onOpenNotifications,
   onOpenAccount,
   onOpenAuthModal,
-  onMarkAllNotificationsRead
+  onMarkAllNotificationsRead,
+  onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -193,11 +196,34 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
                 </div>
                 <div>
                   <span className="text-sm font-bold text-[#0f172a]">Account & Cloud Sync</span>
-                  <p className="text-xs text-[#64748b]">Gestione profilo e Micro-Cache</p>
+                  <p className="text-xs text-[#64748b]">Gestione profilo e credenziali</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
             </button>
+
+            {/* 4. DISCONNETTI */}
+            {onLogout && (
+              <button
+                id="menu-item-logout"
+                onClick={() => {
+                  setIsOpen(false);
+                  onLogout();
+                }}
+                className="w-full text-left p-3 rounded-xl hover:bg-red-50 text-red-600 transition-colors flex items-center justify-between group border-t border-slate-100 mt-1"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100 group-hover:bg-red-100 transition-colors">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-red-600">Disconnetti</span>
+                    <p className="text-xs text-red-400">Esci dal tuo account</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
+              </button>
+            )}
 
           </div>
 

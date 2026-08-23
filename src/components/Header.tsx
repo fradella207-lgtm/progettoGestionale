@@ -22,6 +22,7 @@ interface HeaderProps {
   onOpenAccount: () => void;
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -37,7 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   onOpenAccount,
   onOpenAuthModal,
-  onMarkAllNotificationsRead
+  onMarkAllNotificationsRead,
+  onLogout
 }) => {
   return (
     <nav className="sticky top-0 z-40 bg-white border-b border-[#e2e8f0] px-4 sm:px-8 py-3.5 shadow-xs flex items-center justify-between">
@@ -106,6 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
           onOpenAccount={onOpenAccount}
           onOpenAuthModal={onOpenAuthModal}
           onMarkAllNotificationsRead={onMarkAllNotificationsRead}
+          onLogout={onLogout}
         />
       </div>
     </nav>

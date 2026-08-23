@@ -4,6 +4,7 @@ import { SEED_GARAGE } from './data/seedGarage';
 import { Header } from './components/Header';
 import { GarageHome } from './components/GarageHome';
 import { VehicleDetail } from './components/VehicleDetail';
+import { AuthGate } from './components/AuthGate';
 import { AddVehicleModal } from './components/modals/AddVehicleModal';
 import { RefuelModal } from './components/modals/RefuelModal';
 import { MaintenanceModal } from './components/modals/MaintenanceModal';
@@ -95,7 +96,7 @@ export default function App() {
     if (cached) {
       try { 
         const parsed = JSON.parse(cached);
-        if (parsed && parsed.email) {
+        if (parsed && parsed.email && parsed.isLoggedIn) {
           return {
             id: parsed.id || 'user_default',
             name: parsed.name || 'Francesco Dell\'Aquila',
@@ -104,20 +105,20 @@ export default function App() {
             syncStatus: parsed.syncStatus || 'synced',
             memberSince: parsed.memberSince || 'Marzo 2024',
             provider: parsed.provider || 'google',
-            isLoggedIn: parsed.isLoggedIn ?? true
+            isLoggedIn: true
           };
         }
       } catch (e) {}
     }
     return {
-      id: 'user_1',
-      name: 'Francesco Dell\'Aquila',
-      email: "francesco.dell'aquila@alessandrinimainardi.edu.it",
+      id: '',
+      name: 'Utente Garage',
+      email: '',
       plan: 'Pro Garage Cloud',
       syncStatus: 'synced',
-      memberSince: 'Marzo 2024',
+      memberSince: 'Agosto 2026',
       provider: 'google',
-      isLoggedIn: true
+      isLoggedIn: false
     };
   });
 
@@ -362,20 +363,45 @@ export default function App() {
       await signOut(auth);
     } catch (e) {}
     const guestAccount: UserAccount = {
-      id: `guest_${Date.now()}`,
-      name: 'Ospite Garage',
-      email: 'ospite@garage.local',
-      plan: 'Base Offline',
+      id: '',
+      name: 'Utente Garage',
+      email: '',
+      plan: 'Pro Garage Cloud',
       syncStatus: 'local_only',
-      memberSince: 'Oggi',
+      memberSince: 'Agosto 2026',
       provider: 'guest',
       isLoggedIn: false
     };
     setAccount(guestAccount);
+    localStorage.removeItem('garage_user_account');
     setIsAccountModalOpen(false);
-    setIsAuthModalOpen(true);
-    showToast('Disconnessione effettuata. Accedi con il tuo account.', 'info');
+    setIsAuthModalOpen(false);
+    showToast('Disconnessione effettuata. Effettua l\'accesso per continuare.', 'info');
   };
+
+  // IF NOT LOGGED IN: SHOW AUTH GATE (LOGIN WALL)
+  if (!account.isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased">
+        <AuthGate onLoginSuccess={handleLoginSuccess} />
+        
+        {/* TOAST NOTIFICATION */}
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5">
+            <div className={`px-4 py-3 rounded-2xl shadow-xl border text-xs font-bold flex items-center gap-2 ${
+              toastMessage.type === 'success' 
+                ? 'bg-[#0f172a] text-white border-slate-700' 
+                : toastMessage.type === 'error'
+                  ? 'bg-red-600 text-white border-red-500'
+                  : 'bg-[#2563eb] text-white border-blue-400'
+            }`}>
+              <span>{toastMessage.text}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased">
@@ -401,6 +427,7 @@ export default function App() {
         onOpenAccount={() => setIsAccountModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onMarkAllNotificationsRead={handleMarkAllNotificationsAsRead}
+        onLogout={handleLogout}
       />
 
       {/* 2. MAIN VIEW (HOME GARAGE OR VEHICLE DETAIL) */}
