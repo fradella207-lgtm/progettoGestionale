@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profile matching uid
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Vehicles collection belonging to authenticated user
+    match /users/{userId}/vehicles/{vehicleId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public demo fallback if not logged in (allow read/write for guest sandbox)
+    match /guest_data/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

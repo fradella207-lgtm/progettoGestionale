@@ -1,0 +1,6 @@
+{
+  "name": "Gestionale Auto PWA",
+  "description": "Applicazione PWA per la gestione veicoli, consumi, manutenzioni predittive AI e registro rifornimenti con Firebase e local caching.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
