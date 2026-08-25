@@ -488,30 +488,17 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
             </form>
           )}
 
-          {/* QUICK DEMO ACCESS BUTTON */}
-          <div className="pt-2 border-t border-[#f1f5f9] flex flex-col items-center gap-2">
-            <button
-              type="button"
-              id="btn-quick-demo-access"
-              onClick={handleQuickDemoLogin}
-              className="text-xs font-bold text-slate-500 hover:text-[#2563eb] transition-colors flex items-center gap-1.5 cursor-pointer py-1"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Oppure prova subito con Account Dimostrativo</span>
-            </button>
-          </div>
-
         </div>
 
         {/* SECURITY & CLOUD HIGHLIGHTS FOOTER */}
         <div className="grid grid-cols-2 gap-3 text-[11px] text-[#64748b]">
           <div className="bg-white border border-[#e2e8f0] p-3 rounded-2xl flex items-center gap-2.5">
             <ShieldCheck className="w-4 h-4 text-[#059669] shrink-0" />
-            <span>Accesso sicuro & crittografia Firebase</span>
+            <span>Accesso protetto & Cloud Firebase</span>
           </div>
           <div className="bg-white border border-[#e2e8f0] p-3 rounded-2xl flex items-center gap-2.5">
             <Globe className="w-4 h-4 text-[#2563eb] shrink-0" />
-            <span>Sincronizzazione dati Cloud Real-time</span>
+            <span>Sincronizzazione dati in tempo reale</span>
           </div>
         </div>
 

@@ -203,15 +203,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               type="button"
               onClick={() => {
-                if (confirm('Attenzione: questo ripristinerà il garage con i veicoli dimostrativi originali. Continuare?')) {
+                if (confirm('Attenzione: sei sicuro di voler rimuovere tutti i veicoli e i registri dal tuo garage?')) {
                   onResetGarage();
                   onClose();
                 }
               }}
               className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-red-200 bg-red-50/60 hover:bg-red-100 text-xs font-bold text-[#dc2626] transition-colors"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Ripristina Demo Garage</span>
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Svuota / Azzera Dati Garage</span>
             </button>
           </div>
 

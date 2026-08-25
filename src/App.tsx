@@ -14,56 +14,85 @@ import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 
-// Initial Demo Notifications
-const INITIAL_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'n_1',
-    carPlate: 'GA 892 TR',
-    title: 'Controllo Tagliando Ordinario Imminente',
-    message: 'Hai superato gli 84.000 km. Si consiglia controllo livello olio motore e filtro abitacolo per Alfa Romeo Giulia.',
-    type: 'maintenance',
-    date: '2026-08-18',
-    read: false
-  },
-  {
-    id: 'n_2',
-    carPlate: 'FY 119 PK',
-    title: 'Promemoria Revisione Ministeriale',
-    message: 'La revisione periodica biennale per la Golf GTE è prevista entro i prossimi 60 giorni.',
-    type: 'alert',
-    date: '2026-08-10',
-    read: false
-  },
-  {
-    id: 'n_3',
-    carPlate: 'GE 402 EV',
-    title: 'Check Salute Batteria 12V',
-    message: 'Consiglio AI: Verifica tensione della batteria ausiliaria 12V per Tesla Model 3 prima della stagione invernale.',
-    type: 'service',
-    date: '2026-08-02',
-    read: true
-  }
-];
+// Helper to generate dynamic notifications strictly based on the user's real vehicles
+function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
+  if (!vehicleList || vehicleList.length === 0) return [];
+  const list: AppNotification[] = [];
+
+  vehicleList.forEach((car) => {
+    // 1. Check biennial inspection (Revisione ministeriale: 4 years first, then every 2 years)
+    if (car.registrationDate) {
+      try {
+        const regYear = new Date(car.registrationDate).getFullYear();
+        const currentYear = new Date().getFullYear();
+        const yearsDiff = currentYear - regYear;
+        if (yearsDiff >= 4 && (yearsDiff % 2 === 0 || yearsDiff === 4)) {
+          list.push({
+            id: `rev_${car.id}`,
+            carPlate: car.plate,
+            title: `Controllo Revisione: ${car.brand} ${car.model}`,
+            message: `Veicolo immatricolato nel ${regYear}. Si raccomanda di verificare la scadenza della revisione ministeriale biennale.`,
+            type: 'alert',
+            date: new Date().toISOString().split('T')[0],
+            read: false
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 2. Check service intervals (Tagliando)
+    const refuelsKm = (car.refuels || []).map(r => Number(r.km) || 0);
+    const maintKm = (car.maintenances || []).map(m => Number(m.km) || 0);
+    const maxKm = Math.max(Number(car.initialKm) || 0, ...refuelsKm, ...maintKm);
+    
+    const lastService = (car.maintenances || [])
+      .filter(m => (m.category && m.category.toLowerCase().includes('tagliando')) || (m.description && m.description.toLowerCase().includes('tagliando')))
+      .sort((a, b) => Number(b.km) - Number(a.km))[0];
+
+    const kmSinceService = lastService ? maxKm - Number(lastService.km) : maxKm;
+    if (kmSinceService >= 15000 && maxKm > 0) {
+      list.push({
+        id: `maint_${car.id}`,
+        carPlate: car.plate,
+        title: `Tagliando Ordinario: ${car.brand} ${car.model}`,
+        message: `Hai superato i ${kmSinceService.toLocaleString('it-IT')} km ${lastService ? "dall'ultimo tagliando" : "di percorrenza"}. Controlla olio motore e filtri.`,
+        type: 'maintenance',
+        date: new Date().toISOString().split('T')[0],
+        read: false
+      });
+    }
+  });
+
+  return list;
+}
 
 export default function App() {
-  // 1. ALL VEHICLES IN GARAGE STATE
+  // 1. ALL VEHICLES IN GARAGE STATE (Initialized cleanly per-user)
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
-    const cached = localStorage.getItem('garage_all_vehicles');
-    if (cached) {
+    const cachedUser = localStorage.getItem('garage_user_account');
+    let userId = '';
+    if (cachedUser) {
       try {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Error loading garage cache:', e);
+        const parsed = JSON.parse(cachedUser);
+        if (parsed.isLoggedIn && parsed.id) userId = parsed.id;
+      } catch (e) {}
+    }
+    if (userId) {
+      const cached = localStorage.getItem(`garage_vehicles_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
+        } catch (e) {}
       }
     }
-    return SEED_GARAGE;
+    return [];
   });
 
   // 2. VIEW NAVIGATION STATE: 'garage' | 'detail'
   const [currentView, setCurrentView] = useState<'garage' | 'detail'>('garage');
   const [selectedCarId, setSelectedCarId] = useState<string>(() => {
-    return vehicles[0]?.id || 'car_1';
+    return vehicles[0]?.id || '';
   });
 
   // 3. APP SETTINGS STATE
@@ -81,13 +110,9 @@ export default function App() {
     };
   });
 
-  // 4. NOTIFICATIONS STATE
+  // 4. NOTIFICATIONS STATE (Derived dynamically from real user vehicle records)
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    const cached = localStorage.getItem('garage_notifications');
-    if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
-    }
-    return INITIAL_NOTIFICATIONS;
+    return generateVehicleNotifications(vehicles);
   });
 
   // 5. ACCOUNT STATE
@@ -98,12 +123,12 @@ export default function App() {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.email && parsed.isLoggedIn) {
           return {
-            id: parsed.id || 'user_default',
-            name: parsed.name || 'Francesco Dell\'Aquila',
-            email: parsed.email || "francesco.dell'aquila@alessandrinimainardi.edu.it",
+            id: parsed.id || '',
+            name: parsed.name || 'Utente Garage',
+            email: parsed.email || '',
             plan: parsed.plan || 'Pro Garage Cloud',
             syncStatus: parsed.syncStatus || 'synced',
-            memberSince: parsed.memberSince || 'Marzo 2024',
+            memberSince: parsed.memberSince || 'Agosto 2026',
             provider: parsed.provider || 'google',
             isLoggedIn: true
           };
@@ -143,14 +168,13 @@ export default function App() {
 
   // Sync to localStorage and Firestore
   useEffect(() => {
-    localStorage.setItem('garage_all_vehicles', JSON.stringify(vehicles));
-    // Optional Cloud Sync to Firestore if user is authenticated
     if (account.isLoggedIn && account.id) {
+      localStorage.setItem(`garage_vehicles_${account.id}`, JSON.stringify(vehicles));
       try {
         const userDocRef = doc(db, 'users', account.id);
         setDoc(userDocRef, {
           vehicles,
-          account,
+          settings,
           updatedAt: new Date().toISOString()
         }, { merge: true }).catch(err => {
           console.debug('Firestore sync notice:', err);
@@ -159,15 +183,12 @@ export default function App() {
         console.debug('Firestore offline queue active');
       }
     }
-  }, [vehicles, account]);
+    setNotifications(generateVehicleNotifications(vehicles));
+  }, [vehicles, account, settings]);
 
   useEffect(() => {
     localStorage.setItem('garage_settings', JSON.stringify(settings));
   }, [settings]);
-
-  useEffect(() => {
-    localStorage.setItem('garage_notifications', JSON.stringify(notifications));
-  }, [notifications]);
 
   useEffect(() => {
     localStorage.setItem('garage_user_account', JSON.stringify(account));
@@ -176,13 +197,27 @@ export default function App() {
   // Function to load user's Firestore data
   const loadUserFirestoreData = async (userId: string) => {
     try {
+      const cached = localStorage.getItem(`garage_vehicles_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setVehicles(parsed);
+            if (parsed.length > 0) setSelectedCarId(parsed[0].id);
+          }
+        } catch (e) {}
+      }
+
       const userDocRef = doc(db, 'users', userId);
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+        if (data.vehicles && Array.isArray(data.vehicles)) {
           setVehicles(data.vehicles);
-          setSelectedCarId(data.vehicles[0].id);
+          if (data.vehicles.length > 0) {
+            setSelectedCarId(data.vehicles[0].id);
+          }
+          localStorage.setItem(`garage_vehicles_${userId}`, JSON.stringify(data.vehicles));
         }
         if (data.settings) {
           setSettings(data.settings);
@@ -354,12 +389,18 @@ export default function App() {
     showToast('Registro notifiche svuotato.', 'info');
   };
 
-  // Reset Garage to demo seed
+  // Reset Garage / Clear Data
   const handleResetGarage = () => {
-    setVehicles(SEED_GARAGE);
-    setSelectedCarId(SEED_GARAGE[0].id);
-    localStorage.setItem('garage_all_vehicles', JSON.stringify(SEED_GARAGE));
-    showToast('Garage ripristinato con i veicoli demo.', 'success');
+    setVehicles([]);
+    setSelectedCarId('');
+    if (account.id) {
+      localStorage.removeItem(`garage_vehicles_${account.id}`);
+      try {
+        const userDocRef = doc(db, 'users', account.id);
+        setDoc(userDocRef, { vehicles: [], updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {}
+    }
+    showToast('Tutti i veicoli sono stati rimossi dal garage.', 'info');
   };
 
   // Import Garage from JSON
@@ -368,7 +409,13 @@ export default function App() {
     if (imported.length > 0) {
       setSelectedCarId(imported[0].id);
     }
-    localStorage.setItem('garage_all_vehicles', JSON.stringify(imported));
+    if (account.id) {
+      localStorage.setItem(`garage_vehicles_${account.id}`, JSON.stringify(imported));
+      try {
+        const userDocRef = doc(db, 'users', account.id);
+        setDoc(userDocRef, { vehicles: imported, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {}
+    }
     showToast(`${imported.length} veicoli importati con successo!`, 'success');
   };
 
@@ -397,6 +444,10 @@ export default function App() {
       isLoggedIn: false
     };
     setAccount(guestAccount);
+    setVehicles([]);
+    setNotifications([]);
+    setCurrentView('garage');
+    setSelectedCarId('');
     localStorage.removeItem('garage_user_account');
     setIsAccountModalOpen(false);
     setIsAuthModalOpen(false);
