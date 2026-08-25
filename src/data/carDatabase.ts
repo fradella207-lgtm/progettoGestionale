@@ -16,7 +16,8 @@ export interface CarMotorization {
   transmission?: string; // e.g. "Automatico DSG 7m", "Manuale 6m", "E-CVT"
   euroStandard?: string; // e.g. "Euro 6e", "Euro 6d-ISC-FCM", "Euro 6d-Temp", "Euro 6"
   wltpElectricRangeKm?: number; // e.g. 120, 55, 450
-  driveType?: 'FWD' | 'RWD' | 'AWD / 4x4';
+  driveType?: 'FWD' | 'RWD' | 'AWD / 4x4' | string;
+  differential?: string; // e.g. "Anteriore elettronico", "Integrale Haldex / 4Motion", "Torsen", "Differenziale Q2"
   avgConsumption?: string; // e.g. "0.4 L/100km + 15.5 kWh/100km", "4.8 L/100km"
 }
 
@@ -706,8 +707,457 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
         ]
       }
     ]
+  },
+  {
+    brand: 'Citroën',
+    country: 'Francia',
+    models: [
+      {
+        name: 'C3',
+        category: 'Compatta',
+        motorizations: [
+          // Nuova C3 2024+
+          { name: '1.2 Hybrid 100 CV e-DCT6 (2024+ IV Serie)', fuelType: 'Full / Mild Hybrid', tankCapacity: 44, cv: 100, kw: 74, displacementCc: 1199, years: '2024+', startYear: 2024, generation: 'IV Serie 2024+', euroStandard: 'Euro 6e', transmission: 'e-DCT6', driveType: 'FWD', avgConsumption: '5.1 L/100km' },
+          { name: '1.2 Turbo Benzina 100 CV (2024+)', fuelType: 'Benzina', tankCapacity: 44, cv: 100, kw: 74, displacementCc: 1199, years: '2024+', startYear: 2024, generation: 'IV Serie 2024+', euroStandard: 'Euro 6e', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          { name: 'ë-C3 Elettrica 113 CV (Batteria 44 kWh LFP)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 44, cv: 113, kw: 83, years: '2024+', startYear: 2024, generation: 'IV Serie ë-C3', transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 320, avgConsumption: '16.4 kWh/100km' },
+          // C3 III Serie 2016-2024
+          { name: '1.2 PureTech 83 CV (C3 III Serie)', fuelType: 'Benzina', tankCapacity: 45, cv: 83, kw: 61, displacementCc: 1199, years: '2016-2024', startYear: 2016, endYear: 2024, generation: 'III Serie', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          { name: '1.2 PureTech 110 CV EAT6 / Manuale', fuelType: 'Benzina', tankCapacity: 45, cv: 110, kw: 81, displacementCc: 1199, years: '2016-2024', startYear: 2016, endYear: 2024, generation: 'III Serie', euroStandard: 'Euro 6', transmission: 'Manuale 6m / EAT6', driveType: 'FWD', avgConsumption: '5.5 L/100km' },
+          { name: '1.5 BlueHDi 100 CV Diesel (C3 III Serie)', fuelType: 'Diesel', tankCapacity: 42, cv: 100, kw: 74, displacementCc: 1499, years: '2018-2023', startYear: 2018, endYear: 2023, generation: 'III Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.2 L/100km' },
+          { name: '1.6 BlueHDi 75/100 CV (C3 III Serie)', fuelType: 'Diesel', tankCapacity: 42, cv: 100, kw: 74, displacementCc: 1560, years: '2016-2018', startYear: 2016, endYear: 2018, generation: 'III Serie', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.0 L/100km' },
+          // C3 II Serie 2009-2016
+          { name: '1.4 HDi 68/70 CV (C3 II Serie)', fuelType: 'Diesel', tankCapacity: 45, cv: 68, kw: 50, displacementCc: 1398, years: '2009-2015', startYear: 2009, endYear: 2015, generation: 'II Serie (A51)', euroStandard: 'Euro 4/5', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.3 L/100km' },
+          { name: '1.4 GPL 73/95 CV (C3 II Serie)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 34, cv: 95, kw: 70, displacementCc: 1397, years: '2010-2016', startYear: 2010, endYear: 2016, generation: 'II Serie GPL', euroStandard: 'Euro 5', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '7.1 L/100km GPL' }
+        ]
+      },
+      {
+        name: 'C3 Aircross',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.2 Hybrid 136 CV e-DCT6 (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 44, cv: 136, kw: 100, displacementCc: 1199, years: '2024+', startYear: 2024, generation: 'II Serie', euroStandard: 'Euro 6e', transmission: 'e-DCT6', driveType: 'FWD', avgConsumption: '5.3 L/100km' },
+          { name: '1.2 PureTech 110/130 CV (2017-2024)', fuelType: 'Benzina', tankCapacity: 45, cv: 110, kw: 81, displacementCc: 1199, years: '2017-2024', startYear: 2017, endYear: 2024, generation: 'I Serie', euroStandard: 'Euro 6', transmission: 'Manuale 6m / EAT6', driveType: 'FWD', avgConsumption: '5.9 L/100km' },
+          { name: '1.5 BlueHDi 110/120 CV Diesel', fuelType: 'Diesel', tankCapacity: 45, cv: 110, kw: 81, displacementCc: 1499, years: '2017-2023', startYear: 2017, endYear: 2023, generation: 'I Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m / EAT6', driveType: 'FWD', avgConsumption: '4.6 L/100km' }
+        ]
+      },
+      {
+        name: 'C4 / ë-C4',
+        category: 'Berlina',
+        motorizations: [
+          { name: 'Hybrid 136 CV e-DSC6 (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 50, cv: 136, kw: 100, displacementCc: 1199, years: '2024+', startYear: 2024, euroStandard: 'Euro 6e', transmission: 'e-DSC6', driveType: 'FWD', avgConsumption: '4.7 L/100km' },
+          { name: '1.5 BlueHDi 130 CV EAT8', fuelType: 'Diesel', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1499, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d', transmission: 'EAT8', driveType: 'FWD', avgConsumption: '4.5 L/100km' },
+          { name: 'ë-C4 Elettrica 156 CV (Batteria 54 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 54, cv: 156, kw: 115, years: '2023+', startYear: 2023, transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 420, avgConsumption: '14.8 kWh/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Hyundai',
+    country: 'Corea del Sud',
+    models: [
+      {
+        name: 'Tucson',
+        category: 'SUV',
+        motorizations: [
+          // 2024+ Restyling
+          { name: '1.6 T-GDI Plug-in Hybrid 253 CV 4WD (PHEV 2024+)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 42, batteryCapacity: 13.8, cv: 253, kw: 186, displacementCc: 1598, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'Automatico 6m', driveType: 'AWD / 4x4', wltpElectricRangeKm: 65, avgConsumption: '1.2 L/100km + 16.5 kWh/100km' },
+          { name: '1.6 T-GDI Full Hybrid 215 CV (HEV 2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 52, cv: 215, kw: 158, displacementCc: 1598, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'Automatico 6m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          // 2020-2024 Pre-Restyling
+          { name: '1.6 T-GDI Plug-in Hybrid 265 CV 4WD (PHEV 2020-2024)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 42, batteryCapacity: 13.8, cv: 265, kw: 195, displacementCc: 1598, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie', euroStandard: 'Euro 6d', transmission: 'Automatico 6m', driveType: 'AWD / 4x4', wltpElectricRangeKm: 62, avgConsumption: '1.4 L/100km + 17.0 kWh/100km' },
+          { name: '1.6 CRDi 136 CV MHEV 48V Diesel', fuelType: 'Diesel', tankCapacity: 54, cv: 136, kw: 100, displacementCc: 1598, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie', euroStandard: 'Euro 6d', transmission: '7DCT', driveType: 'FWD', avgConsumption: '5.1 L/100km' }
+        ]
+      },
+      {
+        name: 'i10',
+        category: 'Citycar',
+        motorizations: [
+          { name: '1.0 MPI 67 CV Manuale / AMT', fuelType: 'Benzina', tankCapacity: 36, cv: 67, kw: 49, displacementCc: 998, years: '2020+', startYear: 2020, generation: 'III Serie', euroStandard: 'Euro 6d/6e', transmission: 'Manuale 5m / AMT', driveType: 'FWD', avgConsumption: '5.0 L/100km' },
+          { name: '1.0 T-GDI N Line 100 CV', fuelType: 'Benzina', tankCapacity: 36, cv: 100, kw: 74, displacementCc: 998, years: '2020+', startYear: 2020, generation: 'III Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.4 L/100km' }
+        ]
+      },
+      {
+        name: 'i20',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.0 T-GDI 100 CV 48V Hybrid (i20)', fuelType: 'Full / Mild Hybrid', tankCapacity: 40, cv: 100, kw: 74, displacementCc: 998, years: '2020+', startYear: 2020, generation: 'III Serie', euroStandard: 'Euro 6d/6e', transmission: 'iMT 6m / 7DCT', driveType: 'FWD', avgConsumption: '5.1 L/100km' },
+          { name: '1.2 MPI 84 CV Benzina (i20)', fuelType: 'Benzina', tankCapacity: 40, cv: 84, kw: 62, displacementCc: 1197, years: '2020+', startYear: 2020, generation: 'III Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.3 L/100km' }
+        ]
+      },
+      {
+        name: 'Kona',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.6 GDI Full Hybrid 141 CV (2023+ II Serie)', fuelType: 'Full / Mild Hybrid', tankCapacity: 38, cv: 141, kw: 104, displacementCc: 1580, years: '2023+', startYear: 2023, generation: 'II Serie', euroStandard: 'Euro 6e', transmission: '6DCT', driveType: 'FWD', avgConsumption: '4.7 L/100km' },
+          { name: 'EV Elettrica 218 CV (Batteria 65.4 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 65.4, cv: 218, kw: 160, years: '2023+', startYear: 2023, generation: 'II Serie EV', transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 514, avgConsumption: '14.9 kWh/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Kia',
+    country: 'Corea del Sud',
+    models: [
+      {
+        name: 'Sportage',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.6 T-GDi Plug-in Hybrid 265 CV 4WD (PHEV)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 42, batteryCapacity: 13.8, cv: 265, kw: 195, displacementCc: 1598, years: '2022+', startYear: 2022, generation: 'V Serie', euroStandard: 'Euro 6d/6e', transmission: 'Automatico 6m', driveType: 'AWD / 4x4', wltpElectricRangeKm: 70, avgConsumption: '1.1 L/100km + 16.9 kWh/100km' },
+          { name: '1.6 T-GDi Full Hybrid 230 CV (HEV)', fuelType: 'Full / Mild Hybrid', tankCapacity: 52, cv: 230, kw: 169, displacementCc: 1598, years: '2022+', startYear: 2022, generation: 'V Serie', euroStandard: 'Euro 6d/6e', transmission: 'Automatico 6m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          { name: '1.6 CRDi MHEV 136 CV Diesel 48V', fuelType: 'Diesel', tankCapacity: 54, cv: 136, kw: 100, displacementCc: 1598, years: '2022+', startYear: 2022, generation: 'V Serie', euroStandard: 'Euro 6d', transmission: '7DCT', driveType: 'FWD', avgConsumption: '5.2 L/100km' }
+        ]
+      },
+      {
+        name: 'Picanto',
+        category: 'Citycar',
+        motorizations: [
+          { name: '1.0 DPI 67 CV Manuale / AMT (2024+ Restyling)', fuelType: 'Benzina', tankCapacity: 35, cv: 67, kw: 49, displacementCc: 998, years: '2024+', startYear: 2024, generation: 'III Serie Restyling 2', euroStandard: 'Euro 6e', transmission: 'Manuale 5m / AMT', driveType: 'FWD', avgConsumption: '5.0 L/100km' },
+          { name: '1.0 DPI 67 CV GPL EcoPicanto', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 35, secondaryTankCapacity: 30, cv: 67, kw: 49, displacementCc: 998, years: '2020+', startYear: 2020, generation: 'III Serie GPL', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '6.5 L/100km GPL' }
+        ]
+      },
+      {
+        name: 'Stonic',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.0 T-GDI MHEV 100 CV EcoDynamics+', fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 100, kw: 74, displacementCc: 998, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'iMT 6m / 7DCT', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          { name: '1.2 DPI 84 CV Benzina / GPL', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 35, cv: 84, kw: 62, displacementCc: 1197, years: '2019+', startYear: 2019, euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '6.8 L/100km GPL' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Lancia',
+    country: 'Italia',
+    models: [
+      {
+        name: 'Ypsilon',
+        category: 'Citycar',
+        motorizations: [
+          // 2024+ Nuova Ypsilon
+          { name: '1.2 Ibrida 100 CV e-DCT6 (Nuova Ypsilon 2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 44, cv: 100, kw: 74, displacementCc: 1199, years: '2024+', startYear: 2024, generation: 'Nuova Ypsilon 2024+', euroStandard: 'Euro 6e', transmission: 'e-DCT6', driveType: 'FWD', avgConsumption: '4.6 L/100km' },
+          { name: 'Elettrica 156 CV (Nuova Ypsilon Batteria 54 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 54, cv: 156, kw: 115, years: '2024+', startYear: 2024, generation: 'Nuova Ypsilon Elettrica', transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 403, avgConsumption: '14.6 kWh/100km' },
+          // 2020-2024 Ypsilon Hybrid
+          { name: '1.0 FireFly Mild Hybrid 70 CV (Ypsilon)', fuelType: 'Full / Mild Hybrid', tankCapacity: 40, cv: 70, kw: 51, displacementCc: 999, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'III Serie Hybrid', euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          // 2011-2020 Ypsilon III Serie
+          { name: '1.2 69 CV Ecochic GPL (Ypsilon)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 40, secondaryTankCapacity: 30, cv: 69, kw: 51, displacementCc: 1242, years: '2011-2020', startYear: 2011, endYear: 2020, generation: 'III Serie Ecochic', euroStandard: 'Euro 5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '6.8 L/100km GPL' },
+          { name: '1.3 MultiJet 95 CV (Ypsilon)', fuelType: 'Diesel', tankCapacity: 40, cv: 95, kw: 70, displacementCc: 1248, years: '2011-2018', startYear: 2011, endYear: 2018, generation: 'III Serie', euroStandard: 'Euro 5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.2 L/100km' },
+          { name: '0.9 TwinAir 80 CV Metano Ecochic', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 38, secondaryTankCapacity: 12, cv: 80, kw: 59, displacementCc: 875, years: '2013-2020', startYear: 2013, endYear: 2020, generation: 'III Serie Metano', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.1 kg/100km' },
+          // 2003-2011 Ypsilon II Serie (843)
+          { name: '1.2 60/69 CV 8V (Ypsilon 843)', fuelType: 'Benzina', tankCapacity: 45, cv: 60, kw: 44, displacementCc: 1242, years: '2003-2011', startYear: 2003, endYear: 2011, generation: 'II Serie (843)', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.8 L/100km' },
+          { name: '1.3 MultiJet 75/90 CV (Ypsilon 843)', fuelType: 'Diesel', tankCapacity: 45, cv: 75, kw: 55, displacementCc: 1248, years: '2003-2011', startYear: 2003, endYear: 2011, generation: 'II Serie (843)', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.6 L/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Nissan',
+    country: 'Giappone',
+    models: [
+      {
+        name: 'Qashqai',
+        category: 'SUV',
+        motorizations: [
+          // Qashqai III (2021+)
+          { name: '1.5 e-POWER 190 CV Elettrico con generatore (2024+ Restyling)', fuelType: 'Full / Mild Hybrid', tankCapacity: 55, cv: 190, kw: 140, displacementCc: 1497, years: '2024+', startYear: 2024, generation: 'III Serie Restyling', euroStandard: 'Euro 6e', transmission: 'Monomarcia e-POWER', driveType: 'FWD', avgConsumption: '5.1 L/100km' },
+          { name: '1.3 DIG-T MHEV 140/158 CV Xtronic', fuelType: 'Full / Mild Hybrid', tankCapacity: 55, cv: 158, kw: 116, displacementCc: 1332, years: '2021+', startYear: 2021, generation: 'III Serie', euroStandard: 'Euro 6d/6e', transmission: 'Xtronic CVT', driveType: 'FWD', avgConsumption: '6.3 L/100km' },
+          // Qashqai II (2014-2021)
+          { name: '1.5 dCi 110/115 CV Diesel (Qashqai II)', fuelType: 'Diesel', tankCapacity: 55, cv: 115, kw: 85, displacementCc: 1461, years: '2014-2021', startYear: 2014, endYear: 2021, generation: 'II Serie (J11)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / DCT', driveType: 'FWD', avgConsumption: '4.8 L/100km' },
+          { name: '1.6 dCi 130 CV 4WD (Qashqai II)', fuelType: 'Diesel', tankCapacity: 65, cv: 130, kw: 96, displacementCc: 1598, years: '2014-2019', startYear: 2014, endYear: 2019, generation: 'II Serie (J11)', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'AWD / 4x4', avgConsumption: '5.2 L/100km' },
+          // Qashqai I (2007-2013)
+          { name: '1.5 dCi 106/110 CV (Qashqai I J10)', fuelType: 'Diesel', tankCapacity: 65, cv: 110, kw: 81, displacementCc: 1461, years: '2007-2013', startYear: 2007, endYear: 2013, generation: 'I Serie (J10)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.2 L/100km' }
+        ]
+      },
+      {
+        name: 'Juke',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.6 Full Hybrid 143 CV Multi-mode (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 46, cv: 143, kw: 105, displacementCc: 1598, years: '2022+', startYear: 2022, generation: 'II Serie', euroStandard: 'Euro 6e', transmission: 'Multimode', driveType: 'FWD', avgConsumption: '4.8 L/100km' },
+          { name: '1.0 DIG-T 114 CV DCT', fuelType: 'Benzina', tankCapacity: 46, cv: 114, kw: 84, displacementCc: 999, years: '2019+', startYear: 2019, generation: 'II Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m / DCT 7m', driveType: 'FWD', avgConsumption: '5.8 L/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Opel',
+    country: 'Germania',
+    models: [
+      {
+        name: 'Corsa',
+        category: 'Compatta',
+        motorizations: [
+          // Corsa F 2019+
+          { name: '1.2 Hybrid 100 CV e-DCT6 (Restyling 2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 44, cv: 100, kw: 74, displacementCc: 1199, years: '2024+', startYear: 2024, generation: 'Corsa F Restyling', euroStandard: 'Euro 6e', transmission: 'e-DCT6', driveType: 'FWD', avgConsumption: '4.6 L/100km' },
+          { name: '1.2 75 CV Benzina (Corsa F)', fuelType: 'Benzina', tankCapacity: 44, cv: 75, kw: 55, displacementCc: 1199, years: '2019+', startYear: 2019, generation: 'Corsa F', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.3 L/100km' },
+          { name: '1.5 CDTI 102 CV Diesel (Corsa F)', fuelType: 'Diesel', tankCapacity: 41, cv: 102, kw: 75, displacementCc: 1499, years: '2019-2023', startYear: 2019, endYear: 2023, generation: 'Corsa F', euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.1 L/100km' },
+          { name: 'Corsa-e Elettrica 156 CV (Batteria 51 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 51, cv: 156, kw: 115, years: '2023+', startYear: 2023, generation: 'Corsa-e', transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 405, avgConsumption: '14.6 kWh/100km' },
+          // Corsa E 2014-2019 & D 2006-2014
+          { name: '1.3 CDTI 75/95 CV (Corsa D/E)', fuelType: 'Diesel', tankCapacity: 45, cv: 95, kw: 70, displacementCc: 1248, years: '2006-2019', startYear: 2006, endYear: 2019, generation: 'Corsa D/E', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m/6m', driveType: 'FWD', avgConsumption: '4.5 L/100km' },
+          { name: '1.4 GPL Tech 90 CV (Corsa D/E)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 34, cv: 90, kw: 66, displacementCc: 1398, years: '2010-2019', startYear: 2010, endYear: 2019, generation: 'Corsa GPL Tech', euroStandard: 'Euro 5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '6.9 L/100km GPL' }
+        ]
+      },
+      {
+        name: 'Mokka',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.2 Hybrid 136 CV e-DCT6 (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 44, cv: 136, kw: 100, displacementCc: 1199, years: '2024+', startYear: 2024, euroStandard: 'Euro 6e', transmission: 'e-DCT6', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          { name: 'Mokka-e Elettrica 156 CV (Batteria 54 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 54, cv: 156, kw: 115, years: '2023+', startYear: 2023, transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 407, avgConsumption: '15.2 kWh/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Seat',
+    country: 'Spagna',
+    models: [
+      {
+        name: 'Ibiza',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.0 TSI 95/110 CV (Ibiza V)', fuelType: 'Benzina', tankCapacity: 40, cv: 110, kw: 81, displacementCc: 999, years: '2017+', startYear: 2017, generation: 'V Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m / DSG', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          { name: '1.0 TGI Metano 90 CV (Ibiza V)', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 40, secondaryTankCapacity: 13.8, cv: 90, kw: 66, displacementCc: 999, years: '2018-2022', startYear: 2018, endYear: 2022, generation: 'V Serie TGI', euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '3.6 kg/100km' },
+          { name: '1.6 TDI 95 CV (Ibiza V)', fuelType: 'Diesel', tankCapacity: 40, cv: 95, kw: 70, displacementCc: 1598, years: '2017-2020', startYear: 2017, endYear: 2020, generation: 'V Serie', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.2 L/100km' }
+        ]
+      },
+      {
+        name: 'Arona',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.0 TSI 95/115 CV DSG', fuelType: 'Benzina', tankCapacity: 40, cv: 115, kw: 85, displacementCc: 999, years: '2017+', startYear: 2017, euroStandard: 'Euro 6d/6e', transmission: 'DSG 7m', driveType: 'FWD', avgConsumption: '5.5 L/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Skoda',
+    country: 'Repubblica Ceca',
+    models: [
+      {
+        name: 'Octavia / Octavia Wagon',
+        category: 'Station Wagon',
+        motorizations: [
+          // 2024+ Restyling
+          { name: '1.5 TSI MHEV 150 CV DSG (Restyling 2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 150, kw: 110, displacementCc: 1498, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'DSG 7m', driveType: 'FWD', avgConsumption: '5.3 L/100km' },
+          { name: '2.0 TDI 150 CV DSG (Restyling 2024+)', fuelType: 'Diesel', tankCapacity: 45, cv: 150, kw: 110, displacementCc: 1968, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'DSG 7m', driveType: 'FWD', avgConsumption: '4.8 L/100km' },
+          { name: '1.4 TSI iV Plug-in Hybrid 204 CV (PHEV 2020-2024)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 39, batteryCapacity: 13.0, cv: 204, kw: 150, displacementCc: 1395, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie', euroStandard: 'Euro 6d', transmission: 'DSG 6m', driveType: 'FWD', wltpElectricRangeKm: 65, avgConsumption: '1.2 L/100km + 14.5 kWh/100km' }
+        ]
+      },
+      {
+        name: 'Fabia',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.0 MPI 80 CV Manuale', fuelType: 'Benzina', tankCapacity: 40, cv: 80, kw: 59, displacementCc: 999, years: '2021+', startYear: 2021, generation: 'IV Serie', euroStandard: 'Euro 6d/6e', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.1 L/100km' },
+          { name: '1.0 TSI 95/110 CV DSG', fuelType: 'Benzina', tankCapacity: 40, cv: 110, kw: 81, displacementCc: 999, years: '2021+', startYear: 2021, generation: 'IV Serie', euroStandard: 'Euro 6d/6e', transmission: 'DSG 7m', driveType: 'FWD', avgConsumption: '5.3 L/100km' }
+        ]
+      },
+      {
+        name: 'Kamiq',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.0 TSI 95/115 CV Manuale / DSG', fuelType: 'Benzina', tankCapacity: 50, cv: 115, kw: 85, displacementCc: 999, years: '2019+', startYear: 2019, euroStandard: 'Euro 6d/6e', transmission: 'DSG 7m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          { name: '1.0 G-TEC Metano 90 CV', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 50, secondaryTankCapacity: 13.8, cv: 90, kw: 66, displacementCc: 999, years: '2019-2022', startYear: 2019, endYear: 2022, euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '3.6 kg/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Smart',
+    country: 'Germania',
+    models: [
+      {
+        name: 'Fortwo',
+        category: 'Citycar',
+        motorizations: [
+          { name: 'EQ Fortwo Elettrica 82 CV (Batteria 17.6 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 17.6, cv: 82, kw: 60, years: '2018-2024', startYear: 2018, endYear: 2024, generation: 'EQ W453', transmission: 'Monomarcia', driveType: 'RWD', wltpElectricRangeKm: 135, avgConsumption: '15.5 kWh/100km' },
+          { name: '0.9 Turbo 90 CV Twinamic (453)', fuelType: 'Benzina', tankCapacity: 28, cv: 90, kw: 66, displacementCc: 898, years: '2014-2019', startYear: 2014, endYear: 2019, generation: 'III Serie (453)', euroStandard: 'Euro 6', transmission: 'Twinamic 6m', driveType: 'RWD', avgConsumption: '4.8 L/100km' },
+          { name: '1.0 71 CV mhd (451)', fuelType: 'Benzina', tankCapacity: 33, cv: 71, kw: 52, displacementCc: 999, years: '2007-2014', startYear: 2007, endYear: 2014, generation: 'II Serie (451)', euroStandard: 'Euro 4/5', transmission: 'Robotizzato 5m', driveType: 'RWD', avgConsumption: '5.1 L/100km' },
+          { name: '0.8 CDI Diesel 45/54 CV (451)', fuelType: 'Diesel', tankCapacity: 33, cv: 54, kw: 40, displacementCc: 799, years: '2007-2014', startYear: 2007, endYear: 2014, generation: 'II Serie (451)', euroStandard: 'Euro 4/5', transmission: 'Robotizzato 5m', driveType: 'RWD', avgConsumption: '3.6 L/100km' }
+        ]
+      },
+      {
+        name: '#1 (Hashtag One)',
+        category: 'SUV',
+        motorizations: [
+          { name: 'Pro+ 272 CV (Batteria 66 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 66, cv: 272, kw: 200, years: '2023+', startYear: 2023, generation: 'I Serie', transmission: 'Monomarcia', driveType: 'RWD', wltpElectricRangeKm: 440, avgConsumption: '16.8 kWh/100km' },
+          { name: 'BRABUS 428 CV 4WD (Batteria 66 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 66, cv: 428, kw: 315, years: '2023+', startYear: 2023, generation: 'I Serie BRABUS', transmission: 'Monomarcia', driveType: 'AWD / 4x4', wltpElectricRangeKm: 400, avgConsumption: '18.2 kWh/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Suzuki',
+    country: 'Giappone',
+    models: [
+      {
+        name: 'Swift',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.2 Hybrid 83 CV 12V 2WD/AllGrip (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 37, cv: 83, kw: 61, displacementCc: 1197, years: '2024+', startYear: 2024, generation: 'V Serie 2024+', euroStandard: 'Euro 6e', transmission: 'Manuale 5m / CVT', driveType: 'FWD', avgConsumption: '4.4 L/100km' },
+          { name: '1.2 Dualjet Hybrid 83 CV (2020-2024)', fuelType: 'Full / Mild Hybrid', tankCapacity: 37, cv: 83, kw: 61, displacementCc: 1197, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.7 L/100km' }
+        ]
+      },
+      {
+        name: 'Vitara',
+        category: 'SUV',
+        motorizations: [
+          { name: '1.4 Boosterjet Hybrid 129 CV AllGrip 4WD', fuelType: 'Full / Mild Hybrid', tankCapacity: 47, cv: 129, kw: 95, displacementCc: 1373, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Manuale 6m', driveType: 'AWD / 4x4', avgConsumption: '5.8 L/100km' },
+          { name: '1.5 Full Hybrid 115 CV AGS AllGrip', fuelType: 'Full / Mild Hybrid', tankCapacity: 47, cv: 115, kw: 85, displacementCc: 1462, years: '2022+', startYear: 2022, euroStandard: 'Euro 6d/6e', transmission: 'Robotizzato AGS 6m', driveType: 'AWD / 4x4', avgConsumption: '5.6 L/100km' }
+        ]
+      },
+      {
+        name: 'Ignis',
+        category: 'Citycar',
+        motorizations: [
+          { name: '1.2 Hybrid 83 CV 4WD AllGrip', fuelType: 'Full / Mild Hybrid', tankCapacity: 30, cv: 83, kw: 61, displacementCc: 1197, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'AWD / 4x4', avgConsumption: '5.0 L/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Iveco',
+    country: 'Italia',
+    models: [
+      {
+        name: 'Daily (Furgone / Cabinato)',
+        category: 'SUV',
+        motorizations: [
+          { name: '35S14 / 35C14 2.3 HPI 136 CV', fuelType: 'Diesel', tankCapacity: 70, cv: 136, kw: 100, displacementCc: 2287, years: '2016-2024', startYear: 2016, endYear: 2024, euroStandard: 'Euro 6', transmission: 'Manuale 6m / Hi-Matic 8m', driveType: 'RWD', avgConsumption: '8.4 L/100km' },
+          { name: '35S16 / 35C16 2.3 HPI 156 CV Hi-Matic', fuelType: 'Diesel', tankCapacity: 70, cv: 156, kw: 115, displacementCc: 2287, years: '2016-2024', startYear: 2016, endYear: 2024, euroStandard: 'Euro 6', transmission: 'Hi-Matic 8m', driveType: 'RWD', avgConsumption: '8.8 L/100km' },
+          { name: '35S18 / 35C18 3.0 HPI 180 CV Hi-Matic', fuelType: 'Diesel', tankCapacity: 90, cv: 180, kw: 132, displacementCc: 2998, years: '2016-2024', startYear: 2016, endYear: 2024, euroStandard: 'Euro 6', transmission: 'Hi-Matic 8m', driveType: 'RWD', avgConsumption: '9.5 L/100km' },
+          { name: 'Daily Natural Power 3.0 Metano (CNG) 136 CV', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 14, secondaryTankCapacity: 35, cv: 136, kw: 100, displacementCc: 2998, years: '2016-2024', startYear: 2016, endYear: 2024, euroStandard: 'Euro 6', transmission: 'Hi-Matic 8m', driveType: 'RWD', avgConsumption: '8.5 kg/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Mini',
+    country: 'Regno Unito / Germania',
+    models: [
+      {
+        name: 'Cooper / 3 Porte / 5 Porte',
+        category: 'Compatta',
+        motorizations: [
+          // 2024+ Nuova Generazione
+          { name: 'Cooper C 1.5 156 CV Steptronic (2024+)', fuelType: 'Benzina', tankCapacity: 44, cv: 156, kw: 115, displacementCc: 1499, years: '2024+', startYear: 2024, generation: 'IV Serie (F66)', euroStandard: 'Euro 6e', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '5.9 L/100km' },
+          { name: 'Cooper S 2.0 204 CV Steptronic (2024+)', fuelType: 'Benzina', tankCapacity: 44, cv: 204, kw: 150, displacementCc: 1998, years: '2024+', startYear: 2024, generation: 'IV Serie (F66)', euroStandard: 'Euro 6e', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '6.4 L/100km' },
+          { name: 'Cooper E Elettrica 184 CV (Batteria 40.7 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 40.7, cv: 184, kw: 135, years: '2024+', startYear: 2024, generation: 'J01 Elettrica', transmission: 'Monomarcia', driveType: 'FWD', wltpElectricRangeKm: 305, avgConsumption: '14.0 kWh/100km' },
+          // 2014-2023 F56
+          { name: 'Cooper D 1.5 Diesel 116 CV (F56)', fuelType: 'Diesel', tankCapacity: 40, cv: 116, kw: 85, displacementCc: 1496, years: '2014-2020', startYear: 2014, endYear: 2020, generation: 'III Serie (F56)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / Steptronic', driveType: 'FWD', avgConsumption: '4.2 L/100km' },
+          { name: 'One D 1.5 Diesel 95 CV (F56)', fuelType: 'Diesel', tankCapacity: 40, cv: 95, kw: 70, displacementCc: 1496, years: '2014-2020', startYear: 2014, endYear: 2020, generation: 'III Serie (F56)', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.0 L/100km' },
+          { name: 'Cooper 1.5 Benzina 136 CV (F56)', fuelType: 'Benzina', tankCapacity: 40, cv: 136, kw: 100, displacementCc: 1499, years: '2014-2023', startYear: 2014, endYear: 2023, generation: 'III Serie (F56)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / Steptronic', driveType: 'FWD', avgConsumption: '5.4 L/100km' },
+          // 2006-2013 R56
+          { name: 'Cooper D 1.6 Diesel 109/112 CV (R56)', fuelType: 'Diesel', tankCapacity: 40, cv: 112, kw: 82, displacementCc: 1598, years: '2006-2013', startYear: 2006, endYear: 2013, generation: 'II Serie (R56)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.4 L/100km' }
+        ]
+      },
+      {
+        name: 'Countryman',
+        category: 'SUV',
+        motorizations: [
+          { name: 'Countryman C 1.5 MHEV 170 CV (2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 54, cv: 170, kw: 125, displacementCc: 1499, years: '2024+', startYear: 2024, generation: 'III Serie (U25)', euroStandard: 'Euro 6e', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '6.2 L/100km' },
+          { name: 'Cooper S E ALL4 Plug-in Hybrid 220 CV (PHEV 2017-2023)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 36, batteryCapacity: 10.0, cv: 220, kw: 162, displacementCc: 1499, years: '2017-2023', startYear: 2017, endYear: 2023, generation: 'II Serie (F60)', euroStandard: 'Euro 6d', transmission: 'Steptronic 6m', driveType: 'AWD / 4x4', wltpElectricRangeKm: 51, avgConsumption: '1.9 L/100km + 15.0 kWh/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Land Rover',
+    country: 'Regno Unito',
+    models: [
+      {
+        name: 'Range Rover Evoque',
+        category: 'SUV',
+        motorizations: [
+          { name: 'P300e Plug-in Hybrid 309 CV AWD (PHEV)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 57, batteryCapacity: 15.0, cv: 309, kw: 227, displacementCc: 1497, years: '2020+', startYear: 2020, generation: 'II Serie', euroStandard: 'Euro 6d', transmission: 'Automatico 8m', driveType: 'AWD / 4x4', wltpElectricRangeKm: 62, avgConsumption: '1.4 L/100km + 18.0 kWh/100km' },
+          { name: 'D165 / D200 MHEV Diesel AWD', fuelType: 'Diesel', tankCapacity: 65, cv: 204, kw: 150, displacementCc: 1997, years: '2020+', startYear: 2020, generation: 'II Serie', euroStandard: 'Euro 6d', transmission: 'Automatico 9m', driveType: 'AWD / 4x4', avgConsumption: '6.5 L/100km' },
+          { name: '2.2 TD4 / SD4 150/190 CV (Evoque I)', fuelType: 'Diesel', tankCapacity: 60, cv: 190, kw: 140, displacementCc: 2179, years: '2011-2018', startYear: 2011, endYear: 2018, generation: 'I Serie', euroStandard: 'Euro 5', transmission: 'Automatico 9m', driveType: 'AWD / 4x4', avgConsumption: '6.8 L/100km' }
+        ]
+      }
+    ]
+  },
+  {
+    brand: 'Porsche',
+    country: 'Germania',
+    models: [
+      {
+        name: 'Macan',
+        category: 'SUV',
+        motorizations: [
+          { name: 'Macan 4 Elettrica 408 CV (Batteria 100 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 100, cv: 408, kw: 300, years: '2024+', startYear: 2024, generation: 'Macan Elettrica II Serie', transmission: 'Monomarcia', driveType: 'AWD / 4x4', wltpElectricRangeKm: 613, avgConsumption: '17.9 kWh/100km' },
+          { name: '2.0 Turbo 265 CV PDK', fuelType: 'Benzina', tankCapacity: 65, cv: 265, kw: 195, displacementCc: 1984, years: '2014-2024', startYear: 2014, endYear: 2024, generation: 'I Serie', euroStandard: 'Euro 6d', transmission: 'PDK 7m', driveType: 'AWD / 4x4', avgConsumption: '9.8 L/100km' },
+          { name: 'GTS 2.9 V6 Biturbo 440 CV PDK', fuelType: 'Benzina', tankCapacity: 75, cv: 440, kw: 324, displacementCc: 2894, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'I Serie GTS', euroStandard: 'Euro 6d', transmission: 'PDK 7m', driveType: 'AWD / 4x4', avgConsumption: '11.3 L/100km' }
+        ]
+      }
+    ]
   }
 ];
+
+export const BRAND_ALIASES: Record<string, string> = {
+  'mercedes': 'Mercedes-Benz',
+  'mercedes benz': 'Mercedes-Benz',
+  'mercedes-benz': 'Mercedes-Benz',
+  'mb': 'Mercedes-Benz',
+  'vw': 'Volkswagen',
+  'volks wagen': 'Volkswagen',
+  'volkswagen': 'Volkswagen',
+  'alfa': 'Alfa Romeo',
+  'alfaromeo': 'Alfa Romeo',
+  'alfa-romeo': 'Alfa Romeo',
+  'citroen': 'Citroën',
+  'citroën': 'Citroën',
+  'land rover': 'Land Rover',
+  'landrover': 'Land Rover',
+  'range rover': 'Land Rover',
+  'rangerover': 'Land Rover',
+  'chevy': 'Chevrolet',
+  'chevrolet': 'Chevrolet',
+  'mini cooper': 'Mini',
+  'ds': 'DS',
+  'ds automobiles': 'DS'
+};
+
+export function normalizeBrandName(raw: string): string {
+  if (!raw) return '';
+  const clean = raw.trim().toLowerCase();
+  if (BRAND_ALIASES[clean]) return BRAND_ALIASES[clean];
+  const found = CAR_BRANDS_CATALOG.find(b => b.brand.toLowerCase() === clean);
+  if (found) return found.brand;
+  const partial = CAR_BRANDS_CATALOG.find(b => b.brand.toLowerCase().includes(clean) || clean.includes(b.brand.toLowerCase()));
+  if (partial) return partial.brand;
+  return raw.trim();
+}
+
+/**
+ * Intelligent Smart Generator for custom, non-catalog models.
+ * Guarantees that EVERY vehicle has at least 8-10 realistic, segment-tailored motorizations immediately.
+ */
+export function generateGenericMotorizationsForBrandModel(
+  brand: string,
+  model: string,
+  year?: number
+): CarMotorization[] {
+  const normBrand = normalizeBrandName(brand);
+  const isElectricBrand = /tesla|polestar|byd|smart|nio|lucid|rivian/i.test(normBrand) || /model 3|model y|ioniq|ev6|id\.|bev|e-208|500e/i.test(model);
+  const currentYear = year || new Date().getFullYear();
+  const yearStr = currentYear ? `${currentYear}` : 'Attuale';
+
+  if (isElectricBrand) {
+    return [
+      { name: 'Standard Range RWD (Batteria ~58-60 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 58, cv: 170, kw: 125, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 420, avgConsumption: '15.2 kWh/100km' },
+      { name: 'Long Range AWD (Batteria ~77-82 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 77, cv: 286, kw: 210, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 540, avgConsumption: '16.5 kWh/100km' },
+      { name: 'Performance Dual Motor AWD (Batteria ~77-85 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 82, cv: 420, kw: 309, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 500, avgConsumption: '18.0 kWh/100km' }
+    ];
+  }
+
+  // General rich motorizations covering all fuel types & powers
+  return [
+    { name: `1.0 / 1.2 Turbo Benzina 100/110 CV`, fuelType: 'Benzina', tankCapacity: 50, cv: 100, kw: 74, displacementCc: 1199, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Manuale 6m', avgConsumption: '5.4 L/100km' },
+    { name: `1.2 / 1.5 Mild Hybrid (MHEV) 130 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1498, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6d/6e', transmission: 'Automatico / DSG', avgConsumption: '5.2 L/100km' },
+    { name: `1.5 / 1.6 Turbo Diesel 120/130 CV`, fuelType: 'Diesel', tankCapacity: 50, cv: 120, kw: 88, displacementCc: 1598, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m / Automatico', avgConsumption: '4.6 L/100km' },
+    { name: `2.0 Turbo Diesel 150 CV`, fuelType: 'Diesel', tankCapacity: 55, cv: 150, kw: 110, displacementCc: 1968, years: yearStr, startYear: currentYear - 10, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Automatico', avgConsumption: '5.0 L/100km' },
+    { name: `1.5 / 1.8 Full Hybrid (HEV) 140 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 140, kw: 103, displacementCc: 1798, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6e', transmission: 'Automatico e-CVT', avgConsumption: '4.5 L/100km' },
+    { name: `Plug-in Hybrid (PHEV) 204-225 CV`, fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 45, batteryCapacity: (currentYear >= 2024 ? 19.7 : 13.0), cv: 204, kw: 150, displacementCc: 1498, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6d/6e', transmission: 'Automatico DCT', wltpElectricRangeKm: (currentYear >= 2024 ? 120 : 60), avgConsumption: '1.2 L/100km + 15 kWh/100km' },
+    { name: `1.0 / 1.4 BiFuel GPL 100-120 CV`, fuelType: 'GPL (Benzina + GPL)', tankCapacity: 50, secondaryTankCapacity: 40, cv: 100, kw: 74, displacementCc: 1199, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m', avgConsumption: '7.4 L/100km GPL' },
+    { name: `1.4 / 1.5 Turbo Benzina 150 CV`, fuelType: 'Benzina', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1498, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m / Automatico', avgConsumption: '6.2 L/100km' },
+    { name: `2.0 Turbo Benzina 200+ CV`, fuelType: 'Benzina', tankCapacity: 55, cv: 200, kw: 147, displacementCc: 1984, years: yearStr, startYear: currentYear - 10, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Automatico', avgConsumption: '7.5 L/100km' }
+  ];
+}
 
 export const POPULAR_BRANDS = [
   'Abarth', 'Alfa Romeo', 'Audi', 'BMW', 'Citroën', 'Cupra', 'Dacia', 'DS', 'Ducati', 'Ferrari', 
@@ -872,25 +1322,40 @@ export function searchCarBrands(query: string): string[] {
 
 export function getModelsForBrand(brandName: string): CarModelData[] {
   if (!brandName) return [];
+  const norm = normalizeBrandName(brandName).toLowerCase().trim();
   const found = CAR_BRANDS_CATALOG.find(
-    b => b.brand.toLowerCase() === brandName.toLowerCase().trim()
+    b => b.brand.toLowerCase() === norm ||
+         b.brand.toLowerCase().includes(norm) ||
+         norm.includes(b.brand.toLowerCase())
   );
   return found ? found.models : [];
 }
 
 export function getMotorizationsForModel(brandName: string, modelName: string): CarMotorization[] {
   const models = getModelsForBrand(brandName);
-  if (!models.length || !modelName) return [];
-  const foundModel = models.find(
-    m => m.name.toLowerCase() === modelName.toLowerCase().trim() ||
-         m.name.toLowerCase().includes(modelName.toLowerCase().trim()) ||
-         modelName.toLowerCase().includes(m.name.toLowerCase().trim())
-  );
-  return foundModel ? foundModel.motorizations : [];
+  if (!modelName) return [];
+  const cleanModel = modelName.toLowerCase().trim();
+  
+  if (models.length > 0) {
+    // 1. Direct or partial match on model name
+    const foundModel = models.find(
+      m => m.name.toLowerCase() === cleanModel ||
+           m.name.toLowerCase().includes(cleanModel) ||
+           cleanModel.includes(m.name.toLowerCase()) ||
+           cleanModel.split(/\s+/).some(word => word.length >= 3 && m.name.toLowerCase().includes(word))
+    );
+    if (foundModel && foundModel.motorizations.length > 0) {
+      return foundModel.motorizations;
+    }
+  }
+
+  // 2. If not found in catalog, generate smart standard motorizations for this brand & model
+  return generateGenericMotorizationsForBrandModel(brandName, modelName);
 }
 
 /**
- * Filter and sort motorizations accurately by registration year / generation
+ * Filter and sort motorizations accurately by registration year / generation.
+ * NEVER returns an empty array if brand or model is provided!
  */
 export function getMotorizationsForModelAndYear(
   brandName: string, 
@@ -901,7 +1366,10 @@ export function getMotorizationsForModelAndYear(
   otherYears: CarMotorization[];
   all: CarMotorization[];
 } {
-  const allMots = getMotorizationsForModel(brandName, modelName);
+  let allMots = getMotorizationsForModel(brandName, modelName);
+  if (!allMots.length && (brandName || modelName)) {
+    allMots = generateGenericMotorizationsForBrandModel(brandName, modelName);
+  }
   if (!allMots.length) return { matchedForYear: [], otherYears: [], all: [] };
 
   let targetYear: number | null = null;
@@ -928,6 +1396,15 @@ export function getMotorizationsForModelAndYear(
     }
   }
 
+  // If none matched the exact year window, return all items so dropdown is never empty
+  if (matchedForYear.length === 0) {
+    return {
+      matchedForYear: allMots,
+      otherYears: [],
+      all: allMots
+    };
+  }
+
   return {
     matchedForYear,
     otherYears,
@@ -945,15 +1422,16 @@ export interface FuzzySearchResult {
 
 export function searchMotorizationsFuzzy(query: string, targetYear?: number): FuzzySearchResult[] {
   if (!query || query.trim().length < 2) return [];
-  const tokens = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const tokens = query.toLowerCase().trim().split(/\s+/).filter(t => t.length > 1);
   const results: FuzzySearchResult[] = [];
 
   for (const brandObj of CAR_BRANDS_CATALOG) {
     for (const modelObj of brandObj.models) {
       for (const mot of modelObj.motorizations) {
         const fullString = `${brandObj.brand} ${modelObj.name} ${mot.name} ${mot.fuelType} ${mot.cv}CV ${mot.kw}kW ${mot.years || ''} ${mot.generation || ''}`.toLowerCase();
-        const allMatch = tokens.every(t => fullString.includes(t));
-        if (allMatch) {
+        // Check if all tokens match or if at least most tokens match
+        const matchesCount = tokens.filter(t => fullString.includes(t)).length;
+        if (matchesCount >= Math.min(tokens.length, 2)) {
           const isYearMatch = targetYear 
             ? (targetYear >= (mot.startYear ?? 1990) && targetYear <= (mot.endYear ?? 2035))
             : false;
@@ -970,14 +1448,14 @@ export function searchMotorizationsFuzzy(query: string, targetYear?: number): Fu
     }
   }
 
-  // Prioritize year matches first
+  // Prioritize year matches first, then exact name matches
   results.sort((a, b) => {
     if (a.isYearMatch && !b.isYearMatch) return -1;
     if (!a.isYearMatch && b.isYearMatch) return 1;
     return 0;
   });
 
-  return results.slice(0, 15);
+  return results.slice(0, 20);
 }
 
 export interface VehicleLookupResult {
@@ -992,6 +1470,8 @@ export interface VehicleLookupResult {
   batteryCapacity?: number;
   secondaryTankCapacity?: number;
   displacementCc?: number;
+  driveType?: string;
+  differential?: string;
   transmission?: string;
   euroStandard?: string;
   wltpElectricRangeKm?: number;
@@ -1035,7 +1515,7 @@ export async function lookupVehicleWithAI(
       const data = await res.json();
       if (data?.data && (data.data.brand || data.data.model || data.data.motorization)) {
         const d = data.data;
-        const availableMots: CarMotorization[] = Array.isArray(d.availableMotorizations) && d.availableMotorizations.length > 0
+        let availableMots: CarMotorization[] = Array.isArray(d.availableMotorizations) && d.availableMotorizations.length > 0
           ? d.availableMotorizations.map((m: any) => ({
               name: m.name || '',
               fuelType: m.fuelType as FuelType,
@@ -1046,6 +1526,8 @@ export async function lookupVehicleWithAI(
               batteryCapacity: m.batteryCapacity ? Number(m.batteryCapacity) : undefined,
               secondaryTankCapacity: m.secondaryTankCapacity ? Number(m.secondaryTankCapacity) : undefined,
               wltpElectricRangeKm: m.wltpElectricRangeKm ? Number(m.wltpElectricRangeKm) : undefined,
+              driveType: m.driveType,
+              differential: m.differential,
               transmission: m.transmission,
               euroStandard: m.euroStandard,
               years: m.years,
@@ -1054,22 +1536,30 @@ export async function lookupVehicleWithAI(
             }))
           : [];
 
+        // If AI didn't return motorizations list, merge with local catalog / generator
+        if (availableMots.length === 0 && (d.brand || brand) && (d.model || model)) {
+          const localMots = getMotorizationsForModelAndYear(d.brand || brand, d.model || model, yearInfo.year || undefined);
+          availableMots = localMots.matchedForYear.length > 0 ? localMots.matchedForYear : localMots.all;
+        }
+
         return {
           brand: d.brand || brand || '',
           model: d.model || model || '',
-          motorization: d.motorization || '',
+          motorization: d.motorization || (availableMots[0]?.name ?? ''),
           generation: d.generation || '',
-          fuelType: (d.fuelType as FuelType) || 'Diesel',
-          powerCv: Number(d.powerCv) || undefined,
-          powerKw: Number(d.powerKw) || (d.powerCv ? Math.round(Number(d.powerCv) / 1.35962) : undefined),
-          tankCapacity: Number(d.tankCapacity) || 0,
-          batteryCapacity: d.batteryCapacity ? Number(d.batteryCapacity) : undefined,
-          secondaryTankCapacity: d.secondaryTankCapacity ? Number(d.secondaryTankCapacity) : undefined,
-          displacementCc: d.displacementCc ? Number(d.displacementCc) : undefined,
-          transmission: d.transmission,
-          euroStandard: d.euroStandard,
-          wltpElectricRangeKm: d.wltpElectricRangeKm ? Number(d.wltpElectricRangeKm) : undefined,
-          avgConsumption: d.avgConsumption,
+          fuelType: (d.fuelType as FuelType) || availableMots[0]?.fuelType || 'Diesel',
+          powerCv: Number(d.powerCv) || availableMots[0]?.cv || undefined,
+          powerKw: Number(d.powerKw) || availableMots[0]?.kw || (d.powerCv ? Math.round(Number(d.powerCv) / 1.35962) : undefined),
+          tankCapacity: Number(d.tankCapacity) || availableMots[0]?.tankCapacity || 50,
+          batteryCapacity: d.batteryCapacity ? Number(d.batteryCapacity) : availableMots[0]?.batteryCapacity,
+          secondaryTankCapacity: d.secondaryTankCapacity ? Number(d.secondaryTankCapacity) : availableMots[0]?.secondaryTankCapacity,
+          displacementCc: d.displacementCc ? Number(d.displacementCc) : availableMots[0]?.displacementCc,
+          driveType: d.driveType || availableMots[0]?.driveType,
+          differential: d.differential || availableMots[0]?.differential,
+          transmission: d.transmission || availableMots[0]?.transmission,
+          euroStandard: d.euroStandard || availableMots[0]?.euroStandard,
+          wltpElectricRangeKm: d.wltpElectricRangeKm ? Number(d.wltpElectricRangeKm) : availableMots[0]?.wltpElectricRangeKm,
+          avgConsumption: d.avgConsumption || availableMots[0]?.avgConsumption,
           category: d.category,
           photoQuery: d.photoQuery,
           realPhotos: Array.isArray(d.realPhotos) ? d.realPhotos : [],
@@ -1086,13 +1576,15 @@ export async function lookupVehicleWithAI(
   }
 
   // 2. Intelligent local catalog fallback with Year & Generation matching
-  if (brand && model) {
-    const { matchedForYear, all } = getMotorizationsForModelAndYear(brand, model, yearInfo.year || undefined);
+  if (brand || model) {
+    const effBrand = brand || cleanQuery.split(' ')[0] || '';
+    const effModel = model || cleanQuery.split(' ').slice(1).join(' ') || '';
+    const { matchedForYear, all } = getMotorizationsForModelAndYear(effBrand, effModel, yearInfo.year || undefined);
     const chosenMot = (matchedForYear.length > 0) ? matchedForYear[0] : (all.length > 0 ? all[0] : null);
     if (chosenMot) {
       return {
-        brand,
-        model,
+        brand: effBrand,
+        model: effModel,
         motorization: chosenMot.name,
         generation: chosenMot.generation,
         fuelType: chosenMot.fuelType,
@@ -1102,6 +1594,8 @@ export async function lookupVehicleWithAI(
         batteryCapacity: chosenMot.batteryCapacity,
         secondaryTankCapacity: chosenMot.secondaryTankCapacity,
         displacementCc: chosenMot.displacementCc,
+        driveType: chosenMot.driveType,
+        differential: chosenMot.differential,
         transmission: chosenMot.transmission,
         euroStandard: chosenMot.euroStandard,
         wltpElectricRangeKm: chosenMot.wltpElectricRangeKm,
@@ -1137,7 +1631,7 @@ export async function lookupVehicleWithAI(
     };
   }
 
-  // 3. Fallback heuristic detection
+  // 3. Fallback heuristic detection & generic motorizations
   const isPHEV = /plug|phev|hybrid plug|e-hybrid|ehybrid|4xe|tfsi e|recharge/i.test(cleanQuery);
   const isBEV = /elettric|electric|ev|bev|kwh|tesla/i.test(cleanQuery);
   const isDiesel = /tdi|diesel|dci|crdi|jtd|multijet|cdti/i.test(cleanQuery);
@@ -1151,16 +1645,18 @@ export async function lookupVehicleWithAI(
   else if (isGPL) fuelType = 'GPL (Benzina + GPL)';
   else if (isMetano) fuelType = 'Metano (Benzina + Metano)';
 
-  // If 2024+ PHEV, default battery is 19.7 kWh, otherwise 13.0 kWh
+  const effBrand = brand || cleanQuery.split(' ')[0] || '';
+  const effModel = model || cleanQuery.split(' ').slice(1).join(' ') || '';
+  const genericMots = generateGenericMotorizationsForBrandModel(effBrand, effModel, yearInfo.year || undefined);
   const phevBattery = (yearInfo.year && yearInfo.year >= 2024) ? 19.7 : 13.0;
 
   return {
-    brand: brand || cleanQuery.split(' ')[0] || '',
-    model: model || cleanQuery.split(' ').slice(1).join(' ') || '',
+    brand: effBrand,
+    model: effModel,
     fuelType,
     tankCapacity: isBEV ? 0 : (isPHEV ? (phevBattery > 15 ? 45 : 40) : 50),
     batteryCapacity: isPHEV ? phevBattery : (isBEV ? 60.0 : undefined),
-    availableMotorizations: [],
+    availableMotorizations: genericMots,
     source: 'catalog'
   };
 }

@@ -275,54 +275,105 @@ PARAMETRI DEL VEICOLO DA ANALIZZARE A 360°:
 - Query supplementare: "${searchQuery}"
 
 OBIETTIVO ASSOLUTO:
-Fornisci un'analisi tecnica a 360° per QUALSIASI veicolo inserito (anche marche rare, veicoli commerciali, d'epoca, supercar o moto):
+Fornisci un'analisi tecnica a 360° e TROVA TUTTE LE MOTORIZZAZIONI UFFICIALI DISPONIBILI per questo modello e generazione:
 1. Identifica la GENERAZIONE ESATTA e periodo di produzione per l'anno indicato.
 2. Identifica la CATEGORIA esatta (Berlina, SUV, Compatta, Citycar, Station Wagon, Coupé, Cabrio, Monovolume, Furgone / Commerciale, Moto / Scooter).
-3. Restituisci TUTTE le motorizzazioni e allestimenti ufficiali omologati per quell'anno/generazione (Diesel, Benzina, Mild Hybrid, Full Hybrid, Plug-in PHEV, Elettrica BEV, GPL, Metano).
-4. Per ogni motore indica: nome commerciale completo, fuelType esatto, CV, kW, cilindrata cc, capacità serbatoio carburante litri (0 se 100% elettrica), capacità batteria kWh (per PHEV o BEV), capacità bombola GPL/Metano se applicabile, autonomia elettrica WLTP se applicabile, cambio, classe Euro (es. Euro 3, Euro 4, Euro 5, Euro 6, Euro 6d, Euro 6e), anni di produzione, e consumo medio reale/dichiarato.
-5. Inserisci anche la query fotografica ottimale per trovare la foto reale del veicolo (photoQuery) e il titolo dell'articolo Wikipedia principale (wikiTitle).
+3. CERCA E RESTITUISCI TUTTE LE MOTORIZZAZIONI UFFICIALI omologate per quel modello e generazione (trovane il maggior numero possibile, tipicamente da 6 a 18 versioni diverse coprendo Diesel, Benzina, Mild Hybrid, Full Hybrid, Plug-in Hybrid PHEV, Elettrica BEV, GPL, Metano, varianti sportive e commerciali).
+4. Per OGNI singola motorizzazione indica con precisione ingegneristica:
+   - "name": Nome commerciale ufficiale completo e accurato (es. "1.6 MultiJet 120 CV Lounge", "2.0 TDI 150 CV DSG 4Motion", "1.4 T-Jet 120 CV GPL", "Plug-in Hybrid 1.4 TSI 245 CV e-Hybrid", "2.0 TFSI 204 CV quattro S-tronic", "1.5 eTSI 150 CV DSG", "Long Range Dual Motor AWD 514 CV").
+   - "fuelType": esatto ("Diesel" | "Benzina" | "Full / Mild Hybrid" | "Plug-in Hybrid (PHEV)" | "Elettrica (BEV)" | "GPL (Benzina + GPL)" | "Metano (Benzina + Metano)").
+   - "cv": Potenza esatta in CV (cavalli vapore).
+   - "kw": Potenza esatta in kW (calcolata con formula standard kW = CV / 1.35962 arrotondato).
+   - "displacementCc": Cilindrata esatta in cc (null per BEV).
+   - "tankCapacity": Capacità reale serbatoio carburante principale in litri (0 per 100% Elettrica BEV; tipicamente 40-70 L per termici e PHEV).
+   - "batteryCapacity": Capacità nominale/netta batteria di trazione in kWh (obbligatoria per PHEV come 13.0, 15.5 o 19.7 kWh, e per BEV come 50, 60, 77, 100 kWh; null per termici tradizionali).
+   - "secondaryTankCapacity": Capacità serbatoio secondario per GPL (Litri) o Metano (Kg); null per altre alimentazioni.
+   - "driveType": Differenziale e Trazione ("Trazione Anteriore (FWD)" | "Trazione Posteriore (RWD)" | "Trazione Integrale (4x4 / AWD / 4Motion / Q4 / quattro / xDrive / Dual Motor)").
+   - "differential": Note differenziale (es. "Anteriore elettronico", "Integrale Haldex / 4Motion", "Torsen permanente", "Autobloccante meccanico LSD", "Dual Motor e-AWD", "Differenziale aperto").
+   - "transmission": Tipo di cambio (es. "Manuale 6m", "Automatico DSG 7m", "EAT8 8m", "E-CVT", "Automatico 9G-Tronic").
+   - "euroStandard": Omologazione Euro (es. "Euro 4", "Euro 5", "Euro 6", "Euro 6d-ISC-FCM", "Euro 6e").
+   - "wltpElectricRangeKm": Autonomia elettrica WLTP stimata (per PHEV o BEV).
+   - "years": Anni di produzione della specifica versione (es. "2015-2020").
+   - "avgConsumption": Consumo medio dichiarato (es. "4.4 L/100km", "0.5 L/100km + 15.0 kWh/100km", "16.8 kWh/100km").
+5. Inserisci anche la query fotografica ottimale (photoQuery) e il titolo dell'articolo Wikipedia principale (wikiTitle).
 
 FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
 {
-  "brand": "Nome Marca (es. Alfa Romeo, Volkswagen, Fiat, Toyota, Porsche, Dacia, Iveco, Ducati)",
-  "model": "Nome Modello (es. Giulietta, Golf, Panda, Yaris, 911, Duster, Daily, Monster)",
-  "generation": "Generazione e anni esatti (es. 'Giulietta I Serie (2010-2016)' o 'Golf V (2003-2008)')",
+  "brand": "Nome Marca (es. Alfa Romeo, Volkswagen, Fiat, Toyota, Porsche, Dacia, Iveco, Audi, BMW)",
+  "model": "Nome Modello (es. Giulietta, Golf, Panda, Yaris, 911, Duster, Daily, A3, Serie 3)",
+  "generation": "Generazione e anni esatti (es. 'Giulietta I Serie (2010-2016)' o 'Golf VII (2012-2020)')",
   "category": "Berlina" | "SUV" | "Station Wagon" | "Compatta" | "Coupé" | "Citycar" | "Monovolume" | "Furgone / Commerciale" | "Moto / Scooter",
-  "estimatedRegistrationYear": 2012,
+  "estimatedRegistrationYear": 2015,
   "wikiTitle": "Alfa Romeo Giulietta (2010)",
-  "photoQuery": "Alfa Romeo Giulietta 2012",
+  "photoQuery": "Alfa Romeo Giulietta 2015",
   "primaryMotorization": {
-    "name": "Nome commerciale completo versione (es. 1.6 JTDm 105 CV Distinctive)",
-    "fuelType": "Diesel" | "Benzina" | "Full / Mild Hybrid" | "Plug-in Hybrid (PHEV)" | "Elettrica (BEV)" | "GPL (Benzina + GPL)" | "Metano (Benzina + Metano)",
-    "cv": 105,
-    "kw": 77,
+    "name": "1.6 JTDm 120 CV Distinctive",
+    "fuelType": "Diesel",
+    "cv": 120,
+    "kw": 88,
     "displacementCc": 1598,
     "tankCapacity": 60,
     "batteryCapacity": null,
     "secondaryTankCapacity": null,
-    "wltpElectricRangeKm": null,
+    "driveType": "Trazione Anteriore (FWD)",
+    "differential": "Differenziale Elettronico Q2",
     "transmission": "Manuale 6m",
-    "euroStandard": "Euro 5",
-    "years": "2010-2015",
-    "generation": "Giulietta I Serie",
-    "avgConsumption": "4.4 L/100km"
+    "euroStandard": "Euro 6",
+    "years": "2015-2020",
+    "generation": "Giulietta Restyling",
+    "avgConsumption": "4.3 L/100km"
   },
   "availableMotorizations": [
     {
-      "name": "1.6 JTDm 105 CV",
+      "name": "1.6 JTDm 120 CV",
       "fuelType": "Diesel",
-      "cv": 105,
-      "kw": 77,
+      "cv": 120,
+      "kw": 88,
       "displacementCc": 1598,
       "tankCapacity": 60,
       "batteryCapacity": null,
       "secondaryTankCapacity": null,
-      "wltpElectricRangeKm": null,
+      "driveType": "Trazione Anteriore (FWD)",
+      "differential": "Differenziale Q2",
       "transmission": "Manuale 6m",
-      "euroStandard": "Euro 5",
-      "years": "2010-2015",
-      "generation": "Giulietta I Serie",
-      "avgConsumption": "4.4 L/100km"
+      "euroStandard": "Euro 6",
+      "years": "2015-2020",
+      "generation": "Giulietta Restyling",
+      "avgConsumption": "4.3 L/100km"
+    },
+    {
+      "name": "2.0 JTDm 150 CV",
+      "fuelType": "Diesel",
+      "cv": 150,
+      "kw": 110,
+      "displacementCc": 1956,
+      "tankCapacity": 60,
+      "batteryCapacity": null,
+      "secondaryTankCapacity": null,
+      "driveType": "Trazione Anteriore (FWD)",
+      "differential": "Differenziale Q2",
+      "transmission": "Manuale 6m",
+      "euroStandard": "Euro 6",
+      "years": "2013-2020",
+      "generation": "Giulietta",
+      "avgConsumption": "4.7 L/100km"
+    },
+    {
+      "name": "1.4 Turbo GPL 120 CV",
+      "fuelType": "GPL (Benzina + GPL)",
+      "cv": 120,
+      "kw": 88,
+      "displacementCc": 1368,
+      "tankCapacity": 60,
+      "batteryCapacity": null,
+      "secondaryTankCapacity": 38,
+      "driveType": "Trazione Anteriore (FWD)",
+      "differential": "Differenziale Q2",
+      "transmission": "Manuale 6m",
+      "euroStandard": "Euro 6",
+      "years": "2011-2018",
+      "generation": "Giulietta Turbo GPL",
+      "avgConsumption": "8.2 L/100km GPL"
     }
   ]
 }`;
@@ -330,7 +381,7 @@ FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
       let responseText = '';
       try {
         const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-2.5-flash',
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -384,7 +435,8 @@ FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
         tankCapacity: Number(primary.tankCapacity ?? 50),
         batteryCapacity: primary.batteryCapacity ? Number(primary.batteryCapacity) : undefined,
         secondaryTankCapacity: primary.secondaryTankCapacity ? Number(primary.secondaryTankCapacity) : undefined,
-        wltpElectricRangeKm: primary.wltpElectricRangeKm ? Number(primary.wltpElectricRangeKm) : undefined,
+        driveType: primary.driveType || primary.trazione,
+        differential: primary.differential || primary.differenziale,
         transmission: primary.transmission,
         euroStandard: primary.euroStandard,
         avgConsumption: primary.avgConsumption,
@@ -402,6 +454,8 @@ FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
               batteryCapacity: m.batteryCapacity ? Number(m.batteryCapacity) : undefined,
               secondaryTankCapacity: m.secondaryTankCapacity ? Number(m.secondaryTankCapacity) : undefined,
               wltpElectricRangeKm: m.wltpElectricRangeKm ? Number(m.wltpElectricRangeKm) : undefined,
+              driveType: m.driveType || m.trazione,
+              differential: m.differential || m.differenziale,
               transmission: m.transmission,
               euroStandard: m.euroStandard,
               years: m.years,

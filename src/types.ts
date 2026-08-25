@@ -44,6 +44,8 @@ export interface Vehicle {
   batteryCapacity?: number; // kWh (for PHEV or BEV)
   secondaryTankCapacity?: number; // Liters GPL or Kg Metano for bifuel
   motorization?: string; // e.g. "1.4 eHybrid 204 CV DSG"
+  driveType?: string; // e.g. "Trazione Integrale (4x4 / AWD)", "FWD", "RWD"
+  differential?: string; // e.g. "Differenziale Q2", "Haldex 4Motion", "Torsen"
   powerCv?: number;
   powerKw?: number;
   registrationDate: string; // YYYY-MM-DD

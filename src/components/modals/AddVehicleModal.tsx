@@ -40,7 +40,9 @@ import {
   extractRegistrationYear,
   estimateYearFromItalianPlate,
   lookupVehicleWithAI,
-  CarMotorization 
+  CarMotorization,
+  generateGenericMotorizationsForBrandModel,
+  searchMotorizationsFuzzy
 } from '../../data/carDatabase';
 
 interface AddVehicleModalProps {
@@ -60,6 +62,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const brandContainerRef = useRef<HTMLDivElement | null>(null);
   const modelContainerRef = useRef<HTMLDivElement | null>(null);
+  const motorizationContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Manual Core Fields
   const [brand, setBrand] = useState(vehicleToEdit?.brand || '');
@@ -67,7 +70,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [plate, setPlate] = useState(vehicleToEdit?.plate || '');
   const [regDate, setRegDate] = useState(vehicleToEdit?.registrationDate || new Date().toISOString().split('T')[0]);
 
-  // Technical & Specification Fields (Autofilled via AI & editable)
+  // Technical & Specification Fields (Autofilled via Catalog/AI & editable)
   const [fuelType, setFuelType] = useState<FuelType>(vehicleToEdit?.fuelType || 'Diesel');
   const [motorization, setMotorization] = useState(vehicleToEdit?.motorization || '');
   const [tankCapacity, setTankCapacity] = useState<number | ''>(vehicleToEdit?.tankCapacity ?? 50);
@@ -87,9 +90,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
 
-  // Filter & Toggle for other years
-  const [showAllYears, setShowAllYears] = useState(false);
-
   // AI & Feedback States
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiLoadingPhase, setAiLoadingPhase] = useState<string>('');
@@ -101,6 +101,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   // Autocomplete UI dropdowns
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showMotorizationDropdown, setShowMotorizationDropdown] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Sync state when vehicleToEdit or isOpen changes
@@ -132,12 +133,16 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setAiMotorizations([]);
       setAiGenerationInfo('');
       setSelectedFuelFilter('all');
-      setShowAllYears(false);
+      setShowBrandDropdown(false);
+      setShowModelDropdown(false);
+      setShowMotorizationDropdown(false);
       setPhotoSearchQuery('');
 
       if (initialBrand.trim() && initialModel.trim()) {
         const yr = initialRegDate ? initialRegDate.split('-')[0] : '';
         fetchPhotosForVehicle(initialBrand, initialModel, yr);
+        // Trigger motorizations lookup automatically
+        triggerLookup(initialBrand, initialModel, yr, initialPlate, false);
       } else {
         setRealPhotos([]);
       }
@@ -152,6 +157,9 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       }
       if (modelContainerRef.current && !modelContainerRef.current.contains(e.target as Node)) {
         setShowModelDropdown(false);
+      }
+      if (motorizationContainerRef.current && !motorizationContainerRef.current.contains(e.target as Node)) {
+        setShowMotorizationDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -184,9 +192,113 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
   // Available motorizations from catalog, separated by target year and other generations
   const motorizationGroups = useMemo(() => {
-    if (!brand.trim() || !model.trim()) return { matchedForYear: [], otherYears: [], all: [] };
-    return getMotorizationsForModelAndYear(brand, model, yearInfo.year || undefined);
+    if (!brand.trim() && !model.trim()) return { matchedForYear: [], otherYears: [], all: [] };
+    if (brand.trim() && model.trim()) {
+      return getMotorizationsForModelAndYear(brand, model, yearInfo.year || undefined);
+    }
+    // If only brand is selected, aggregate all motorizations from all models of that brand
+    if (brand.trim() && !model.trim()) {
+      const models = getModelsForBrand(brand);
+      const allBrandMots: (CarMotorization & { modelName?: string })[] = [];
+      models.forEach(m => {
+        m.motorizations.forEach(mot => {
+          allBrandMots.push({ ...mot, modelName: m.name });
+        });
+      });
+      return {
+        matchedForYear: allBrandMots,
+        otherYears: [],
+        all: allBrandMots
+      };
+    }
+    return { matchedForYear: [], otherYears: [], all: [] };
   }, [brand, model, yearInfo.year]);
+
+  // Unified available motorizations list (combining AI results + local catalog matching)
+  const allAvailableMotorizations = useMemo(() => {
+    const list: (CarMotorization & { brandName?: string; modelName?: string })[] = [];
+    const seenNames = new Set<string>();
+
+    const addMotorization = (m: CarMotorization & { brandName?: string; modelName?: string }) => {
+      const norm = `${m.brandName || ''} ${m.modelName || ''} ${m.name}`.toLowerCase().trim();
+      if (!seenNames.has(norm)) {
+        seenNames.add(norm);
+        list.push(m);
+      }
+    };
+
+    // 1. AI Motorizations if fetched
+    aiMotorizations.forEach(addMotorization);
+
+    // 2. Year-matched motorizations from local database
+    motorizationGroups.matchedForYear.forEach(addMotorization);
+
+    // 3. Other years motorizations from local database
+    motorizationGroups.otherYears.forEach(addMotorization);
+
+    // 4. If still empty, generate standard generic motorizations for brand and/or model
+    if (list.length === 0 && (brand.trim() || model.trim())) {
+      const generic = generateGenericMotorizationsForBrandModel(brand, model, yearInfo.year || undefined);
+      generic.forEach(addMotorization);
+    }
+
+    return list;
+  }, [aiMotorizations, motorizationGroups, brand, model, yearInfo.year]);
+
+  // Filtered list based on fuel filter and/or search text in dropdown
+  const filteredMotorizations = useMemo(() => {
+    let result = allAvailableMotorizations;
+
+    // Fuel filter inside dropdown
+    if (selectedFuelFilter === 'Diesel') {
+      result = result.filter(m => m.fuelType.includes('Diesel'));
+    } else if (selectedFuelFilter === 'Benzina') {
+      result = result.filter(m => m.fuelType.includes('Benzina') && !m.fuelType.includes('GPL') && !m.fuelType.includes('Metano') && !m.fuelType.includes('PHEV') && !m.fuelType.includes('Hybrid'));
+    } else if (selectedFuelFilter === 'Hybrid') {
+      result = result.filter(m => m.fuelType.includes('Hybrid') || m.fuelType.includes('PHEV'));
+    } else if (selectedFuelFilter === 'Elettrica (BEV)') {
+      result = result.filter(m => m.fuelType.includes('Elettrica') || m.fuelType.includes('BEV'));
+    } else if (selectedFuelFilter === 'GPL/Metano') {
+      result = result.filter(m => m.fuelType.includes('GPL') || m.fuelType.includes('Metano'));
+    }
+
+    // Text search if user is typing
+    if (motorization.trim()) {
+      const q = motorization.toLowerCase().trim();
+      const exactMatch = result.some(m => m.name.toLowerCase().trim() === q);
+      if (!exactMatch) {
+        const matches = result.filter(m => {
+          const combined = `${m.brandName || ''} ${m.modelName || ''} ${m.name} ${m.fuelType} ${m.cv}cv ${m.displacementCc || ''} ${m.generation || ''} ${m.years || ''}`.toLowerCase();
+          return combined.includes(q);
+        });
+        if (matches.length > 0) {
+          result = matches;
+        } else {
+          // If no matches in current brand/model, perform global fuzzy search
+          const fuzzy = searchMotorizationsFuzzy(q, yearInfo.year || undefined);
+          if (fuzzy.length > 0) {
+            result = fuzzy.map(f => ({
+              ...f.motorization,
+              brandName: f.brand,
+              modelName: f.model
+            }));
+          }
+        }
+      }
+    } else if (result.length === 0) {
+      // If nothing selected and dropdown opened, show global popular motorizations
+      const fuzzy = searchMotorizationsFuzzy('TDI JTDm TSI Hybrid MultiJet', yearInfo.year || undefined);
+      if (fuzzy.length > 0) {
+        result = fuzzy.map(f => ({
+          ...f.motorization,
+          brandName: f.brand,
+          modelName: f.model
+        }));
+      }
+    }
+
+    return result;
+  }, [allAvailableMotorizations, selectedFuelFilter, motorization, yearInfo.year]);
 
   /**
    * Searches and loads real vehicle photos dynamically from Wikipedia/Wikimedia Commons
@@ -223,6 +335,84 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setIsSearchingPhotos(false);
     }
   };
+
+  /**
+   * Trigger 360° AI Vehicle Lookup for ANY vehicle to get all motorizations
+   */
+  const triggerLookup = async (
+    targetBrand: string,
+    targetModel: string,
+    targetYearOrDate?: string | number,
+    targetPlate?: string,
+    autoApplyFirst: boolean = false
+  ) => {
+    if (!targetBrand.trim() || !targetModel.trim()) return;
+
+    const yrStr = targetYearOrDate ? String(targetYearOrDate).split('-')[0] : '';
+    const query = `${targetBrand} ${targetModel} ${yrStr ? 'anno ' + yrStr : ''}`.trim();
+
+    try {
+      setIsAiLoading(true);
+      setAiLoadingPhase(`Ricerca di tutte le motorizzazioni per ${targetBrand} ${targetModel}...`);
+
+      const res = await lookupVehicleWithAI(query, targetBrand, targetModel, yrStr, targetPlate || plate);
+
+      if (res.generation) setAiGenerationInfo(res.generation);
+
+      if (res.availableMotorizations && res.availableMotorizations.length > 0) {
+        setAiMotorizations(res.availableMotorizations);
+      }
+
+      // Populate real authentic photos
+      if (res.realPhotos && res.realPhotos.length > 0) {
+        setRealPhotos(res.realPhotos);
+        if (res.suggestedPhotoUrl && (!photoUrl || photoUrl.includes('unsplash.com/photo-1617814076367') || !isEditing)) {
+          setPhotoUrl(res.suggestedPhotoUrl);
+        }
+      } else {
+        fetchPhotosForVehicle(res.brand || targetBrand, res.model || targetModel, yrStr, res.generation);
+      }
+
+      if (autoApplyFirst && res.availableMotorizations && res.availableMotorizations.length > 0) {
+        applyMotorization(res.availableMotorizations[0]);
+      } else if (autoApplyFirst) {
+        if (res.motorization) setMotorization(res.motorization);
+        if (res.fuelType) setFuelType(res.fuelType);
+        setTankCapacity(res.tankCapacity ?? 50);
+        setBatteryCapacity(res.batteryCapacity ?? '');
+        setSecondaryTankCapacity(res.secondaryTankCapacity ?? '');
+        if (res.powerCv) {
+          setPowerCv(res.powerCv);
+          setPowerKw(res.powerKw || Math.round(res.powerCv / 1.35962));
+        }
+      }
+
+      const count = res.availableMotorizations?.length || 0;
+      setAiStatusMessage({
+        text: `Identificate ${count > 0 ? count + ' motorizzazioni' : 'specifiche'} per ${res.brand || targetBrand} ${res.model || targetModel}${res.generation ? ` (${res.generation})` : ''}.`,
+        type: 'success'
+      });
+      setTimeout(() => setAiStatusMessage(null), 5000);
+
+    } catch (err) {
+      console.warn('Errore auto-lookup motorizzazioni:', err);
+    } finally {
+      setIsAiLoading(false);
+      setAiLoadingPhase('');
+    }
+  };
+
+  // Debounced auto-search for motorizations when Brand and Model are specified
+  useEffect(() => {
+    if (!isOpen) return;
+    if (brand.trim().length >= 2 && model.trim().length >= 1) {
+      const timer = setTimeout(() => {
+        const yr = regDate ? regDate.split('-')[0] : (plateEstimation?.year ? String(plateEstimation.year) : undefined);
+        triggerLookup(brand, model, yr, plate, false);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [brand, model, regDate, isOpen]);
 
   if (!isOpen) return null;
 
@@ -296,7 +486,13 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   };
 
   // Select a motorization from catalog or AI
-  const applyMotorization = (m: CarMotorization) => {
+  const applyMotorization = (m: CarMotorization & { brandName?: string; modelName?: string }) => {
+    if (m.brandName && (!brand.trim() || brand.trim().toLowerCase() !== m.brandName.toLowerCase())) {
+      setBrand(m.brandName);
+    }
+    if (m.modelName && (!model.trim() || model.trim().toLowerCase() !== m.modelName.toLowerCase())) {
+      setModel(m.modelName);
+    }
     setMotorization(m.name);
     setFuelType(m.fuelType);
     setTankCapacity(m.tankCapacity);
@@ -304,92 +500,25 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     setSecondaryTankCapacity(m.secondaryTankCapacity ?? '');
     setPowerCv(m.cv);
     setPowerKw(m.kw);
+    setShowMotorizationDropdown(false);
 
+    const activeBrand = m.brandName || brand;
+    const activeModel = m.modelName || model;
     const targetYear = m.years || yearInfo.year || plateEstimation?.year;
-    fetchPhotosForVehicle(brand, model, targetYear, m.generation);
+    fetchPhotosForVehicle(activeBrand, activeModel, targetYear, m.generation);
 
     setAiStatusMessage({
-      text: `Scheda applicata: ${m.name}${m.wltpElectricRangeKm ? ` • ${m.wltpElectricRangeKm} km WLTP` : ''}`,
+      text: `Motorizzazione applicata: ${m.name} (${m.cv} CV / ${m.kw} kW, ${m.fuelType}).`,
       type: 'success'
     });
-    setTimeout(() => setAiStatusMessage(null), 3500);
+    setTimeout(() => setAiStatusMessage(null), 4000);
   };
 
-  // Trigger 360° AI Vehicle Lookup for ANY vehicle
+  // Trigger 360° AI Vehicle Lookup manually
   const handleAiSearch = async () => {
     const targetYear = yearInfo.year || plateEstimation?.year;
     const regYear = targetYear ? String(targetYear) : (regDate ? regDate.split('-')[0] : undefined);
-    const query = `${brand} ${model} ${motorization} ${regYear ? 'anno ' + regYear : ''}`.trim();
-
-    if (!brand.trim() && !model.trim()) {
-      setAiStatusMessage({
-        text: 'Inserisci Marca e Modello (e opzionalmente la data/anno) per identificare qualsiasi veicolo.',
-        type: 'info'
-      });
-      setTimeout(() => setAiStatusMessage(null), 4000);
-      return;
-    }
-
-    try {
-      setIsAiLoading(true);
-      setAiLoadingPhase(`Analisi 360° per ${brand} ${model} ${regYear ? `(anno ${regYear})` : ''}...`);
-      setAiStatusMessage(null);
-
-      const phaseTimer = setTimeout(() => {
-        setAiLoadingPhase('Estrazione schede tecniche e ricerca foto reali in corso...');
-      }, 900);
-
-      const res = await lookupVehicleWithAI(query, brand, model, regYear, plate);
-      clearTimeout(phaseTimer);
-
-      if (res.brand) setBrand(res.brand);
-      if (res.model) setModel(res.model);
-      if (res.motorization) setMotorization(res.motorization);
-      if (res.fuelType) setFuelType(res.fuelType);
-      if (res.generation) setAiGenerationInfo(res.generation);
-      
-      setTankCapacity(res.tankCapacity ?? 50);
-      setBatteryCapacity(res.batteryCapacity ?? '');
-      setSecondaryTankCapacity(res.secondaryTankCapacity ?? '');
-      
-      if (res.powerCv) {
-        setPowerCv(res.powerCv);
-        setPowerKw(res.powerKw || Math.round(res.powerCv / 1.35962));
-      }
-
-      if (res.availableMotorizations && res.availableMotorizations.length > 0) {
-        setAiMotorizations(res.availableMotorizations);
-      }
-
-      // Populate real authentic photos
-      if (res.realPhotos && res.realPhotos.length > 0) {
-        setRealPhotos(res.realPhotos);
-        if (res.suggestedPhotoUrl) {
-          setPhotoUrl(res.suggestedPhotoUrl);
-        }
-      } else {
-        // Run fallback photo search
-        fetchPhotosForVehicle(res.brand || brand, res.model || model, regYear, res.generation);
-      }
-
-      const motsFound = res.availableMotorizations?.length || 0;
-      setAiStatusMessage({
-        text: `Identificate ${motsFound > 0 ? motsFound + ' motorizzazioni ufficiali' : 'specifiche complete'} e foto reali per ${res.brand || brand} ${res.model || model} ${res.generation ? `(${res.generation})` : ''}`,
-        type: 'success'
-      });
-      setTimeout(() => setAiStatusMessage(null), 6000);
-
-    } catch (err) {
-      console.error('Errore ricerca scheda AI:', err);
-      setAiStatusMessage({
-        text: 'Non è stato possibile completare la ricerca automatica. Puoi compilare le specifiche manualmente.',
-        type: 'error'
-      });
-      setTimeout(() => setAiStatusMessage(null), 4000);
-    } finally {
-      setIsAiLoading(false);
-      setAiLoadingPhase('');
-    }
+    await triggerLookup(brand, model, regYear, plate, true);
   };
 
   // Custom photo query search (e.g. "Fiat Punto 2007 grigia", "Golf 5 nera", "Alfa 147 rossa")
@@ -787,164 +916,174 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
           </div>
 
-          {/* MOTORIZZAZIONI IDENTIFICATE (AI + CATALOGO) */}
-          {(aiMotorizations.length > 0 || motorizationGroups.matchedForYear.length > 0 || motorizationGroups.otherYears.length > 0) && (
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-black uppercase text-[#0f172a] tracking-wider flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-[#2563eb]" />
-                    {aiMotorizations.length > 0 ? 'Motorizzazioni Identificate (AI 360°)' : `Motorizzazioni Ufficiali (${brand} ${model})`}
-                  </span>
-                  
-                  {(aiGenerationInfo || yearInfo.year) && (
-                    <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md">
-                      {aiGenerationInfo || `Anno ${yearInfo.year}`}
-                    </span>
-                  )}
+          {/* SEZIONE DETTAGLI TECNICI & MOTORIZZAZIONE */}
+          <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-4 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase text-[#0f172a] tracking-wider flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-[#2563eb]" />
+                Specifiche Tecniche & Motorizzazione
+              </span>
+              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                Selezione a tendina o personalizzabile
+              </span>
+            </div>
 
-                  {aiMotorizations.length > 0 && (
-                    <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-600" />
-                      {aiMotorizations.length} versioni
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* MOTORIZZAZIONE / ALLESTIMENTO (DROPDOWN A TENDINA) */}
+              <div ref={motorizationContainerRef} className="relative flex flex-col gap-1 sm:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#0f172a] flex items-center gap-1.5">
+                    Motorizzazione / Allestimento *
+                  </label>
+                  {allAvailableMotorizations.length > 0 && (
+                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                      {allAvailableMotorizations.length} versioni disponibili
                     </span>
                   )}
                 </div>
 
-                {/* Fuel Filter */}
-                <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-[10px] font-bold">
-                  {['all', 'Diesel', 'Benzina', 'Hybrid', 'Elettrica (BEV)', 'GPL/Metano'].map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => setSelectedFuelFilter(f)}
-                      className={`px-2 py-0.5 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
-                        selectedFuelFilter === f 
-                          ? 'bg-blue-600 text-white border-blue-600 font-black' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {f === 'all' ? 'Tutti' : f}
-                    </button>
-                  ))}
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Scegli dalla tendina o digita liberamente (es. 1.6 JTDm 120 CV, 2.0 TDI 150 CV...)"
+                    value={motorization}
+                    onFocus={() => setShowMotorizationDropdown(true)}
+                    onChange={(e) => {
+                      setMotorization(e.target.value);
+                      setShowMotorizationDropdown(true);
+                    }}
+                    className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden transition-all pr-9"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMotorizationDropdown(!showMotorizationDropdown)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    title="Mostra tutte le motorizzazioni disponibili"
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showMotorizationDropdown ? 'rotate-180 text-blue-600' : ''}`} />
+                  </button>
                 </div>
-              </div>
 
-              {/* LISTA MOTORIZZAZIONI */}
-              <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
-                {(aiMotorizations.length > 0 ? aiMotorizations : (showAllYears ? motorizationGroups.all : motorizationGroups.matchedForYear))
-                  .filter((m) => {
-                    if (selectedFuelFilter === 'all') return true;
-                    if (selectedFuelFilter === 'Hybrid') return m.fuelType.includes('Hybrid') || m.fuelType.includes('PHEV');
-                    if (selectedFuelFilter === 'GPL/Metano') return m.fuelType.includes('GPL') || m.fuelType.includes('Metano');
-                    return m.fuelType.includes(selectedFuelFilter);
-                  })
-                  .map((m) => {
-                    const isSelected = motorization.trim().toLowerCase() === m.name.trim().toLowerCase();
-                    return (
+                {/* Motorization Dropdown Menu */}
+                {showMotorizationDropdown && (
+                  <div className="absolute left-0 right-0 top-[66px] z-40 bg-white border border-[#cbd5e1] rounded-2xl shadow-2xl max-h-80 overflow-y-auto p-2 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                    
+                    {/* Mini Fuel Filters within Dropdown */}
+                    <div className="pb-2 flex items-center gap-1 overflow-x-auto text-[10px] font-bold">
+                      {[
+                        { key: 'all', label: 'Tutte' },
+                        { key: 'Diesel', label: 'Diesel' },
+                        { key: 'Benzina', label: 'Benzina' },
+                        { key: 'Hybrid', label: 'Ibrida / PHEV' },
+                        { key: 'Elettrica (BEV)', label: 'Elettrica' },
+                        { key: 'GPL/Metano', label: 'GPL / Metano' }
+                      ].map((f) => (
+                        <button
+                          key={f.key}
+                          type="button"
+                          onClick={() => setSelectedFuelFilter(f.key)}
+                          className={`px-2 py-0.5 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+                            selectedFuelFilter === f.key 
+                              ? 'bg-blue-600 text-white border-blue-600 font-black shadow-2xs' 
+                              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Motorizations Options List */}
+                    <div className="pt-1.5 flex flex-col gap-1">
+                      {isAiLoading && (
+                        <div className="p-3 text-center text-xs text-blue-700 font-bold bg-blue-50/70 rounded-xl flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                          <span>Ricerca motorizzazioni in corso...</span>
+                        </div>
+                      )}
+
+                      {filteredMotorizations.length > 0 ? (
+                        filteredMotorizations.map((m, idx) => {
+                          const isSelected = motorization.trim().toLowerCase() === m.name.trim().toLowerCase();
+                          return (
+                            <button
+                              key={m.name + idx}
+                              type="button"
+                              onClick={() => applyMotorization(m)}
+                              className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-300'
+                                  : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200 text-[#0f172a]'
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {(m.brandName || m.modelName) && (
+                                    <span className="text-[9.5px] font-black px-1.5 py-0.2 bg-blue-100 text-blue-900 border border-blue-200 rounded">
+                                      {[m.brandName, m.modelName].filter(Boolean).join(' ')}
+                                    </span>
+                                  )}
+                                  <span className="font-black text-xs text-[#0f172a]">{m.name}</span>
+                                  {m.generation && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
+                                      {m.generation}
+                                    </span>
+                                  )}
+                                  {m.years && (
+                                    <span className="text-[9px] font-medium px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
+                                      {m.years}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5 text-[10.5px] text-slate-500 font-semibold">
+                                  <span className="text-slate-700">{m.fuelType}</span>
+                                  {m.displacementCc && <span>• {m.displacementCc} cc</span>}
+                                  {m.tankCapacity > 0 && <span>• Serbatoio: {m.tankCapacity}L</span>}
+                                  {m.batteryCapacity && <span className="text-amber-700">• Batt: {m.batteryCapacity} kWh</span>}
+                                  {m.secondaryTankCapacity && <span className="text-teal-700">• Gas: {m.secondaryTankCapacity} L/Kg</span>}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[11px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-lg shadow-2xs whitespace-nowrap">
+                                  {m.cv} CV <span className="text-slate-300 font-normal">({m.kw} kW)</span>
+                                </span>
+                                {isSelected && (
+                                  <Check className="w-4 h-4 text-blue-600" />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="p-3 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">
+                          Nessuna motorizzazione preimpostata per questi filtri. Puoi digitare liberamente o premere &quot;Cerca Scheda Tecnica e Foto Reali&quot;.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Motorization Chips under the field */}
+                {allAvailableMotorizations.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {allAvailableMotorizations.slice(0, 4).map((m) => (
                       <button
                         key={m.name}
                         type="button"
                         onClick={() => applyMotorization(m)}
-                        className={`text-left p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer ${
-                          isSelected 
-                            ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-100 shadow-2xs' 
-                            : 'bg-white border-[#e2e8f0] hover:border-blue-200 hover:bg-slate-50/50 text-[#0f172a]'
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                          motorization.toLowerCase() === m.name.toLowerCase()
+                            ? 'bg-blue-100 text-blue-800 border-blue-300'
+                            : 'bg-[#f1f5f9] text-[#64748b] border-transparent hover:bg-slate-200'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-bold text-xs text-[#0f172a]">{m.name}</span>
-                              {m.generation && (
-                                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
-                                  {m.generation}
-                                </span>
-                              )}
-                              {m.years && (
-                                <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
-                                  {m.years}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-medium">
-                              <span>{m.fuelType}</span>
-                              {m.displacementCc && <span>• {m.displacementCc} cc</span>}
-                              {m.transmission && <span>• {m.transmission}</span>}
-                              {m.euroStandard && <span>• {m.euroStandard}</span>}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            <span className="text-[11px] font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg">
-                              {m.cv} CV ({m.kw} kW)
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Technical highlights badges */}
-                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100/80 text-[10px]">
-                          {m.fuelType !== 'Elettrica (BEV)' && (
-                            <span className="text-slate-600 flex items-center gap-1">
-                              <Fuel className="w-3 h-3 text-blue-500" />
-                              Serbatoio: <strong>{m.tankCapacity}L</strong>
-                            </span>
-                          )}
-                          {m.batteryCapacity && (
-                            <span className="text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-bold flex items-center gap-1">
-                              <Zap className="w-3 h-3 text-amber-500" />
-                              Batteria: {m.batteryCapacity} kWh
-                            </span>
-                          )}
-                          {m.secondaryTankCapacity && (
-                            <span className="text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded font-bold">
-                              Gas: {m.secondaryTankCapacity} {m.fuelType.includes('Metano') ? 'Kg' : 'L'}
-                            </span>
-                          )}
-                          {m.wltpElectricRangeKm && (
-                            <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
-                              ⚡ Autonomia WLTP: ~{m.wltpElectricRangeKm} km
-                            </span>
-                          )}
-                          {m.avgConsumption && (
-                            <span className="text-slate-500 ml-auto">
-                              Consumo: {m.avgConsumption}
-                            </span>
-                          )}
-                        </div>
+                        {m.name.length > 30 ? `${m.name.slice(0, 30)}...` : m.name}
                       </button>
-                    );
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* 2. SEZIONE DETTAGLI TECNICI & MOTORIZZAZIONE (SEMPRE MODIFICABILE DALL'UTENTE) */}
-          <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-4 shadow-2xs">
-            <span className="text-[11px] font-black uppercase text-[#0f172a] tracking-wider flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-[#2563eb]" />
-                Specifiche Tecniche & Motorizzazione
-              </span>
-              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                Completamente Modificabile
-              </span>
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* MOTORIZZAZIONE / ALLESTIMENTO */}
-              <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-xs font-bold text-[#0f172a]">
-                  Allestimento / Nome Motorizzazione
-                </label>
-                <input 
-                  type="text"
-                  placeholder="Es. 1.3 Multijet 75 CV oppure 2.0 TDI 140 CV"
-                  value={motorization}
-                  onChange={(e) => setMotorization(e.target.value)}
-                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden"
-                />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* TIPO ALIMENTAZIONE */}

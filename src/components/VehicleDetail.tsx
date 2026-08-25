@@ -271,11 +271,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0f172a] tracking-tight break-words">
                   {vehicle.brand} <span className="text-[#2563eb]">{vehicle.model}</span>
                 </h2>
-                {vehicle.motorization && (
-                  <p className="text-xs font-bold text-slate-500 mt-0.5 break-words">
-                    {vehicle.motorization}
-                  </p>
-                )}
+                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                  {vehicle.motorization && (
+                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                      {vehicle.motorization}
+                    </span>
+                  )}
+                </div>
               </div>
               
               {/* Authentic European License Plate */}
