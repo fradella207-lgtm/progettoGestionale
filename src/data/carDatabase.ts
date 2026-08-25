@@ -44,6 +44,28 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
     country: 'Italia',
     models: [
       {
+        name: 'Giulietta',
+        category: 'Berlina',
+        motorizations: [
+          { name: '1.6 JTDm 120 CV (Giulietta)', fuelType: 'Diesel', tankCapacity: 60, cv: 120, kw: 88, displacementCc: 1598, years: '2015-2020', startYear: 2015, endYear: 2020, generation: 'Giulietta Restyling', euroStandard: 'Euro 6', transmission: 'Manuale 6m / TCT', driveType: 'FWD', avgConsumption: '4.3 L/100km' },
+          { name: '1.6 JTDm 105 CV (Giulietta)', fuelType: 'Diesel', tankCapacity: 60, cv: 105, kw: 77, displacementCc: 1598, years: '2010-2015', startYear: 2010, endYear: 2015, generation: 'Giulietta I Serie', euroStandard: 'Euro 5', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.4 L/100km' },
+          { name: '2.0 JTDm 150 CV (Giulietta)', fuelType: 'Diesel', tankCapacity: 60, cv: 150, kw: 110, displacementCc: 1956, years: '2013-2020', startYear: 2013, endYear: 2020, generation: 'Giulietta', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.7 L/100km' },
+          { name: '2.0 JTDm 170/175 CV TCT (Giulietta)', fuelType: 'Diesel', tankCapacity: 60, cv: 175, kw: 129, displacementCc: 1956, years: '2010-2020', startYear: 2010, endYear: 2020, generation: 'Giulietta', euroStandard: 'Euro 5/6', transmission: 'TCT 6m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          { name: '1.4 Turbo GPL 120 CV (Giulietta)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 60, secondaryTankCapacity: 38, cv: 120, kw: 88, displacementCc: 1368, years: '2011-2018', startYear: 2011, endYear: 2018, generation: 'Giulietta Turbo GPL', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '8.2 L/100km GPL' },
+          { name: '1.4 MultiAir 150/170 CV (Giulietta)', fuelType: 'Benzina', tankCapacity: 60, cv: 170, kw: 125, displacementCc: 1368, years: '2010-2018', startYear: 2010, endYear: 2018, generation: 'Giulietta', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m / TCT', driveType: 'FWD', avgConsumption: '5.8 L/100km' }
+        ]
+      },
+      {
+        name: '147',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.9 JTDm 120 CV 8V (147)', fuelType: 'Diesel', tankCapacity: 60, cv: 120, kw: 88, displacementCc: 1910, years: '2005-2010', startYear: 2005, endYear: 2010, generation: '147 Restyling', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.8 L/100km' },
+          { name: '1.9 JTDm 150 CV 16V (147)', fuelType: 'Diesel', tankCapacity: 60, cv: 150, kw: 110, displacementCc: 1910, years: '2004-2010', startYear: 2004, endYear: 2010, generation: '147 Restyling', euroStandard: 'Euro 4', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.9 L/100km' },
+          { name: '1.6 Twin Spark 105 CV (147)', fuelType: 'Benzina', tankCapacity: 60, cv: 105, kw: 77, displacementCc: 1598, years: '2000-2010', startYear: 2000, endYear: 2010, generation: '147', euroStandard: 'Euro 3/4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '8.1 L/100km' },
+          { name: '1.6 Twin Spark 120 CV (147)', fuelType: 'Benzina', tankCapacity: 60, cv: 120, kw: 88, displacementCc: 1598, years: '2000-2010', startYear: 2000, endYear: 2010, generation: '147', euroStandard: 'Euro 3/4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '8.2 L/100km' }
+        ]
+      },
+      {
         name: 'Giulia',
         category: 'Berlina',
         motorizations: [
@@ -99,14 +121,20 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
           // 2024+ Restyling
           { name: '40 TFSI e Plug-in Hybrid 204 CV S tronic (PHEV 2024+)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 45, batteryCapacity: 19.7, cv: 204, kw: 150, displacementCc: 1498, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'S tronic 6m', driveType: 'FWD', wltpElectricRangeKm: 142, avgConsumption: '0.3 L/100km + 14.5 kWh/100km' },
           { name: '45 TFSI e Plug-in Hybrid 272 CV S tronic (PHEV 2024+)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 45, batteryCapacity: 19.7, cv: 272, kw: 200, displacementCc: 1498, years: '2024+', startYear: 2024, generation: 'IV Serie Restyling', euroStandard: 'Euro 6e', transmission: 'S tronic 6m', driveType: 'FWD', wltpElectricRangeKm: 140, avgConsumption: '0.4 L/100km + 15.0 kWh/100km' },
-          // 2020-2024 Pre-Restyling PHEV
+          // 2020-2024 Pre-Restyling (8Y)
           { name: '40 TFSI e Plug-in Hybrid 204 CV S tronic (PHEV 2020-2024)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 40, batteryCapacity: 13.0, cv: 204, kw: 150, displacementCc: 1395, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie (8Y)', euroStandard: 'Euro 6d', transmission: 'S tronic 6m', driveType: 'FWD', wltpElectricRangeKm: 65, avgConsumption: '1.2 L/100km + 14.5 kWh/100km' },
-          { name: '45 TFSI e Plug-in Hybrid 245 CV S tronic (PHEV 2020-2024)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 40, batteryCapacity: 13.0, cv: 245, kw: 180, displacementCc: 1395, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie (8Y)', euroStandard: 'Euro 6d', transmission: 'S tronic 6m', driveType: 'FWD', wltpElectricRangeKm: 60, avgConsumption: '1.3 L/100km + 15.0 kWh/100km' },
-          // Thermal & Mild Hybrid
-          { name: '30 TDI 2.0 116 CV S tronic', fuelType: 'Diesel', tankCapacity: 50, cv: 116, kw: 85, displacementCc: 1968, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '4.7 L/100km' },
-          { name: '35 TDI 2.0 150 CV S tronic', fuelType: 'Diesel', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1968, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
-          { name: '35 TFSI 1.5 MHEV 150 CV S tronic', fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 150, kw: 110, displacementCc: 1498, years: '2020+', startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
-          { name: 'S3 2.0 TFSI quattro 333 CV S tronic', fuelType: 'Benzina', tankCapacity: 55, cv: 333, kw: 245, displacementCc: 1984, years: '2024+', startYear: 2024, euroStandard: 'Euro 6e', transmission: 'S tronic 7m', driveType: 'AWD / 4x4', avgConsumption: '8.4 L/100km' }
+          { name: '30 TDI 2.0 116 CV S tronic (8Y)', fuelType: 'Diesel', tankCapacity: 50, cv: 116, kw: 85, displacementCc: 1968, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie (8Y)', euroStandard: 'Euro 6d', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '4.7 L/100km' },
+          { name: '35 TDI 2.0 150 CV S tronic (8Y)', fuelType: 'Diesel', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1968, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie (8Y)', euroStandard: 'Euro 6d', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          { name: '35 TFSI 1.5 MHEV 150 CV S tronic (8Y)', fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 150, kw: 110, displacementCc: 1498, years: '2020-2024', startYear: 2020, endYear: 2024, generation: 'IV Serie (8Y)', euroStandard: 'Euro 6d', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          // 2012-2020 (8V)
+          { name: '1.6 TDI 110/116 CV (A3 8V)', fuelType: 'Diesel', tankCapacity: 50, cv: 116, kw: 85, displacementCc: 1598, years: '2012-2020', startYear: 2012, endYear: 2020, generation: 'III Serie (8V)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / S tronic', driveType: 'FWD', avgConsumption: '4.2 L/100km' },
+          { name: '2.0 TDI 150 CV (A3 8V)', fuelType: 'Diesel', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1968, years: '2012-2020', startYear: 2012, endYear: 2020, generation: 'III Serie (8V)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / S tronic', driveType: 'FWD', avgConsumption: '4.4 L/100km' },
+          { name: '1.4 TFSI 125/150 CV (A3 8V)', fuelType: 'Benzina', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1395, years: '2012-2020', startYear: 2012, endYear: 2020, generation: 'III Serie (8V)', euroStandard: 'Euro 6', transmission: 'Manuale 6m / S tronic', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          { name: '1.4 g-tron Metano 110 CV (A3 8V)', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 50, secondaryTankCapacity: 14, cv: 110, kw: 81, displacementCc: 1395, years: '2013-2019', startYear: 2013, endYear: 2019, generation: 'III Serie (8V)', euroStandard: 'Euro 6', transmission: 'S tronic 7m', driveType: 'FWD', avgConsumption: '3.6 kg/100km' },
+          // 2003-2012 (8P)
+          { name: '1.9 TDI 105 CV (A3 8P)', fuelType: 'Diesel', tankCapacity: 55, cv: 105, kw: 77, displacementCc: 1896, years: '2003-2010', startYear: 2003, endYear: 2010, generation: 'II Serie (8P)', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.1 L/100km' },
+          { name: '2.0 TDI 140 CV 16V (A3 8P)', fuelType: 'Diesel', tankCapacity: 55, cv: 140, kw: 103, displacementCc: 1968, years: '2003-2012', startYear: 2003, endYear: 2012, generation: 'II Serie (8P)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m / S tronic', driveType: 'FWD', avgConsumption: '5.5 L/100km' },
+          { name: '1.6 102 CV Attraction (A3 8P)', fuelType: 'Benzina', tankCapacity: 55, cv: 102, kw: 75, displacementCc: 1595, years: '2003-2010', startYear: 2003, endYear: 2010, generation: 'II Serie (8P)', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '7.2 L/100km' }
         ]
       },
       {
@@ -137,20 +165,36 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
         name: 'Serie 1',
         category: 'Compatta',
         motorizations: [
+          // F70 2024+
           { name: '120 MHEV 170 CV Steptronic (F70 2024+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 49, cv: 170, kw: 125, displacementCc: 1499, years: '2024+', startYear: 2024, generation: 'IV Serie (F70)', euroStandard: 'Euro 6e', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '5.5 L/100km' },
           { name: '120d MHEV 163 CV Steptronic (F70 2024+)', fuelType: 'Diesel', tankCapacity: 49, cv: 163, kw: 120, displacementCc: 1995, years: '2024+', startYear: 2024, generation: 'IV Serie (F70)', euroStandard: 'Euro 6e', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '4.6 L/100km' },
-          { name: '118d 2.0 Diesel 150 CV Steptronic (F40 2019-2024)', fuelType: 'Diesel', tankCapacity: 42, cv: 150, kw: 110, displacementCc: 1995, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'III Serie (F40)', euroStandard: 'Euro 6d', transmission: 'Steptronic 8m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
-          { name: '118i 1.5 136 CV Steptronic (F40 2019-2024)', fuelType: 'Benzina', tankCapacity: 42, cv: 136, kw: 100, displacementCc: 1499, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'III Serie (F40)', euroStandard: 'Euro 6d', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '5.9 L/100km' }
+          // F40 2019-2024
+          { name: '118d 2.0 Diesel 150 CV Steptronic (F40)', fuelType: 'Diesel', tankCapacity: 42, cv: 150, kw: 110, displacementCc: 1995, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'III Serie (F40)', euroStandard: 'Euro 6d', transmission: 'Steptronic 8m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          { name: '118i 1.5 136 CV Steptronic (F40)', fuelType: 'Benzina', tankCapacity: 42, cv: 136, kw: 100, displacementCc: 1499, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'III Serie (F40)', euroStandard: 'Euro 6d', transmission: 'Steptronic 7m', driveType: 'FWD', avgConsumption: '5.9 L/100km' },
+          // F20 2011-2019
+          { name: '116d 1.5/2.0 Diesel 116 CV (F20)', fuelType: 'Diesel', tankCapacity: 52, cv: 116, kw: 85, displacementCc: 1496, years: '2011-2019', startYear: 2011, endYear: 2019, generation: 'II Serie (F20)', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m / Steptronic 8m', driveType: 'RWD', avgConsumption: '4.3 L/100km' },
+          { name: '118d 2.0 Diesel 143/150 CV (F20)', fuelType: 'Diesel', tankCapacity: 52, cv: 150, kw: 110, displacementCc: 1995, years: '2011-2019', startYear: 2011, endYear: 2019, generation: 'II Serie (F20)', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m / Steptronic 8m', driveType: 'RWD', avgConsumption: '4.5 L/100km' },
+          { name: '120d 2.0 Diesel 184/190 CV (F20)', fuelType: 'Diesel', tankCapacity: 52, cv: 190, kw: 140, displacementCc: 1995, years: '2011-2019', startYear: 2011, endYear: 2019, generation: 'II Serie (F20)', euroStandard: 'Euro 5/6', transmission: 'Steptronic 8m', driveType: 'RWD', avgConsumption: '4.7 L/100km' },
+          // E87 2004-2011
+          { name: '118d 2.0 Diesel 122/143 CV (E87)', fuelType: 'Diesel', tankCapacity: 53, cv: 143, kw: 105, displacementCc: 1995, years: '2004-2011', startYear: 2004, endYear: 2011, generation: 'I Serie (E87)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m', driveType: 'RWD', avgConsumption: '5.2 L/100km' },
+          { name: '120d 2.0 Diesel 163/177 CV (E87)', fuelType: 'Diesel', tankCapacity: 53, cv: 177, kw: 130, displacementCc: 1995, years: '2004-2011', startYear: 2004, endYear: 2011, generation: 'I Serie (E87)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m / Steptronic', driveType: 'RWD', avgConsumption: '5.4 L/100km' },
+          { name: '116i 1.6 115/122 CV (E87)', fuelType: 'Benzina', tankCapacity: 53, cv: 122, kw: 90, displacementCc: 1599, years: '2004-2011', startYear: 2004, endYear: 2011, generation: 'I Serie (E87)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m', driveType: 'RWD', avgConsumption: '6.8 L/100km' }
         ]
       },
       {
         name: 'Serie 3 / Serie 3 Touring',
         category: 'Berlina',
         motorizations: [
+          // G20 2019+
           { name: '330e Plug-in Hybrid 292 CV (Batteria 19.5 kWh 2024+)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 40, batteryCapacity: 19.5, cv: 292, kw: 215, displacementCc: 1998, years: '2024+', startYear: 2024, generation: 'G20 Restyling 2', euroStandard: 'Euro 6e', transmission: 'Steptronic 8m', driveType: 'RWD', wltpElectricRangeKm: 101, avgConsumption: '0.8 L/100km + 15.0 kWh/100km' },
-          { name: '330e Plug-in Hybrid 292 CV (Batteria 12.0 kWh 2019-2024)', fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 40, batteryCapacity: 12.0, cv: 292, kw: 215, displacementCc: 1998, years: '2019-2024', startYear: 2019, endYear: 2024, generation: 'G20', euroStandard: 'Euro 6d', transmission: 'Steptronic 8m', driveType: 'RWD', wltpElectricRangeKm: 60, avgConsumption: '1.4 L/100km + 15.5 kWh/100km' },
-          { name: '320d 2.0 MHEV 190 CV Steptronic', fuelType: 'Diesel', tankCapacity: 40, cv: 190, kw: 140, displacementCc: 1995, years: '2019+', startYear: 2019, euroStandard: 'Euro 6d/6e', transmission: 'Steptronic 8m', driveType: 'RWD', avgConsumption: '5.0 L/100km' },
-          { name: '320i 2.0 184 CV Steptronic', fuelType: 'Benzina', tankCapacity: 59, cv: 184, kw: 135, displacementCc: 1998, years: '2019+', startYear: 2019, euroStandard: 'Euro 6d/6e', transmission: 'Steptronic 8m', driveType: 'RWD', avgConsumption: '6.7 L/100km' }
+          { name: '320d 2.0 MHEV 190 CV Steptronic (G20)', fuelType: 'Diesel', tankCapacity: 40, cv: 190, kw: 140, displacementCc: 1995, years: '2019+', startYear: 2019, generation: 'VII Serie (G20)', euroStandard: 'Euro 6d/6e', transmission: 'Steptronic 8m', driveType: 'RWD', avgConsumption: '5.0 L/100km' },
+          { name: '320i 2.0 184 CV Steptronic (G20)', fuelType: 'Benzina', tankCapacity: 59, cv: 184, kw: 135, displacementCc: 1998, years: '2019+', startYear: 2019, generation: 'VII Serie (G20)', euroStandard: 'Euro 6d/6e', transmission: 'Steptronic 8m', driveType: 'RWD', avgConsumption: '6.7 L/100km' },
+          // F30 2012-2019
+          { name: '320d 2.0 Diesel 184/190 CV (F30)', fuelType: 'Diesel', tankCapacity: 57, cv: 190, kw: 140, displacementCc: 1995, years: '2012-2019', startYear: 2012, endYear: 2019, generation: 'VI Serie (F30)', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m / Steptronic 8m', driveType: 'RWD', avgConsumption: '4.8 L/100km' },
+          { name: '318d 2.0 Diesel 143/150 CV (F30)', fuelType: 'Diesel', tankCapacity: 57, cv: 150, kw: 110, displacementCc: 1995, years: '2012-2019', startYear: 2012, endYear: 2019, generation: 'VI Serie (F30)', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m / Steptronic 8m', driveType: 'RWD', avgConsumption: '4.6 L/100km' },
+          // E90 2005-2012
+          { name: '320d 2.0 Diesel 163/177 CV (E90)', fuelType: 'Diesel', tankCapacity: 61, cv: 177, kw: 130, displacementCc: 1995, years: '2005-2012', startYear: 2005, endYear: 2012, generation: 'V Serie (E90)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m / Steptronic', driveType: 'RWD', avgConsumption: '5.5 L/100km' },
+          { name: '318d 2.0 Diesel 122/143 CV (E90)', fuelType: 'Diesel', tankCapacity: 61, cv: 143, kw: 105, displacementCc: 1995, years: '2005-2012', startYear: 2005, endYear: 2012, generation: 'V Serie (E90)', euroStandard: 'Euro 4/5', transmission: 'Manuale 6m', driveType: 'RWD', avgConsumption: '5.3 L/100km' }
         ]
       },
       {
@@ -292,6 +336,32 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
           { name: '1.6 MultiJet 120/130 CV', fuelType: 'Diesel', tankCapacity: 48, cv: 130, kw: 96, displacementCc: 1598, years: '2015-2023', startYear: 2015, endYear: 2023, euroStandard: 'Euro 6d', transmission: 'Manuale 6m / DCT', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
           { name: '1.0 FireFly Turbo 120 CV', fuelType: 'Benzina', tankCapacity: 48, cv: 120, kw: 88, displacementCc: 999, years: '2018-2022', startYear: 2018, endYear: 2022, euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '6.3 L/100km' }
         ]
+      },
+      {
+        name: 'Punto / Grande Punto / Evo',
+        category: 'Compatta',
+        motorizations: [
+          // Grande Punto / Punto Evo / Punto 2012 (2005-2018)
+          { name: '1.2 65/69 CV 8V (Punto)', fuelType: 'Benzina', tankCapacity: 45, cv: 69, kw: 51, displacementCc: 1242, years: '2005-2018', startYear: 2005, endYear: 2018, generation: 'Grande Punto / Evo / 2012', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.4 L/100km' },
+          { name: '1.4 77 CV EasyPower (GPL Punto)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 38, cv: 77, kw: 57, displacementCc: 1368, years: '2008-2018', startYear: 2008, endYear: 2018, generation: 'Punto EasyPower', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '7.0 L/100km GPL' },
+          { name: '1.4 77 CV Natural Power (Metano Punto)', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 45, secondaryTankCapacity: 13, cv: 77, kw: 57, displacementCc: 1368, years: '2008-2018', startYear: 2008, endYear: 2018, generation: 'Punto Natural Power', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.2 kg/100km' },
+          { name: '1.3 MultiJet 75/90/95 CV (Punto)', fuelType: 'Diesel', tankCapacity: 45, cv: 95, kw: 70, displacementCc: 1248, years: '2005-2018', startYear: 2005, endYear: 2018, generation: 'Grande Punto / Evo', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.5 L/100km' },
+          { name: '1.6 MultiJet 120 CV (Punto)', fuelType: 'Diesel', tankCapacity: 45, cv: 120, kw: 88, displacementCc: 1598, years: '2008-2012', startYear: 2008, endYear: 2012, generation: 'Grande Punto / Evo', euroStandard: 'Euro 5', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.8 L/100km' },
+          { name: '1.9 MultiJet 120/130 CV (Grande Punto)', fuelType: 'Diesel', tankCapacity: 45, cv: 130, kw: 96, displacementCc: 1910, years: '2005-2009', startYear: 2005, endYear: 2009, generation: 'Grande Punto', euroStandard: 'Euro 4', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.6 L/100km' },
+          // Punto II Serie (188 1999-2010)
+          { name: '1.2 60 CV 8V (Punto II 188)', fuelType: 'Benzina', tankCapacity: 47, cv: 60, kw: 44, displacementCc: 1242, years: '1999-2010', startYear: 1999, endYear: 2010, generation: 'II Serie (188 / Classic)', euroStandard: 'Euro 3/4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.7 L/100km' },
+          { name: '1.3 MultiJet 70 CV (Punto II 188)', fuelType: 'Diesel', tankCapacity: 47, cv: 70, kw: 51, displacementCc: 1248, years: '2003-2010', startYear: 2003, endYear: 2010, generation: 'II Serie (188 / Classic)', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.5 L/100km' }
+        ]
+      },
+      {
+        name: 'Tipo',
+        category: 'Compatta',
+        motorizations: [
+          { name: '1.5 Hybrid 130 CV DCT7 (2022+)', fuelType: 'Full / Mild Hybrid', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1469, years: '2022+', startYear: 2022, generation: 'Tipo Restyling', euroStandard: 'Euro 6d/6e', transmission: 'DCT 7m', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          { name: '1.0 FireFly 100 CV (2020+)', fuelType: 'Benzina', tankCapacity: 50, cv: 100, kw: 74, displacementCc: 999, years: '2020+', startYear: 2020, generation: 'Tipo Restyling', euroStandard: 'Euro 6d', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.5 L/100km' },
+          { name: '1.6 MultiJet 120/130 CV', fuelType: 'Diesel', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1598, years: '2015+', startYear: 2015, generation: 'Tipo', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.6 L/100km' },
+          { name: '1.3 MultiJet 95 CV', fuelType: 'Diesel', tankCapacity: 50, cv: 95, kw: 70, displacementCc: 1248, years: '2015-2022', startYear: 2015, endYear: 2022, generation: 'Tipo', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.3 L/100km' }
+        ]
       }
     ]
   },
@@ -299,6 +369,36 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
     brand: 'Ford',
     country: 'USA / Europa',
     models: [
+      {
+        name: 'Focus',
+        category: 'Compatta',
+        motorizations: [
+          // Focus IV (2018+)
+          { name: '1.0 EcoBoost Hybrid 125/155 CV mHEV (Focus IV)', fuelType: 'Full / Mild Hybrid', tankCapacity: 52, cv: 125, kw: 92, displacementCc: 999, years: '2020+', startYear: 2020, generation: 'IV Serie', euroStandard: 'Euro 6d/6e', transmission: 'Manuale 6m / Powershift 7m', driveType: 'FWD', avgConsumption: '5.3 L/100km' },
+          { name: '1.5 EcoBlue Diesel 120 CV (Focus IV)', fuelType: 'Diesel', tankCapacity: 47, cv: 120, kw: 88, displacementCc: 1499, years: '2018-2024', startYear: 2018, endYear: 2024, generation: 'IV Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m / Automatico 8m', driveType: 'FWD', avgConsumption: '4.6 L/100km' },
+          // Focus III (2011-2018)
+          { name: '1.5 TDCi 120 CV (Focus III)', fuelType: 'Diesel', tankCapacity: 53, cv: 120, kw: 88, displacementCc: 1499, years: '2014-2018', startYear: 2014, endYear: 2018, generation: 'III Serie Restyling', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.2 L/100km' },
+          { name: '1.6 TDCi 95/115 CV (Focus III)', fuelType: 'Diesel', tankCapacity: 53, cv: 115, kw: 85, displacementCc: 1560, years: '2011-2015', startYear: 2011, endYear: 2015, generation: 'III Serie', euroStandard: 'Euro 5', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.5 L/100km' },
+          { name: '1.0 EcoBoost 100/125 CV (Focus III)', fuelType: 'Benzina', tankCapacity: 55, cv: 125, kw: 92, displacementCc: 999, years: '2012-2018', startYear: 2012, endYear: 2018, generation: 'III Serie', euroStandard: 'Euro 5/6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.2 L/100km' },
+          // Focus II (2004-2011)
+          { name: '1.6 TDCi 90/110 CV DPF (Focus II)', fuelType: 'Diesel', tankCapacity: 53, cv: 110, kw: 80, displacementCc: 1560, years: '2004-2011', startYear: 2004, endYear: 2011, generation: 'II Serie', euroStandard: 'Euro 4/5', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.9 L/100km' },
+          { name: '1.6 100 CV Benzina (Focus II)', fuelType: 'Benzina', tankCapacity: 55, cv: 100, kw: 74, displacementCc: 1596, years: '2004-2011', startYear: 2004, endYear: 2011, generation: 'II Serie', euroStandard: 'Euro 4', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '6.7 L/100km' }
+        ]
+      },
+      {
+        name: 'Fiesta',
+        category: 'Compatta',
+        motorizations: [
+          // Fiesta VII (2017-2023)
+          { name: '1.0 EcoBoost Hybrid 125 CV mHEV (Fiesta VII)', fuelType: 'Full / Mild Hybrid', tankCapacity: 42, cv: 125, kw: 92, displacementCc: 999, years: '2020-2023', startYear: 2020, endYear: 2023, generation: 'VII Serie', euroStandard: 'Euro 6d', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '5.0 L/100km' },
+          { name: '1.1 75 CV Benzina (Fiesta VII)', fuelType: 'Benzina', tankCapacity: 42, cv: 75, kw: 55, displacementCc: 1084, years: '2017-2023', startYear: 2017, endYear: 2023, generation: 'VII Serie', euroStandard: 'Euro 6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.3 L/100km' },
+          { name: '1.5 TDCi 85/120 CV (Fiesta VII)', fuelType: 'Diesel', tankCapacity: 42, cv: 120, kw: 88, displacementCc: 1499, years: '2017-2020', startYear: 2017, endYear: 2020, generation: 'VII Serie', euroStandard: 'Euro 6', transmission: 'Manuale 6m', driveType: 'FWD', avgConsumption: '4.0 L/100km' },
+          // Fiesta VI (2008-2017)
+          { name: '1.4 TDCi 68/70 CV (Fiesta VI)', fuelType: 'Diesel', tankCapacity: 40, cv: 70, kw: 51, displacementCc: 1399, years: '2008-2015', startYear: 2008, endYear: 2015, generation: 'VI Serie', euroStandard: 'Euro 4/5', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '4.3 L/100km' },
+          { name: '1.4 GPL 96 CV (Fiesta VI)', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 42, secondaryTankCapacity: 33, cv: 96, kw: 71, displacementCc: 1388, years: '2009-2017', startYear: 2009, endYear: 2017, generation: 'VI Serie GPL', euroStandard: 'Euro 5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '7.2 L/100km GPL' },
+          { name: '1.2 60/82 CV 16V (Fiesta VI)', fuelType: 'Benzina', tankCapacity: 42, cv: 82, kw: 60, displacementCc: 1242, years: '2008-2017', startYear: 2008, endYear: 2017, generation: 'VI Serie', euroStandard: 'Euro 4/5/6', transmission: 'Manuale 5m', driveType: 'FWD', avgConsumption: '5.7 L/100km' }
+        ]
+      },
       {
         name: 'Puma',
         category: 'SUV',
@@ -610,12 +710,16 @@ export const CAR_BRANDS_CATALOG: CarBrandData[] = [
 ];
 
 export const POPULAR_BRANDS = [
-  'Alfa Romeo', 'Audi', 'BMW', 'Citroën', 'Cupra', 'Dacia', 'Fiat', 'Ford', 
-  'Hyundai', 'Jeep', 'Kia', 'Mercedes-Benz', 'MG', 'Nissan', 'Peugeot', 'Renault', 
-  'Tesla', 'Toyota', 'Volkswagen', 'Volvo'
+  'Abarth', 'Alfa Romeo', 'Audi', 'BMW', 'Citroën', 'Cupra', 'Dacia', 'DS', 'Ducati', 'Ferrari', 
+  'Fiat', 'Ford', 'Honda', 'Hyundai', 'Iveco', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Lancia', 
+  'Land Rover', 'Lexus', 'Maserati', 'Mazda', 'Mercedes-Benz', 'MG', 'Mini', 'Mitsubishi', 
+  'Nissan', 'Opel', 'Peugeot', 'Piaggio', 'Porsche', 'Renault', 'Seat', 'Skoda', 'Smart', 
+  'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'Vespa', 'Volkswagen', 'Volvo', 'Yamaha'
 ];
 
-export const ALL_BRAND_NAMES = CAR_BRANDS_CATALOG.map(b => b.brand);
+export const ALL_BRAND_NAMES = Array.from(
+  new Set([...CAR_BRANDS_CATALOG.map(b => b.brand), ...POPULAR_BRANDS])
+).sort((a, b) => a.localeCompare(b));
 
 /**
  * Italian License Plate (LL NNN LL) to Estimated Registration Year Algorithm
@@ -894,6 +998,10 @@ export interface VehicleLookupResult {
   avgConsumption?: string;
   category?: string;
   photoQuery?: string;
+  realPhotos?: { url: string; title: string; source: string }[];
+  suggestedPhotoUrl?: string;
+  estimatedRegistrationYear?: number;
+  registrationDate?: string;
   availableMotorizations?: CarMotorization[];
   source: 'ai' | 'catalog';
 }
@@ -925,7 +1033,7 @@ export async function lookupVehicleWithAI(
 
     if (res.ok) {
       const data = await res.json();
-      if (data?.data && data.data.brand && data.data.fuelType) {
+      if (data?.data && (data.data.brand || data.data.model || data.data.motorization)) {
         const d = data.data;
         const availableMots: CarMotorization[] = Array.isArray(d.availableMotorizations) && d.availableMotorizations.length > 0
           ? d.availableMotorizations.map((m: any) => ({
@@ -951,7 +1059,7 @@ export async function lookupVehicleWithAI(
           model: d.model || model || '',
           motorization: d.motorization || '',
           generation: d.generation || '',
-          fuelType: d.fuelType as FuelType,
+          fuelType: (d.fuelType as FuelType) || 'Diesel',
           powerCv: Number(d.powerCv) || undefined,
           powerKw: Number(d.powerKw) || (d.powerCv ? Math.round(Number(d.powerCv) / 1.35962) : undefined),
           tankCapacity: Number(d.tankCapacity) || 0,
@@ -964,6 +1072,10 @@ export async function lookupVehicleWithAI(
           avgConsumption: d.avgConsumption,
           category: d.category,
           photoQuery: d.photoQuery,
+          realPhotos: Array.isArray(d.realPhotos) ? d.realPhotos : [],
+          suggestedPhotoUrl: d.suggestedPhotoUrl || (Array.isArray(d.realPhotos) && d.realPhotos.length > 0 ? d.realPhotos[0].url : undefined),
+          estimatedRegistrationYear: d.estimatedRegistrationYear || yearInfo.year || undefined,
+          registrationDate: d.registrationDate,
           availableMotorizations: availableMots,
           source: 'ai'
         };

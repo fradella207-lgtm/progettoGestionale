@@ -19,6 +19,131 @@ function getGeminiClient(): GoogleGenAI | null {
   return genAIClient;
 }
 
+export interface RealVehiclePhoto {
+  url: string;
+  title: string;
+  source: string;
+}
+
+/**
+ * Searches real, authentic high-definition photographs of ANY vehicle model, generation and year
+ * from Wikipedia and Wikimedia Commons open automotive repositories.
+ */
+async function fetchRealVehiclePhotos(
+  brand: string,
+  model: string,
+  year?: string | number,
+  generation?: string,
+  customQuery?: string
+): Promise<RealVehiclePhoto[]> {
+  const photos: RealVehiclePhoto[] = [];
+  const seenUrls = new Set<string>();
+
+  const b = (brand || '').trim();
+  const m = (model || '').trim();
+  const y = (year || '').toString().trim();
+  const gen = (generation || '').trim();
+  const q = (customQuery || '').trim();
+
+  // Queries in order of precision
+  const queriesToTry: string[] = [];
+  if (q) {
+    queriesToTry.push(q);
+  }
+  if (b && m && gen) {
+    queriesToTry.push(`${b} ${m} ${gen}`);
+  }
+  if (b && m && y && y !== 'undefined') {
+    queriesToTry.push(`${b} ${m} ${y}`);
+  }
+  if (b && m) {
+    queriesToTry.push(`${b} ${m}`);
+  }
+  if (m && !b) {
+    queriesToTry.push(m);
+  }
+
+  const customHeaders = {
+    'User-Agent': 'GestionaleAutoPW/1.0 (Automotive Management System; contact@gestionaleauto.it)',
+    'Accept': 'application/json'
+  };
+
+  // 1. Search Wikipedia (EN and IT) for official article vehicle lead photos
+  for (const queryStr of queriesToTry) {
+    if (photos.length >= 8) break;
+    for (const lang of ['en', 'it']) {
+      try {
+        const wikiUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(queryStr)}&gsrlimit=4&prop=pageimages&pithumbsize=1200&format=json&origin=*`;
+        const wikiRes = await fetch(wikiUrl, { headers: customHeaders });
+        if (wikiRes.ok) {
+          const wikiData = await wikiRes.json();
+          const pages = wikiData?.query?.pages;
+          if (pages) {
+            for (const pageId in pages) {
+              const page = pages[pageId];
+              const imgUrl = page.thumbnail?.source;
+              if (imgUrl && !seenUrls.has(imgUrl)) {
+                if (!/logo|flag|coat_of_arms|map|icon|symbol|diagram/i.test(imgUrl)) {
+                  seenUrls.add(imgUrl);
+                  photos.push({
+                    url: imgUrl,
+                    title: `${page.title || `${b} ${m}`} (Wikipedia ${lang.toUpperCase()})`,
+                    source: `Wikipedia ${lang.toUpperCase()}`
+                  });
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Continue to next source
+      }
+    }
+  }
+
+  // 2. Search Wikimedia Commons for real automotive photographs (exterior shots)
+  for (const queryStr of queriesToTry) {
+    if (photos.length >= 10) break;
+    try {
+      const commonsSearch = `${queryStr} automobile car`;
+      const commonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(commonsSearch)}&gsrnamespace=6&gsrlimit=15&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1200&format=json&origin=*`;
+      const commRes = await fetch(commonsUrl, { headers: customHeaders });
+      if (commRes.ok) {
+        const commData = await commRes.json();
+        const pages = commData?.query?.pages;
+        if (pages) {
+          for (const pageId in pages) {
+            const page = pages[pageId];
+            const ii = page.imageinfo?.[0];
+            const url = ii?.thumburl || ii?.url;
+            const fileTitle = page.title || '';
+
+            if (url && !seenUrls.has(url)) {
+              // Exclude interiors, dashboards, engines, logos, wrecked cars
+              const isNonExterior = /interior|dashboard|engine|motor|chassis|steering|cockpit|wheel|rim|blueprint|diagram|sign|plate|logo|badge|icon|wreck|crash|gear/i.test(fileTitle);
+              const isValidExt = /\.(jpe?g|png|webp)(\?|$)/i.test(url) || (ii?.mime && /jpeg|png|webp/i.test(ii.mime));
+
+              if (!isNonExterior && isValidExt && (ii?.width ? ii.width >= 350 : true)) {
+                seenUrls.add(url);
+                photos.push({
+                  url,
+                  title: fileTitle.replace(/^File:/i, '').replace(/\.[^.]+$/, '').replace(/_/g, ' '),
+                  source: 'Wikimedia Commons'
+                });
+              }
+            }
+            if (photos.length >= 10) break;
+          }
+        }
+      }
+    } catch (e) {
+      // Continue
+    }
+  }
+
+  return photos;
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -30,14 +155,40 @@ async function startServer() {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // AI Vehicle Lookup & Motorization Autofill endpoint
+  // Dedicated Real Vehicle Photos Search endpoint (Wikipedia / Wikimedia Commons)
+  app.all("/api/vehicle-photos", async (req, res) => {
+    const brand = (req.query.brand as string) || req.body?.brand || '';
+    const model = (req.query.model as string) || req.body?.model || '';
+    const year = (req.query.year as string) || req.body?.year || '';
+    const generation = (req.query.generation as string) || req.body?.generation || '';
+    const query = (req.query.query as string) || req.body?.query || '';
+
+    try {
+      const photos = await fetchRealVehiclePhotos(brand, model, year, generation, query);
+      return res.json({
+        success: true,
+        count: photos.length,
+        photos
+      });
+    } catch (err: any) {
+      console.warn("Errore ricerca foto reali:", err?.message || err);
+      return res.json({
+        success: false,
+        count: 0,
+        photos: []
+      });
+    }
+  });
+
+  // 360° AI & External Registry Vehicle Lookup endpoint for ANY vehicle
   app.post("/api/vehicle-lookup", async (req, res) => {
     const { query, brand, model, year, plate } = req.body;
 
-    // Estimate year from Italian license plate if provided
+    // 1. Precise Italian License Plate Estimation (1994 to 2026+)
     let plateEstimatedYear: number | null = null;
+    let cleanPlate = '';
     if (plate && typeof plate === 'string') {
-      const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (cleanPlate.length >= 2) {
         const p1 = cleanPlate[0];
         const p2 = cleanPlate[1];
@@ -90,114 +241,96 @@ async function startServer() {
       }
     }
 
-    // Extract numerical year if embedded in year/regDate string
-    let extractedYear: string | number | undefined = year;
-    if (typeof year === 'string' && year.includes('-')) {
-      const parsed = parseInt(year.split('-')[0], 10);
-      if (!isNaN(parsed) && parsed > 1970) extractedYear = parsed;
+    // Determine target year
+    let targetYear = year;
+    if (typeof targetYear === 'string' && targetYear.includes('-')) {
+      const parsed = parseInt(targetYear.split('-')[0], 10);
+      if (!isNaN(parsed) && parsed > 1970) targetYear = parsed;
     }
 
-    // If year is unset or current year (2025/2026) but plate indicates older year, prioritize plate
-    const currentYear = new Date().getFullYear();
-    if (plateEstimatedYear && (!extractedYear || Number(extractedYear) >= currentYear - 1)) {
-      extractedYear = plateEstimatedYear;
-    } else if (plateEstimatedYear && Math.abs(Number(extractedYear) - plateEstimatedYear) > 4) {
-      // Large discrepancy (e.g. user selected 2026 but plate is D... 2007)
-      extractedYear = plateEstimatedYear;
-    }
+    const searchQuery = query || `${brand || ''} ${model || ''} ${targetYear ? 'anno ' + targetYear : ''}`.trim();
 
-    const searchQuery = query || `${brand || ''} ${model || ''} ${extractedYear ? 'anno ' + extractedYear : ''} ${plate || ''}`.trim();
-
-    if (!searchQuery) {
-      return res.status(400).json({ error: "Parametro di ricerca o veicolo mancante" });
+    if (!searchQuery && !brand && !model) {
+      return res.status(400).json({ error: "Specificare almeno Marca, Modello o Anno di ricerca" });
     }
 
     try {
       const ai = getGeminiClient();
       if (!ai) {
+        const realPhotos = await fetchRealVehiclePhotos(brand, model, targetYear);
         return res.json({ 
           success: false,
           useFallback: true,
+          realPhotos,
           message: "GEMINI_API_KEY non configurata sul server, fallback catalogo attivo" 
         });
       }
 
-      const prompt = `Sei il massimo ingegnere automobilistico ed esperto di omologazioni e banche dati europee (Quattroruote, Eurotax, DAT, KBA, Motorizzazione Civile e listini costruttori dal 1995 al 2026).
+      const prompt = `Sei il massimo ingegnere automobilistico ed esperto globale di omologazioni, schede tecniche, motorizzazioni, generazioni e listini veicoli (auto di ogni segmento, SUV, sportive, supercar, auto storiche/vintage, veicoli commerciali/furgoni, moto e scooter dal 1970 al 2026).
 
-RICHIESTA DI ANALISI VEICOLO:
-Query di ricerca: "${searchQuery}"
-Marca indicata: "${brand || ''}"
-Modello indicato: "${model || ''}"
-Anno di immatricolazione / produzione target: "${extractedYear || (plateEstimatedYear ? `Circa ${plateEstimatedYear} (da targa ${plate})` : 'Non specificato')}"
-Targa italiana (se fornita): "${plate || ''}"
+PARAMETRI DEL VEICOLO DA ANALIZZARE A 360°:
+- Marca: "${brand || 'Da identificare'}"
+- Modello: "${model || 'Da identificare'}"
+- Anno di Immatricolazione / Riferimento: "${targetYear || 'Attuale / Recente'}"
+- Query supplementare: "${searchQuery}"
 
-OBIETTIVO CRITICO - COERENZA TEMPORALE ASSOLUTA (ANNO / GENERAZIONE):
-1. SE L'ANNO O LA TARGA INDICANO UN VEICOLO DEL PASSATO (es. 2005, 2007, 2008, 2011, 2014, 2017, ecc.):
-   - DEVI IDENTIFICARE LA GENERAZIONE ESATTA DI QUELL'EPOCA E FORNIRE ESCLUSIVAMENTE LE MOTORIZZAZIONI DI QUELL'ANNO!
-   - VIETATO ASSOLUTAMENTE restituire modelli del 2020-2024 (es. PHEV/MHEV moderne) se la vettura è del 2007/2008!
-   - Esempi di coerenza storica:
-     * Volkswagen Golf 2007/2008 (targa D...): DEVE essere Golf V (5ª serie) -> 1.9 TDI 105 CV, 2.0 TDI 140/170 CV, 1.4 TSI 122/140/170 CV, 1.6 102 CV, 1.6 FSI 115 CV, 2.0 TFSI GTI 200 CV, R32 250 CV, Euro 4, serbatoio 55L.
-     * Audi A3 2007/2008 (targa D...): DEVE essere Audi A3 8P -> 1.9 TDI 105 CV, 2.0 TDI 140/170 CV, 1.6 102 CV, 1.4 TFSI 125 CV, 1.8 TFSI 160 CV, 2.0 TFSI 200 CV, Euro 4, serbatoio 55L.
-     * Fiat Grande Punto / Punto 2007/2008: 1.3 Multijet 75/90 CV, 1.9 Multijet 120/130 CV, 1.2 65 CV, 1.4 77 CV, 1.4 T-Jet 120 CV, Natural Power Metano, GPL, Euro 4.
-     * Fiat Panda 2007/2008: Panda 2ª serie (169) -> 1.1 54 CV, 1.2 60 CV, 1.3 Multijet 69/75 CV, Natural Power Metano, 4x4 Climbing, Euro 4, serbatoio 35L/38L.
-     * BMW Serie 3 2007/2008 (targa D...): BMW E90/E91 -> 320d 163/177 CV, 318d 143 CV, 320i 150/170 CV, 325d, 330d 231 CV, 335d 286 CV, 335i 306 CV, Euro 4, serbatoio 61L/63L.
-     * Ford Fiesta 2007/2008: Fiesta V restyling / Mk6 -> 1.4 TDCi 68 CV, 1.6 TDCi 90 CV, 1.2 75 CV, 1.4 80 CV, 1.6 100 CV, ST 150 CV, Euro 4.
-     * Ford Focus 2007/2008: Focus II (Mk2) -> 1.6 TDCi 90/109 CV, 2.0 TDCi 136 CV, 1.6 100/115 CV, 2.0 145 CV, 2.5 ST 225 CV, Euro 4.
+OBIETTIVO ASSOLUTO:
+Fornisci un'analisi tecnica a 360° per QUALSIASI veicolo inserito (anche marche rare, veicoli commerciali, d'epoca, supercar o moto):
+1. Identifica la GENERAZIONE ESATTA e periodo di produzione per l'anno indicato.
+2. Identifica la CATEGORIA esatta (Berlina, SUV, Compatta, Citycar, Station Wagon, Coupé, Cabrio, Monovolume, Furgone / Commerciale, Moto / Scooter).
+3. Restituisci TUTTE le motorizzazioni e allestimenti ufficiali omologati per quell'anno/generazione (Diesel, Benzina, Mild Hybrid, Full Hybrid, Plug-in PHEV, Elettrica BEV, GPL, Metano).
+4. Per ogni motore indica: nome commerciale completo, fuelType esatto, CV, kW, cilindrata cc, capacità serbatoio carburante litri (0 se 100% elettrica), capacità batteria kWh (per PHEV o BEV), capacità bombola GPL/Metano se applicabile, autonomia elettrica WLTP se applicabile, cambio, classe Euro (es. Euro 3, Euro 4, Euro 5, Euro 6, Euro 6d, Euro 6e), anni di produzione, e consumo medio reale/dichiarato.
+5. Inserisci anche la query fotografica ottimale per trovare la foto reale del veicolo (photoQuery) e il titolo dell'articolo Wikipedia principale (wikiTitle).
 
-2. SE IL VEICOLO È MODERNO (2020-2026):
-   - Fornisci le motorizzazioni attuali (Mild Hybrid, Plug-in PHEV con kWh netti e autonomia WLTP reale, Diesel, Elettriche BEV).
-
-3. Fornisci sia la motorizzazione primaria più diffusa/probabile, sia l'elenco COMPLETO in "availableMotorizations" (almeno 5-10 versioni ufficiali per quella specifica annata).
-
-FORMATO RISPOSTA:
-Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
-
+FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
 {
-  "brand": "Nome Marca",
-  "model": "Nome Modello",
-  "generation": "Nome generazione esatta e anni (es. 'Golf V (2003-2008)' oppure 'Formentor I Serie (2020-2024)')",
-  "category": "Berlina" | "SUV" | "Station Wagon" | "Compatta" | "Coupé" | "Citycar" | "Monovolume",
+  "brand": "Nome Marca (es. Alfa Romeo, Volkswagen, Fiat, Toyota, Porsche, Dacia, Iveco, Ducati)",
+  "model": "Nome Modello (es. Giulietta, Golf, Panda, Yaris, 911, Duster, Daily, Monster)",
+  "generation": "Generazione e anni esatti (es. 'Giulietta I Serie (2010-2016)' o 'Golf V (2003-2008)')",
+  "category": "Berlina" | "SUV" | "Station Wagon" | "Compatta" | "Coupé" | "Citycar" | "Monovolume" | "Furgone / Commerciale" | "Moto / Scooter",
+  "estimatedRegistrationYear": 2012,
+  "wikiTitle": "Alfa Romeo Giulietta (2010)",
+  "photoQuery": "Alfa Romeo Giulietta 2012",
   "primaryMotorization": {
-    "name": "Nome commerciale completo (es. 1.9 TDI 105 CV Comfortline)",
+    "name": "Nome commerciale completo versione (es. 1.6 JTDm 105 CV Distinctive)",
     "fuelType": "Diesel" | "Benzina" | "Full / Mild Hybrid" | "Plug-in Hybrid (PHEV)" | "Elettrica (BEV)" | "GPL (Benzina + GPL)" | "Metano (Benzina + Metano)",
     "cv": 105,
     "kw": 77,
-    "displacementCc": 1896,
-    "tankCapacity": 55,
+    "displacementCc": 1598,
+    "tankCapacity": 60,
     "batteryCapacity": null,
     "secondaryTankCapacity": null,
     "wltpElectricRangeKm": null,
-    "transmission": "Manuale 5m",
-    "euroStandard": "Euro 4",
-    "years": "2003-2008",
-    "generation": "V Serie (1K)",
-    "avgConsumption": "5.2 L/100km"
+    "transmission": "Manuale 6m",
+    "euroStandard": "Euro 5",
+    "years": "2010-2015",
+    "generation": "Giulietta I Serie",
+    "avgConsumption": "4.4 L/100km"
   },
   "availableMotorizations": [
     {
-      "name": "1.9 TDI 105 CV",
+      "name": "1.6 JTDm 105 CV",
       "fuelType": "Diesel",
       "cv": 105,
       "kw": 77,
-      "displacementCc": 1896,
-      "tankCapacity": 55,
+      "displacementCc": 1598,
+      "tankCapacity": 60,
       "batteryCapacity": null,
       "secondaryTankCapacity": null,
       "wltpElectricRangeKm": null,
-      "transmission": "Manuale 5m",
-      "euroStandard": "Euro 4",
-      "years": "2003-2008",
-      "generation": "V Serie (1K)",
-      "avgConsumption": "5.2 L/100km"
+      "transmission": "Manuale 6m",
+      "euroStandard": "Euro 5",
+      "years": "2010-2015",
+      "generation": "Giulietta I Serie",
+      "avgConsumption": "4.4 L/100km"
     }
-  ],
-  "photoQuery": "volkswagen golf 5 2007"
+  ]
 }`;
 
       let responseText = '';
       try {
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.6-flash',
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -207,9 +340,11 @@ Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
         responseText = response.text || '';
       } catch (geminiError: any) {
         console.warn("Avviso chiamata modello Gemini:", geminiError?.message || geminiError);
+        const realPhotos = await fetchRealVehiclePhotos(brand, model, targetYear);
         return res.json({ 
           success: false,
           useFallback: true,
+          realPhotos,
           error: geminiError?.message || "AI unavailable"
         });
       }
@@ -222,18 +357,29 @@ Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
         jsonResult = JSON.parse(clean);
       }
 
-      // Format response to ensure backward compatibility and rich motorization list
       const primary = jsonResult.primaryMotorization || jsonResult;
-      
+      const finalBrand = jsonResult.brand || brand || '';
+      const finalModel = jsonResult.model || model || '';
+      const finalGen = jsonResult.generation || '';
+
+      // Asynchronously fetch authentic real photos of this exact car and generation from Wikipedia/Wikimedia
+      const realPhotos = await fetchRealVehiclePhotos(
+        finalBrand,
+        finalModel,
+        targetYear || jsonResult.estimatedRegistrationYear,
+        finalGen,
+        jsonResult.photoQuery || `${finalBrand} ${finalModel} ${targetYear || ''}`
+      );
+
       const formattedResult = {
-        brand: jsonResult.brand || brand || '',
-        model: jsonResult.model || model || '',
-        generation: jsonResult.generation || '',
+        brand: finalBrand,
+        model: finalModel,
+        generation: finalGen,
         category: jsonResult.category || 'Berlina',
         motorization: primary.name || primary.motorization || '',
         fuelType: primary.fuelType || 'Diesel',
-        powerCv: Number(primary.cv || primary.powerCv) || 150,
-        powerKw: Number(primary.kw || primary.powerKw) || Math.round(Number(primary.cv || primary.powerCv || 150) / 1.35962),
+        powerCv: Number(primary.cv || primary.powerCv) || 120,
+        powerKw: Number(primary.kw || primary.powerKw) || Math.round(Number(primary.cv || primary.powerCv || 120) / 1.35962),
         displacementCc: primary.displacementCc ? Number(primary.displacementCc) : undefined,
         tankCapacity: Number(primary.tankCapacity ?? 50),
         batteryCapacity: primary.batteryCapacity ? Number(primary.batteryCapacity) : undefined,
@@ -243,6 +389,8 @@ Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
         euroStandard: primary.euroStandard,
         avgConsumption: primary.avgConsumption,
         photoQuery: jsonResult.photoQuery,
+        realPhotos,
+        suggestedPhotoUrl: realPhotos.length > 0 ? realPhotos[0].url : undefined,
         availableMotorizations: Array.isArray(jsonResult.availableMotorizations) 
           ? jsonResult.availableMotorizations.map((m: any) => ({
               name: m.name || '',
@@ -270,9 +418,11 @@ Restituisci ESCLUSIVAMENTE un oggetto JSON valido con la seguente struttura:
 
     } catch (err: any) {
       console.warn("Fallback catalogo attivato per ricerca veicolo:", err?.message || err);
+      const realPhotos = await fetchRealVehiclePhotos(brand, model, targetYear);
       return res.json({ 
         success: false,
         useFallback: true,
+        realPhotos,
         error: err?.message || "Errore elaborazione"
       });
     }

@@ -20,10 +20,18 @@ import {
   Flame,
   ShieldCheck,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Image as ImageIcon,
+  ExternalLink,
+  Plus
 } from 'lucide-react';
 import { Vehicle, FuelType } from '../../types';
-import { getAutomaticVehiclePhoto, optimizeImageFile, OptimizationResult } from '../../utils/imageOptimizer';
+import { 
+  searchRealVehiclePhotos, 
+  RealVehiclePhoto, 
+  optimizeImageFile, 
+  OptimizationResult 
+} from '../../utils/imageOptimizer';
 import { 
   POPULAR_BRANDS,
   ALL_BRAND_NAMES,
@@ -41,14 +49,6 @@ interface AddVehicleModalProps {
   onClose: () => void;
   onSave: (vehicleData: Partial<Vehicle>) => void;
 }
-
-const PRESET_PHOTOS = [
-  { label: 'Berlina', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=1000&auto=format&fit=crop&q=80' },
-  { label: 'SUV', url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=1000&auto=format&fit=crop&q=80' },
-  { label: 'Compatta', url: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=1000&auto=format&fit=crop&q=80' },
-  { label: 'Elettrica / EV', url: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=1000&auto=format&fit=crop&q=80' },
-  { label: 'Coupé / Sport', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1000&auto=format&fit=crop&q=80' }
-];
 
 export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   vehicleToEdit,
@@ -76,9 +76,16 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [powerCv, setPowerCv] = useState<number | ''>(vehicleToEdit?.powerCv ?? '');
   const [powerKw, setPowerKw] = useState<number | ''>(vehicleToEdit?.powerKw ?? '');
   const [initialKm, setInitialKm] = useState<number | ''>(vehicleToEdit?.initialKm ?? 0);
-  const [photoUrl, setPhotoUrl] = useState(
-    vehicleToEdit?.photoUrl || getAutomaticVehiclePhoto(vehicleToEdit?.brand || '', vehicleToEdit?.model || '', vehicleToEdit?.fuelType)
+  const [photoUrl, setPhotoUrl] = useState<string>(
+    vehicleToEdit?.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=1000&auto=format&fit=crop&q=80'
   );
+
+  // Real Photos State (Wikipedia & Wikimedia Commons)
+  const [realPhotos, setRealPhotos] = useState<RealVehiclePhoto[]>([]);
+  const [isSearchingPhotos, setIsSearchingPhotos] = useState(false);
+  const [photoSearchQuery, setPhotoSearchQuery] = useState('');
+  const [customUrlInput, setCustomUrlInput] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Filter & Toggle for other years
   const [showAllYears, setShowAllYears] = useState(false);
@@ -99,10 +106,15 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   // Sync state when vehicleToEdit or isOpen changes
   useEffect(() => {
     if (isOpen) {
-      setBrand(vehicleToEdit?.brand || '');
-      setModel(vehicleToEdit?.model || '');
-      setPlate(vehicleToEdit?.plate || '');
-      setRegDate(vehicleToEdit?.registrationDate || new Date().toISOString().split('T')[0]);
+      const initialBrand = vehicleToEdit?.brand || '';
+      const initialModel = vehicleToEdit?.model || '';
+      const initialPlate = vehicleToEdit?.plate || '';
+      const initialRegDate = vehicleToEdit?.registrationDate || new Date().toISOString().split('T')[0];
+
+      setBrand(initialBrand);
+      setModel(initialModel);
+      setPlate(initialPlate);
+      setRegDate(initialRegDate);
       setFuelType(vehicleToEdit?.fuelType || 'Diesel');
       setMotorization(vehicleToEdit?.motorization || '');
       setTankCapacity(vehicleToEdit?.tankCapacity ?? 50);
@@ -111,14 +123,24 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setPowerCv(vehicleToEdit?.powerCv ?? '');
       setPowerKw(vehicleToEdit?.powerKw ?? '');
       setInitialKm(vehicleToEdit?.initialKm ?? 0);
-      setPhotoUrl(
-        vehicleToEdit?.photoUrl || getAutomaticVehiclePhoto(vehicleToEdit?.brand || '', vehicleToEdit?.model || '', vehicleToEdit?.fuelType)
-      );
+      
+      const defaultInitialPhoto = vehicleToEdit?.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=1000&auto=format&fit=crop&q=80';
+      setPhotoUrl(defaultInitialPhoto);
+      setCustomUrlInput('');
+      setShowUrlInput(false);
       setAiStatusMessage(null);
       setAiMotorizations([]);
       setAiGenerationInfo('');
       setSelectedFuelFilter('all');
       setShowAllYears(false);
+      setPhotoSearchQuery('');
+
+      if (initialBrand.trim() && initialModel.trim()) {
+        const yr = initialRegDate ? initialRegDate.split('-')[0] : '';
+        fetchPhotosForVehicle(initialBrand, initialModel, yr);
+      } else {
+        setRealPhotos([]);
+      }
     }
   }, [isOpen, vehicleToEdit]);
 
@@ -166,22 +188,68 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     return getMotorizationsForModelAndYear(brand, model, yearInfo.year || undefined);
   }, [brand, model, yearInfo.year]);
 
+  /**
+   * Searches and loads real vehicle photos dynamically from Wikipedia/Wikimedia Commons
+   */
+  const fetchPhotosForVehicle = async (
+    targetBrand: string,
+    targetModel: string,
+    targetYear?: string | number,
+    targetGen?: string,
+    customQuery?: string
+  ) => {
+    if (!targetBrand.trim() && !targetModel.trim() && !customQuery?.trim()) return;
+
+    try {
+      setIsSearchingPhotos(true);
+      const photos = await searchRealVehiclePhotos(
+        targetBrand,
+        targetModel,
+        targetYear,
+        targetGen,
+        customQuery
+      );
+
+      if (photos.length > 0) {
+        setRealPhotos(photos);
+        // If user hasn't uploaded a custom photo or we're on default, switch to top real photo
+        if (!photoUrl || photoUrl.includes('unsplash.com/photo-1617814076367') || !isEditing) {
+          setPhotoUrl(photos[0].url);
+        }
+      }
+    } catch (err) {
+      console.warn("Errore ricerca foto reali:", err);
+    } finally {
+      setIsSearchingPhotos(false);
+    }
+  };
+
   if (!isOpen) return null;
 
-  // Update photo automatically when brand/model changes if not customized
   const handleBrandChange = (newBrand: string) => {
     setBrand(newBrand);
+    setAiMotorizations([]);
+    setAiGenerationInfo('');
     if (newBrand.trim() && model.trim()) {
-      const autoPhoto = getAutomaticVehiclePhoto(newBrand, model, fuelType, undefined, yearInfo.year || plateEstimation?.year);
-      setPhotoUrl(autoPhoto);
+      fetchPhotosForVehicle(newBrand, model, yearInfo.year || plateEstimation?.year);
     }
   };
 
   const handleModelChange = (newModel: string) => {
     setModel(newModel);
+    setAiMotorizations([]);
+    setAiGenerationInfo('');
     if (brand.trim() && newModel.trim()) {
-      const autoPhoto = getAutomaticVehiclePhoto(brand, newModel, fuelType, undefined, yearInfo.year || plateEstimation?.year);
-      setPhotoUrl(autoPhoto);
+      fetchPhotosForVehicle(brand, newModel, yearInfo.year || plateEstimation?.year);
+    }
+  };
+
+  const handleRegDateChange = (newDate: string) => {
+    setRegDate(newDate);
+    setAiMotorizations([]);
+    const yr = newDate ? parseInt(newDate.split('-')[0], 10) : undefined;
+    if (brand.trim() && model.trim()) {
+      fetchPhotosForVehicle(brand, model, yr);
     }
   };
 
@@ -195,8 +263,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         setRegDate(est.estimatedDateString);
       }
       if (brand.trim() && model.trim()) {
-        const autoPhoto = getAutomaticVehiclePhoto(brand, model, fuelType, undefined, est.year);
-        setPhotoUrl(autoPhoto);
+        fetchPhotosForVehicle(brand, model, est.year);
       }
     }
   };
@@ -228,7 +295,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     }
   };
 
-  // Select a motorization from catalog
+  // Select a motorization from catalog or AI
   const applyMotorization = (m: CarMotorization) => {
     setMotorization(m.name);
     setFuelType(m.fuelType);
@@ -239,8 +306,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     setPowerKw(m.kw);
 
     const targetYear = m.years || yearInfo.year || plateEstimation?.year;
-    const photo = getAutomaticVehiclePhoto(brand, model, m.fuelType, undefined, targetYear);
-    setPhotoUrl(photo);
+    fetchPhotosForVehicle(brand, model, targetYear, m.generation);
 
     setAiStatusMessage({
       text: `Scheda applicata: ${m.name}${m.wltpElectricRangeKm ? ` • ${m.wltpElectricRangeKm} km WLTP` : ''}`,
@@ -249,15 +315,15 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     setTimeout(() => setAiStatusMessage(null), 3500);
   };
 
-  // Trigger "Cerca con AI" using Brand, Model, Plate, Registration Year
+  // Trigger 360° AI Vehicle Lookup for ANY vehicle
   const handleAiSearch = async () => {
     const targetYear = yearInfo.year || plateEstimation?.year;
     const regYear = targetYear ? String(targetYear) : (regDate ? regDate.split('-')[0] : undefined);
-    const query = `${brand} ${model} ${motorization} ${regYear ? 'anno ' + regYear : ''} ${plate || ''}`.trim();
+    const query = `${brand} ${model} ${motorization} ${regYear ? 'anno ' + regYear : ''}`.trim();
 
     if (!brand.trim() && !model.trim()) {
       setAiStatusMessage({
-        text: 'Inserisci almeno la Marca o il Modello per avviare la ricerca con AI.',
+        text: 'Inserisci Marca e Modello (e opzionalmente la data/anno) per identificare qualsiasi veicolo.',
         type: 'info'
       });
       setTimeout(() => setAiStatusMessage(null), 4000);
@@ -266,12 +332,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
     try {
       setIsAiLoading(true);
-      setAiLoadingPhase('Analisi anno, targa e modello...');
+      setAiLoadingPhase(`Analisi 360° per ${brand} ${model} ${regYear ? `(anno ${regYear})` : ''}...`);
       setAiStatusMessage(null);
 
       const phaseTimer = setTimeout(() => {
-        setAiLoadingPhase('Estrazione esatta della generazione e delle motorizzazioni...');
-      }, 1200);
+        setAiLoadingPhase('Estrazione schede tecniche e ricerca foto reali in corso...');
+      }, 900);
 
       const res = await lookupVehicleWithAI(query, brand, model, regYear, plate);
       clearTimeout(phaseTimer);
@@ -295,29 +361,28 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         setAiMotorizations(res.availableMotorizations);
       }
 
-      // Find precise photo for this model & year
-      const photo = getAutomaticVehiclePhoto(
-        res.brand || brand, 
-        res.model || model, 
-        res.fuelType, 
-        res.category, 
-        regYear || targetYear
-      );
-      setPhotoUrl(photo);
+      // Populate real authentic photos
+      if (res.realPhotos && res.realPhotos.length > 0) {
+        setRealPhotos(res.realPhotos);
+        if (res.suggestedPhotoUrl) {
+          setPhotoUrl(res.suggestedPhotoUrl);
+        }
+      } else {
+        // Run fallback photo search
+        fetchPhotosForVehicle(res.brand || brand, res.model || model, regYear, res.generation);
+      }
 
       const motsFound = res.availableMotorizations?.length || 0;
       setAiStatusMessage({
-        text: res.source === 'ai' 
-          ? `✨ Trovata scheda AI: ${res.motorization || res.model}${res.generation ? ` (${res.generation})` : (regYear ? ` (Anno ${regYear})` : '')}${motsFound > 1 ? ` • ${motsFound} motorizzazioni identificate` : ''}` 
-          : `✓ Scheda caricata dal catalogo ufficiale (${res.motorization || res.model})`,
+        text: `Identificate ${motsFound > 0 ? motsFound + ' motorizzazioni ufficiali' : 'specifiche complete'} e foto reali per ${res.brand || brand} ${res.model || model} ${res.generation ? `(${res.generation})` : ''}`,
         type: 'success'
       });
       setTimeout(() => setAiStatusMessage(null), 6000);
 
     } catch (err) {
-      console.error('Errore ricerca AI:', err);
+      console.error('Errore ricerca scheda AI:', err);
       setAiStatusMessage({
-        text: 'Non è stato possibile completare la ricerca automatica. Puoi compilare i dati manualmente.',
+        text: 'Non è stato possibile completare la ricerca automatica. Puoi compilare le specifiche manualmente.',
         type: 'error'
       });
       setTimeout(() => setAiStatusMessage(null), 4000);
@@ -325,6 +390,14 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setIsAiLoading(false);
       setAiLoadingPhase('');
     }
+  };
+
+  // Custom photo query search (e.g. "Fiat Punto 2007 grigia", "Golf 5 nera", "Alfa 147 rossa")
+  const handleCustomPhotoSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const query = photoSearchQuery.trim() || `${brand} ${model} ${yearInfo.year || ''}`.trim();
+    if (!query) return;
+    fetchPhotosForVehicle(brand, model, yearInfo.year || undefined, aiGenerationInfo, query);
   };
 
   // Image Upload with compression
@@ -352,6 +425,18 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     } finally {
       setIsOptimizing(false);
     }
+  };
+
+  // Apply custom URL
+  const handleApplyCustomUrl = () => {
+    if (!customUrlInput.trim()) return;
+    setPhotoUrl(customUrlInput.trim());
+    setShowUrlInput(false);
+    setAiStatusMessage({
+      text: 'Foto da URL applicata con successo!',
+      type: 'success'
+    });
+    setTimeout(() => setAiStatusMessage(null), 3000);
   };
 
   // Submit
@@ -401,11 +486,16 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               <Car className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black text-[#0f172a] leading-tight">
-                {isEditing ? 'Modifica Veicolo' : 'Aggiungi Nuovo Veicolo'}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-[#0f172a] leading-tight">
+                  {isEditing ? 'Modifica Veicolo' : 'Aggiungi Nuovo Veicolo'}
+                </h3>
+                <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200">
+                  Supporto 360°
+                </span>
+              </div>
               <p className="text-xs text-[#64748b] mt-0.5">
-                {isEditing ? 'Aggiorna i dati della scheda tecnica' : 'Inserisci i dati manualmente o usa la ricerca AI ad alta precisione'}
+                {isEditing ? 'Aggiorna i dati della scheda tecnica' : 'Compatibile con qualsiasi marca, modello, anno e foto reali autentiche'}
               </p>
             </div>
           </div>
@@ -421,12 +511,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         {/* BODY */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto flex flex-col gap-5">
 
-          {/* 1. SEZIONE DATI PRINCIPALI: MARCA, MODELLO, TARGA, IMMATRICOLAZIONE (INSERIMENTO MANUALE) */}
+          {/* 1. SEZIONE DATI PRINCIPALI: MARCA, MODELLO, TARGA, IMMATRICOLAZIONE */}
           <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-4 shadow-2xs">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase text-[#0f172a] tracking-wider flex items-center gap-1.5">
                 <Car className="w-3.5 h-3.5 text-[#2563eb]" />
-                Dati Principali del Veicolo
+                Dati Principali del Veicolo (Qualsiasi Marca / Modello)
               </span>
               <span className="text-[10px] text-slate-400 font-medium">* Campi obbligatori</span>
             </div>
@@ -442,7 +532,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   <input 
                     type="text"
                     required
-                    placeholder="Es. Volkswagen, Cupra, Audi, Fiat, BMW..."
+                    placeholder="Scrivi o scegli una marca (es. Fiat, Audi, Toyota, Iveco...)"
                     value={brand}
                     onFocus={() => setShowBrandDropdown(true)}
                     onChange={(e) => {
@@ -470,18 +560,19 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                         onClick={() => {
                           handleBrandChange(b);
                           setShowBrandDropdown(false);
-                          setShowModelDropdown(true);
                         }}
                         className="w-full text-left px-3 py-2 text-xs font-semibold hover:bg-blue-50 text-[#0f172a] rounded-lg transition-colors flex items-center justify-between cursor-pointer"
                       >
                         <span>{b}</span>
-                        {brand.toLowerCase() === b.toLowerCase() && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                        {POPULAR_BRANDS.includes(b) && (
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-medium">Popolare</span>
+                        )}
                       </button>
                     ))}
                   </div>
                 )}
 
-                {/* Popular Brands Quick Chips */}
+                {/* Quick Brand Chips */}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {POPULAR_BRANDS.slice(0, 7).map((b) => (
                     <button
@@ -512,7 +603,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   <input 
                     type="text"
                     required
-                    placeholder="Es. Formentor, Golf, Tonale, Panda, Serie 3..."
+                    placeholder="Scrivi qualsiasi modello (es. Punto, Golf, Yaris, Daily...)"
                     value={model}
                     onFocus={() => setShowModelDropdown(true)}
                     onChange={(e) => {
@@ -581,8 +672,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                     Targa *
                   </label>
                   {plateEstimation && (
-                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
-                      Targa ~{plateEstimation.year}
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                      Immatricolazione ~{plateEstimation.year}
                     </span>
                   )}
                 </div>
@@ -609,7 +700,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                     Data Immatricolazione
                   </label>
                   {yearInfo.year && (
-                    <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200">
+                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200">
                       Anno {yearInfo.year}
                     </span>
                   )}
@@ -617,38 +708,43 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 <input 
                   type="date"
                   value={regDate}
-                  onChange={(e) => setRegDate(e.target.value)}
+                  onChange={(e) => handleRegDateChange(e.target.value)}
                   className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden"
                 />
               </div>
 
             </div>
 
-            {/* YEAR BADGE AND SYNC ASSIST */}
-            {yearInfo.label && (
-              <div className="bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between text-xs text-slate-700">
-                <div className="flex items-center gap-2">
-                  <CalendarCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span className="font-semibold">{yearInfo.label}</span>
-                </div>
-                {yearInfo.source === 'plate' && plateEstimation && (!regDate || regDate.startsWith('2026') || regDate.startsWith(new Date().getFullYear().toString())) && (
-                  <button
-                    type="button"
-                    onClick={() => setRegDate(plateEstimation.estimatedDateString)}
-                    className="text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 px-2 py-0.5 rounded-md hover:bg-blue-50 transition-colors cursor-pointer"
-                  >
-                    Imposta data {plateEstimation.year}
-                  </button>
-                )}
+            {/* QUICK YEAR SELECTION HELPER */}
+            <div className="bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                <CalendarCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Anno di riferimento: <strong className="text-blue-900">{yearInfo.year || 'Non impostato'}</strong></span>
               </div>
-            )}
+              <div className="flex items-center gap-1 flex-wrap text-[10px] font-bold">
+                {[2004, 2007, 2010, 2013, 2016, 2019, 2021, 2023, 2024, 2025, 2026].map((yr) => (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => handleRegDateChange(`${yr}-06-15`)}
+                    className={`px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                      yearInfo.year === yr
+                        ? 'bg-blue-600 text-white border-blue-600 font-black'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-700'
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* PULSANTE CERCA CON AI */}
+            {/* PULSANTE CERCA SCHEDA & FOTO CON AI (360°) */}
             <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-blue-500 shrink-0" />
+                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                 <span>
-                  {aiLoadingPhase || "L'algoritmo AI estrapola l'anno esatto per allestimenti precisi, generazioni e foto HD."}
+                  {aiLoadingPhase || `Incrocia ${brand || 'Marca'} + ${model || 'Modello'} + Anno ${yearInfo.year || ''} per schede tecniche e foto reali.`}
                 </span>
               </div>
 
@@ -662,12 +758,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 {isAiLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{aiLoadingPhase || 'Analisi scheda e anno...'}</span>
+                    <span>{aiLoadingPhase || 'Analisi 360° in corso...'}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>Cerca Scheda con AI</span>
+                    <span>Cerca Scheda Tecnica e Foto Reali (AI 360°)</span>
                   </>
                 )}
               </button>
@@ -691,14 +787,14 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
           </div>
 
-          {/* MOTORIZZAZIONI DISPONIBILI (AI + CATALOGO) CON FILTRO ALIMENTAZIONE E ANNO */}
+          {/* MOTORIZZAZIONI IDENTIFICATE (AI + CATALOGO) */}
           {(aiMotorizations.length > 0 || motorizationGroups.matchedForYear.length > 0 || motorizationGroups.otherYears.length > 0) && (
             <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] font-black uppercase text-[#0f172a] tracking-wider flex items-center gap-1.5">
                     <Sliders className="w-3.5 h-3.5 text-[#2563eb]" />
-                    {aiMotorizations.length > 0 ? 'Motorizzazioni Identificate con AI' : `Motorizzazioni Ufficiali (${brand} ${model})`}
+                    {aiMotorizations.length > 0 ? 'Motorizzazioni Identificate (AI 360°)' : `Motorizzazioni Ufficiali (${brand} ${model})`}
                   </span>
                   
                   {(aiGenerationInfo || yearInfo.year) && (
@@ -715,144 +811,110 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {aiMotorizations.length > 0 && (
+                {/* Fuel Filter */}
+                <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-[10px] font-bold">
+                  {['all', 'Diesel', 'Benzina', 'Hybrid', 'Elettrica (BEV)', 'GPL/Metano'].map((f) => (
                     <button
+                      key={f}
                       type="button"
-                      onClick={() => setAiMotorizations([])}
-                      className="text-[10px] font-bold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                      onClick={() => setSelectedFuelFilter(f)}
+                      className={`px-2 py-0.5 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+                        selectedFuelFilter === f 
+                          ? 'bg-blue-600 text-white border-blue-600 font-black' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
                     >
-                      Mostra catalogo standard
+                      {f === 'all' ? 'Tutti' : f}
                     </button>
-                  )}
-                  {aiMotorizations.length === 0 && motorizationGroups.otherYears.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllYears(!showAllYears)}
-                      className="text-[10px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
-                    >
-                      {showAllYears ? 'Nascondi altre annate' : `Tutte le generazioni (+${motorizationGroups.otherYears.length})`}
-                    </button>
-                  )}
+                  ))}
                 </div>
               </div>
 
-              {/* Filtro per tipo di alimentazione */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] font-bold">
-                {[
-                  { id: 'all', label: 'Tutte' },
-                  { id: 'Benzina', label: 'Benzina' },
-                  { id: 'Diesel', label: 'Diesel' },
-                  { id: 'Full / Mild Hybrid', label: 'Ibrida' },
-                  { id: 'Plug-in Hybrid (PHEV)', label: 'Plug-in ⚡' },
-                  { id: 'Elettrica (BEV)', label: 'Elettrica ⚡' },
-                  { id: 'GPL', label: 'GPL / Metano' }
-                ].map((chip) => {
-                  const isActive = selectedFuelFilter === chip.id;
-                  return (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      onClick={() => setSelectedFuelFilter(chip.id)}
-                      className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
-                        isActive 
-                          ? 'bg-blue-600 text-white shadow-2xs font-black' 
-                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Lista versioni AI o Compatibili con l'anno */}
+              {/* LISTA MOTORIZZAZIONI */}
               <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
-                {(aiMotorizations.length > 0 
-                  ? aiMotorizations 
-                  : (showAllYears ? motorizationGroups.all : motorizationGroups.matchedForYear)
-                )
-                .filter((m) => {
-                  if (selectedFuelFilter === 'all') return true;
-                  if (selectedFuelFilter === 'GPL') return m.fuelType.includes('GPL') || m.fuelType.includes('Metano');
-                  return m.fuelType === selectedFuelFilter;
-                })
-                .map((m) => {
-                  const isSelected = motorization === m.name;
-                  return (
-                    <button
-                      key={m.name}
-                      type="button"
-                      onClick={() => applyMotorization(m)}
-                      className={`text-left p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer ${
-                        isSelected 
-                          ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-100 shadow-2xs' 
-                          : 'bg-white border-[#e2e8f0] hover:border-blue-200 hover:bg-slate-50/50 text-[#0f172a]'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-bold text-xs text-[#0f172a]">{m.name}</span>
-                            {m.generation && (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
-                                {m.generation}
-                              </span>
-                            )}
-                            {m.years && (
-                              <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
-                                {m.years}
-                              </span>
-                            )}
+                {(aiMotorizations.length > 0 ? aiMotorizations : (showAllYears ? motorizationGroups.all : motorizationGroups.matchedForYear))
+                  .filter((m) => {
+                    if (selectedFuelFilter === 'all') return true;
+                    if (selectedFuelFilter === 'Hybrid') return m.fuelType.includes('Hybrid') || m.fuelType.includes('PHEV');
+                    if (selectedFuelFilter === 'GPL/Metano') return m.fuelType.includes('GPL') || m.fuelType.includes('Metano');
+                    return m.fuelType.includes(selectedFuelFilter);
+                  })
+                  .map((m) => {
+                    const isSelected = motorization.trim().toLowerCase() === m.name.trim().toLowerCase();
+                    return (
+                      <button
+                        key={m.name}
+                        type="button"
+                        onClick={() => applyMotorization(m)}
+                        className={`text-left p-2.5 rounded-xl border transition-all flex flex-col gap-1.5 cursor-pointer ${
+                          isSelected 
+                            ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-100 shadow-2xs' 
+                            : 'bg-white border-[#e2e8f0] hover:border-blue-200 hover:bg-slate-50/50 text-[#0f172a]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs text-[#0f172a]">{m.name}</span>
+                              {m.generation && (
+                                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
+                                  {m.generation}
+                                </span>
+                              )}
+                              {m.years && (
+                                <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
+                                  {m.years}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-medium">
+                              <span>{m.fuelType}</span>
+                              {m.displacementCc && <span>• {m.displacementCc} cc</span>}
+                              {m.transmission && <span>• {m.transmission}</span>}
+                              {m.euroStandard && <span>• {m.euroStandard}</span>}
+                            </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-medium">
-                            <span>{m.fuelType}</span>
-                            {m.displacementCc && <span>• {m.displacementCc} cc</span>}
-                            {m.transmission && <span>• {m.transmission}</span>}
-                            {m.euroStandard && <span>• {m.euroStandard}</span>}
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[11px] font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg">
+                              {m.cv} CV ({m.kw} kW)
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
-                          <span className="text-[11px] font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded-lg">
-                            {m.cv} CV ({m.kw} kW)
-                          </span>
+                        {/* Technical highlights badges */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100/80 text-[10px]">
+                          {m.fuelType !== 'Elettrica (BEV)' && (
+                            <span className="text-slate-600 flex items-center gap-1">
+                              <Fuel className="w-3 h-3 text-blue-500" />
+                              Serbatoio: <strong>{m.tankCapacity}L</strong>
+                            </span>
+                          )}
+                          {m.batteryCapacity && (
+                            <span className="text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-bold flex items-center gap-1">
+                              <Zap className="w-3 h-3 text-amber-500" />
+                              Batteria: {m.batteryCapacity} kWh
+                            </span>
+                          )}
+                          {m.secondaryTankCapacity && (
+                            <span className="text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded font-bold">
+                              Gas: {m.secondaryTankCapacity} {m.fuelType.includes('Metano') ? 'Kg' : 'L'}
+                            </span>
+                          )}
+                          {m.wltpElectricRangeKm && (
+                            <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
+                              ⚡ Autonomia WLTP: ~{m.wltpElectricRangeKm} km
+                            </span>
+                          )}
+                          {m.avgConsumption && (
+                            <span className="text-slate-500 ml-auto">
+                              Consumo: {m.avgConsumption}
+                            </span>
+                          )}
                         </div>
-                      </div>
-
-                      {/* Technical highlights badges */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100/80 text-[10px]">
-                        {m.fuelType !== 'Elettrica (BEV)' && (
-                          <span className="text-slate-600 flex items-center gap-1">
-                            <Fuel className="w-3 h-3 text-blue-500" />
-                            Serbatoio: <strong>{m.tankCapacity}L</strong>
-                          </span>
-                        )}
-                        {m.batteryCapacity && (
-                          <span className="text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-bold flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-amber-500" />
-                            Batteria: {m.batteryCapacity} kWh
-                          </span>
-                        )}
-                        {m.secondaryTankCapacity && (
-                          <span className="text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded font-bold">
-                            Gas: {m.secondaryTankCapacity} {m.fuelType.includes('Metano') ? 'Kg' : 'L'}
-                          </span>
-                        )}
-                        {m.wltpElectricRangeKm && (
-                          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">
-                            ⚡ Autonomia WLTP: ~{m.wltpElectricRangeKm} km
-                          </span>
-                        )}
-                        {m.avgConsumption && (
-                          <span className="text-slate-500 ml-auto">
-                            Consumo: {m.avgConsumption}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -878,7 +940,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 </label>
                 <input 
                   type="text"
-                  placeholder="Es. 1.5 e-HYBRID VZ 272 CV DSG (PHEV 2024+) oppure 2.0 TDI 150 CV"
+                  placeholder="Es. 1.3 Multijet 75 CV oppure 2.0 TDI 140 CV"
                   value={motorization}
                   onChange={(e) => setMotorization(e.target.value)}
                   className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden"
@@ -895,10 +957,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   onChange={(e) => {
                     const newFuel = e.target.value as FuelType;
                     setFuelType(newFuel);
-                    // refresh photo automatically
-                    if (brand && model) {
-                      setPhotoUrl(getAutomaticVehiclePhoto(brand, model, newFuel));
-                    }
                   }}
                   className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden cursor-pointer"
                 >
@@ -973,7 +1031,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                     className="w-full bg-white text-xs font-black px-2.5 py-1.5 rounded-lg border border-slate-200 outline-hidden focus:border-blue-600"
                   />
                   <span className="text-[10px] text-slate-400">
-                    {isPHEV ? 'Capienza per il motore a combustione' : 'Volume totale carburante'}
+                    {isPHEV ? 'Capienza per il motore a combustione' : 'Volume totale serbatoio'}
                   </span>
                 </div>
               )}
@@ -1021,25 +1079,36 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
             </div>
           </div>
 
-          {/* 3. SEZIONE FOTO VEICOLO (RICERCA AUTOMATICA + CARICAMENTO RAPIDO) */}
+          {/* 3. SEZIONE FOTO REALI DEL VEICOLO (WIKIPEDIA & WIKIMEDIA ARCHIVE) */}
           <div className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-2xl flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#0f172a] flex items-center gap-1.5">
-                <Car className="w-3.5 h-3.5 text-[#2563eb]" />
-                Foto del Veicolo
-              </span>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-[#2563eb]" />
+                <span className="text-xs font-bold text-[#0f172a]">
+                  Foto Reale del Veicolo
+                </span>
+                <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                  Foto Autentiche
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Trova foto reali button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const autoPhoto = getAutomaticVehiclePhoto(brand, model, fuelType);
-                    setPhotoUrl(autoPhoto);
-                  }}
-                  className="text-[11px] font-bold text-slate-600 hover:text-blue-600 bg-white border border-[#cbd5e1] hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                  onClick={() => fetchPhotosForVehicle(brand, model, yearInfo.year || undefined, aiGenerationInfo)}
+                  disabled={isSearchingPhotos || (!brand.trim() && !model.trim())}
+                  className="text-[11px] font-bold text-slate-700 hover:text-blue-700 bg-white border border-[#cbd5e1] hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Foto Automatica</span>
+                  {isSearchingPhotos ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3 text-blue-600" />
+                  )}
+                  <span>{isSearchingPhotos ? 'Ricerca...' : 'Trova Foto Reali'}</span>
                 </button>
+
+                {/* Upload custom file */}
                 <input 
                   type="file" 
                   ref={fileInputRef}
@@ -1054,36 +1123,124 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   className="text-[11px] font-bold text-[#2563eb] bg-white border border-[#cbd5e1] hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
                 >
                   <Upload className="w-3 h-3" />
-                  <span>{isOptimizing ? 'Caricamento...' : 'Carica Foto'}</span>
+                  <span>{isOptimizing ? 'Caricamento...' : 'Carica File'}</span>
+                </button>
+
+                {/* Direct Link toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                  className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  Link URL
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-28 h-18 rounded-xl overflow-hidden border border-[#cbd5e1] shrink-0 bg-slate-200 shadow-2xs">
+            {/* Custom URL Input Field */}
+            {showUrlInput && (
+              <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                <input
+                  type="url"
+                  placeholder="Incolla l'URL diretto dell'immagine..."
+                  value={customUrlInput}
+                  onChange={(e) => setCustomUrlInput(e.target.value)}
+                  className="flex-1 text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg outline-hidden focus:border-blue-600"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCustomUrl}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  Applica
+                </button>
+              </div>
+            )}
+
+            {/* Live Active Photo Preview & Real Photos Gallery */}
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              
+              {/* Main Selected Image */}
+              <div className="w-full sm:w-44 h-28 rounded-xl overflow-hidden border border-[#cbd5e1] shrink-0 bg-slate-100 shadow-2xs relative group">
                 <img 
                   src={photoUrl} 
-                  alt="Anteprima Veicolo" 
+                  alt="Foto Veicolo" 
                   className="w-full h-full object-cover"
                 />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center">
+                  <span className="text-[10px] text-white font-bold">Foto attualmente selezionata</span>
+                </div>
               </div>
 
-              {/* Preset buttons */}
-              <div className="flex flex-wrap gap-1.5 flex-1">
-                {PRESET_PHOTOS.map((p) => (
+              {/* Real Photo Suggestions or Custom Photo Search */}
+              <div className="flex-1 flex flex-col gap-2 w-full">
+                
+                {/* Search bar to find specific real photos */}
+                <div className="flex items-center gap-1.5 w-full">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Cerca foto reali (es. colore, versione, angolazione...)"
+                      value={photoSearchQuery}
+                      onChange={(e) => setPhotoSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCustomPhotoSearch();
+                        }
+                      }}
+                      className="w-full bg-white text-xs pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-200 outline-hidden focus:border-blue-600"
+                    />
+                  </div>
                   <button
-                    key={p.label}
                     type="button"
-                    onClick={() => setPhotoUrl(p.url)}
-                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
-                      photoUrl === p.url 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
+                    onClick={() => handleCustomPhotoSearch()}
+                    disabled={isSearchingPhotos}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 disabled:opacity-50"
                   >
-                    {p.label}
+                    {isSearchingPhotos ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Cerca Foto'}
                   </button>
-                ))}
+                </div>
+
+                {/* Real Photos Thumbnails Gallery */}
+                {realPhotos.length > 0 ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-slate-500">
+                      Foto reali trovate ({realPhotos.length}) - Clicca per selezionare:
+                    </span>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+                      {realPhotos.map((p, idx) => {
+                        const isCurrent = photoUrl === p.url;
+                        return (
+                          <button
+                            key={p.url + idx}
+                            type="button"
+                            onClick={() => setPhotoUrl(p.url)}
+                            title={p.title}
+                            className={`w-16 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition-all cursor-pointer relative ${
+                              isCurrent 
+                                ? 'border-blue-600 ring-2 ring-blue-200 shadow-xs' 
+                                : 'border-slate-200 hover:border-blue-300 opacity-80 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
+                            {isCurrent && (
+                              <div className="absolute top-0.5 right-0.5 bg-blue-600 text-white p-0.5 rounded-full">
+                                <Check className="w-2.5 h-2.5" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-dashed border-slate-200 rounded-xl p-3 text-center text-xs text-slate-500">
+                    <span>Inserisci Marca e Modello o scrivi nella barra per cercare foto reali autentiche.</span>
+                  </div>
+                )}
+
               </div>
             </div>
           </div>
