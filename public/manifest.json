@@ -1,7 +1,7 @@
 {
-  "name": "Gestionale Auto PWA",
-  "short_name": "GestionaleAuto",
-  "description": "Applicazione PWA per la gestione dei veicoli, registro rifornimenti, consumi e manutenzioni con Firebase e local caching.",
+  "name": "MyGarage360",
+  "short_name": "MyGarage360",
+  "description": "Gestione completa del veicolo a 360°: consumi, rifornimenti, ricariche elettriche e manutenzioni.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

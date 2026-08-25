@@ -61,11 +61,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="min-w-0">
-              <h1 className="text-base sm:text-xl font-bold tracking-tight text-[#0f172a] leading-tight truncate">
-                Il Tuo Garage
+              <h1 className="text-base sm:text-xl font-bold tracking-tight text-[#0f172a] leading-tight truncate flex items-center gap-1.5">
+                <span>Il mio garage</span>
               </h1>
               <p className="text-xs text-[#64748b] hidden sm:block truncate">
-                Panoramica parco auto, consumi e scadenze manutenzioni
+                Panoramica veicoli, consumi e manutenzioni
               </p>
             </div>
           </>
