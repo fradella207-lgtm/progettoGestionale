@@ -54,54 +54,46 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle Google Sign-In with Firebase Auth & Fallback
+  // Handle Google Sign-In with Firebase Auth
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
       // Attempt real Firebase Google Auth Popup
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
       const googleUser: UserAccount = {
         id: user.uid,
-        name: user.displayName || 'Francesco Dell\'Aquila',
-        email: user.email || 'francesco.dell\'aquila@alessandrinimainardi.edu.it',
+        name: user.displayName || (user.email ? user.email.split('@')[0] : 'Utente Google'),
+        email: user.email || '',
         plan: 'Pro Garage Cloud (Firebase)',
         syncStatus: 'synced',
-        memberSince: 'Marzo 2024',
+        memberSince: 'Agosto 2026',
         provider: 'google',
         isLoggedIn: true,
         avatarUrl: user.photoURL || undefined
       };
 
       onLoginSuccess(googleUser);
-      setSuccessMessage('Accesso eseguito con successo tramite Firebase Google Auth!');
+      setSuccessMessage('Accesso eseguito con successo con Account Google!');
       setTimeout(() => {
         setSuccessMessage(null);
         onClose();
-      }, 900);
+      }, 700);
     } catch (err: any) {
-      console.warn('Firebase Google Auth Popup standard fallback:', err);
-      // Fallback for sandboxed iframe/preview environments where popup may be restricted
-      const googleUser: UserAccount = {
-        id: `google_${Date.now()}`,
-        name: currentAccount.name || 'Francesco Dell\'Aquila',
-        email: currentAccount.email.includes('@') ? currentAccount.email : 'francesco.dell\'aquila@alessandrinimainardi.edu.it',
-        plan: 'Pro Garage Cloud (Firebase)',
-        syncStatus: 'synced',
-        memberSince: 'Marzo 2024',
-        provider: 'google',
-        isLoggedIn: true
-      };
-
-      onLoginSuccess(googleUser);
-      setSuccessMessage('Accesso effettuato con successo con Account Google!');
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onClose();
-      }, 900);
+      console.warn('Firebase Google Auth error / cancel:', err);
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setErrorMessage('Selezione account Google annullata.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setErrorMessage('Finestra popup bloccata dal browser. Consenti i popup per selezionare l\'account Google.');
+      } else {
+        setErrorMessage(err.message || 'Accesso con Google non riuscito.');
+      }
     } finally {
       setIsLoading(false);
     }

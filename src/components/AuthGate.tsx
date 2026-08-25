@@ -46,22 +46,25 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Handle Google Sign-In with Firebase Auth & Fallback
+  // Handle Google Sign-In with Firebase Auth
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
       const googleUser: UserAccount = {
         id: user.uid,
-        name: user.displayName || 'Francesco Dell\'Aquila',
-        email: user.email || "francesco.dell'aquila@alessandrinimainardi.edu.it",
+        name: user.displayName || (user.email ? user.email.split('@')[0] : 'Utente Google'),
+        email: user.email || '',
         plan: 'Pro Garage Cloud (Firebase)',
         syncStatus: 'synced',
-        memberSince: 'Marzo 2024',
+        memberSince: 'Agosto 2026',
         provider: 'google',
         isLoggedIn: true,
         avatarUrl: user.photoURL || undefined
@@ -72,23 +75,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
         onLoginSuccess(googleUser);
       }, 500);
     } catch (err: any) {
-      console.warn('Firebase Google Auth fallback:', err);
-      // Fallback for sandboxed preview
-      const googleUser: UserAccount = {
-        id: `google_${Date.now()}`,
-        name: 'Francesco Dell\'Aquila',
-        email: "francesco.dell'aquila@alessandrinimainardi.edu.it",
-        plan: 'Pro Garage Cloud (Firebase)',
-        syncStatus: 'synced',
-        memberSince: 'Marzo 2024',
-        provider: 'google',
-        isLoggedIn: true
-      };
-
-      setSuccessMessage('Accesso effettuato con Account Google!');
-      setTimeout(() => {
-        onLoginSuccess(googleUser);
-      }, 500);
+      console.warn('Firebase Google Auth error / cancel:', err);
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setErrorMessage('Selezione account Google annullata.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setErrorMessage('La finestra popup per Google è stata bloccata dal browser. Consenti i popup per accedere.');
+      } else {
+        setErrorMessage(err.message || 'Accesso con Google non riuscito. Riprova.');
+      }
     } finally {
       setIsLoading(false);
     }
