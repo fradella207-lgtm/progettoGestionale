@@ -173,6 +173,26 @@ export default function App() {
     localStorage.setItem('garage_user_account', JSON.stringify(account));
   }, [account]);
 
+  // Function to load user's Firestore data
+  const loadUserFirestoreData = async (userId: string) => {
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+          setVehicles(data.vehicles);
+          setSelectedCarId(data.vehicles[0].id);
+        }
+        if (data.settings) {
+          setSettings(data.settings);
+        }
+      }
+    } catch (e) {
+      console.debug('Firestore read exception:', e);
+    }
+  };
+
   // Listen to Firebase Auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -188,6 +208,7 @@ export default function App() {
           provider: firebaseUser.providerData[0]?.providerId.includes('google') ? 'google' : 'email',
           avatarUrl: firebaseUser.photoURL || prev.avatarUrl
         }));
+        loadUserFirestoreData(firebaseUser.uid);
       }
     });
     return () => unsubscribe();
@@ -355,6 +376,9 @@ export default function App() {
   const handleLoginSuccess = (newAccount: UserAccount) => {
     setAccount(newAccount);
     setIsAuthModalOpen(false);
+    if (newAccount.id) {
+      loadUserFirestoreData(newAccount.id);
+    }
     showToast(`Benvenuto, ${newAccount.name}! Accesso effettuato.`, 'success');
   };
 

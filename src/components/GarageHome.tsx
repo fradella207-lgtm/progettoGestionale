@@ -32,7 +32,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* 1. CLEAN GARAGE TITLE HEADER */}
-      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="w-2 h-2 rounded-full bg-[#2563eb]" />
@@ -44,6 +44,16 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             I Tuoi Veicoli
           </h2>
         </div>
+
+        <button
+          type="button"
+          id="btn-add-vehicle-header"
+          onClick={onOpenAddCar}
+          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Aggiungi Veicolo</span>
+        </button>
       </section>
 
       {/* 2. VEHICLES GRID */}
