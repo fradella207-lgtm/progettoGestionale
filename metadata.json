@@ -1,6 +1,6 @@
 {
   "name": "MyGarage360",
   "description": "Gestione completa del veicolo a 360°: consumi, rifornimenti, ricariche, manutenzioni e scadenze con sincronizzazione Cloud Firebase.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

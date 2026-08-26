@@ -27,6 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [fuelPriceAlerts, setFuelPriceAlerts] = useState<boolean>(settings.fuelPriceAlerts);
   const [predictiveAlerts, setPredictiveAlerts] = useState<boolean>(settings.predictiveAlerts);
   const [autoBackup, setAutoBackup] = useState<boolean>(settings.autoBackup);
+  const [stationDisplayMode, setStationDisplayMode] = useState<'auto' | 'fuel_only' | 'ev_only' | 'all'>(settings.stationDisplayMode || 'auto');
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -41,6 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setFuelPriceAlerts(settings.fuelPriceAlerts);
       setPredictiveAlerts(settings.predictiveAlerts);
       setAutoBackup(settings.autoBackup);
+      setStationDisplayMode(settings.stationDisplayMode || 'auto');
     }
   }, [isOpen, settings]);
 
@@ -53,7 +55,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       currency,
       fuelPriceAlerts,
       predictiveAlerts,
-      autoBackup
+      autoBackup,
+      stationDisplayMode
     });
     onClose();
   };
@@ -161,7 +164,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* SECTION 2: AI & NOTIFICATIONS PREFERENCES */}
+            {/* SECTION 2: MAP & STATIONS PREFERENCES */}
+          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
+            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Mappa Distributori & Colonnine</h4>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-[#64748b] font-semibold">Filtro Automatico Stazioni</label>
+              <select
+                value={stationDisplayMode}
+                onChange={(e) => setStationDisplayMode(e.target.value as 'auto' | 'fuel_only' | 'ev_only' | 'all')}
+                className="border border-[#e2e8f0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563eb] bg-white font-medium"
+              >
+                <option value="auto">Automatico (in base ai veicoli nel tuo Garage)</option>
+                <option value="fuel_only">Mostra solo Distributori Carburante (Benzina/Diesel/GPL/Metano)</option>
+                <option value="ev_only">Mostra solo Colonnine Elettriche (EV / Tesla / Fast DC)</option>
+                <option value="all">Mostra sempre tutto (Distributori + Colonnine)</option>
+              </select>
+              <span className="text-[11px] text-slate-500">
+                {stationDisplayMode === 'auto'
+                  ? 'Se hai solo auto termiche/ibride nasconde di default le colonnine. Se hai solo elettriche BEV mostra solo colonnine.'
+                  : 'Preferenza fissa per la mappa distributori.'}
+              </span>
+            </div>
+          </div>
+
+          {/* SECTION 3: AI & NOTIFICATIONS PREFERENCES */}
           <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
             <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Funzionalità Smart</h4>
             

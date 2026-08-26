@@ -618,19 +618,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         
         {/* HEADER */}
         <div className="px-4 sm:px-5 py-4 border-b border-[#e2e8f0] flex items-center justify-between gap-2 bg-[#fafbfc]">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            {/* Top-Left Indietro Button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
-              title="Torna indietro"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              <span>Indietro</span>
-            </button>
-
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center shadow-2xs shrink-0 hidden xs:flex">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center shadow-2xs shrink-0">
               <Car className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
@@ -649,7 +638,9 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           </div>
           <button 
             id="btn-close-add-car-modal"
+            type="button"
             onClick={onClose}
+            title="Chiudi"
             className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -1502,20 +1493,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
         </form>
 
         {/* MODAL FOOTER */}
-        <div className="px-5 py-4 border-t border-[#e2e8f0] bg-[#fafbfc] flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-white hover:bg-slate-100 text-[#0f172a] border border-[#cbd5e1] text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
-          >
-            Annulla
-          </button>
-
+        <div className="px-5 py-4 border-t border-[#e2e8f0] bg-[#fafbfc] flex items-center justify-end">
           <button
             type="button"
             id="btn-save-vehicle"
             onClick={handleSubmit}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Check className="w-4 h-4" />
             <span>{isEditing ? 'Salva Modifiche' : 'Crea Scheda Veicolo'}</span>

@@ -79,6 +79,47 @@ export interface AppSettings {
   fuelPriceAlerts: boolean;
   predictiveAlerts: boolean;
   autoBackup: boolean;
+  stationDisplayMode?: 'auto' | 'fuel_only' | 'ev_only' | 'all';
+}
+
+export type StationType = 'fuel' | 'ev' | 'both';
+
+export interface FuelPriceItem {
+  fuel: 'Benzina' | 'Diesel' | 'GPL' | 'Metano' | 'Benzina Special' | 'Diesel Special';
+  price: number; // e.g. 1.749
+  isSelf: boolean; // true for Self-Service, false for Servito
+  updatedAt: string;
+}
+
+export interface EVPlugItem {
+  type: 'Type 2 (AC)' | 'CCS Combo 2 (DC)' | 'CHAdeMO' | 'Tesla Supercharger';
+  powerKw: number; // e.g. 22, 50, 150, 300
+  pricePerKwh: number; // e.g. 0.49
+  availableCount: number;
+  totalCount: number;
+  status: 'available' | 'busy' | 'offline';
+}
+
+export interface Station {
+  id: string;
+  name: string;
+  brand: string;
+  type: StationType; // 'fuel' | 'ev' | 'both'
+  address: string;
+  city: string;
+  province: string;
+  lat: number;
+  lng: number;
+  distanceKm?: number;
+  isOpen24h?: boolean;
+  hasCarWash?: boolean;
+  hasBar?: boolean;
+  hasShop?: boolean;
+  fuelPrices?: FuelPriceItem[];
+  evPlugs?: EVPlugItem[];
+  operatorName?: string;
+  rating?: number;
+  highway?: string; // e.g. "A1 Milano-Napoli km 45"
 }
 
 export interface UserAccount {

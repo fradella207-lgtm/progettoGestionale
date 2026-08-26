@@ -9,7 +9,7 @@ import { Vehicle, AppNotification, AppSettings, UserAccount } from '../types';
 import { TopRightMenu } from './TopRightMenu';
 
 interface HeaderProps {
-  currentView: 'garage' | 'detail';
+  currentView: 'garage' | 'detail' | 'stations';
   selectedVehicle?: Vehicle;
   notifications: AppNotification[];
   settings: AppSettings;
@@ -66,6 +66,21 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             )}
           </div>
+        ) : currentView === 'stations' ? (
+          <>
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-xs shrink-0">
+              <span className="text-base">⛽</span>
+            </div>
+
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-xl font-bold tracking-tight text-[#0f172a] leading-tight truncate flex items-center gap-1.5">
+                <span>Distributori & Colonnine</span>
+              </h1>
+              <p className="text-xs text-[#64748b] hidden sm:block truncate">
+                Mappa prezzi carburanti e stazioni di ricarica in tempo reale
+              </p>
+            </div>
+          </>
         ) : (
           <>
             <div className="w-10 h-10 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-xs shrink-0">

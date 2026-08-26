@@ -1,1 +1,17 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Leaflet Custom Marker & Popup Fixes */
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-station-pin {
+  transition: transform 0.15s ease-in-out;
+}
+
+.custom-station-pin:hover {
+  transform: scale(1.12);
+  z-index: 9999 !important;
+}

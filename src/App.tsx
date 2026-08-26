@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Vehicle, RefuelRecord, MaintenanceRecord, AppNotification, AppSettings, UserAccount, EnergySourceType } from './types';
+import { Vehicle, RefuelRecord, MaintenanceRecord, AppNotification, AppSettings, UserAccount, EnergySourceType, Station } from './types';
 import { SEED_GARAGE } from './data/seedGarage';
 import { Header } from './components/Header';
 import { GarageHome } from './components/GarageHome';
 import { VehicleDetail } from './components/VehicleDetail';
+import { FuelAndChargingMap } from './components/FuelAndChargingMap';
+import { BottomNavigation } from './components/BottomNavigation';
 import { AuthGate } from './components/AuthGate';
 import { AddVehicleModal } from './components/modals/AddVehicleModal';
 import { RefuelModal } from './components/modals/RefuelModal';
@@ -90,8 +92,8 @@ export default function App() {
     return [];
   });
 
-  // 2. VIEW NAVIGATION STATE: 'garage' | 'detail'
-  const [currentView, setCurrentView] = useState<'garage' | 'detail'>('garage');
+  // 2. VIEW NAVIGATION STATE: 'garage' | 'detail' | 'stations'
+  const [currentView, setCurrentView] = useState<'garage' | 'detail' | 'stations'>('garage');
   const [selectedCarId, setSelectedCarId] = useState<string>(() => {
     return vehicles[0]?.id || '';
   });
@@ -167,15 +169,15 @@ export default function App() {
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Support swipe right gesture to navigate from detail view back to garage
+  // Support swipe right gesture to navigate back to garage
   const isAnyTopModalOpen = isAddCarModalOpen || isRefuelModalOpen || isMaintenanceModalOpen || isSettingsModalOpen || isNotificationsModalOpen || isAccountModalOpen || isAuthModalOpen;
   useSwipeBack({
     onBack: () => {
-      if (currentView === 'detail') {
+      if (currentView === 'detail' || currentView === 'stations') {
         setCurrentView('garage');
       }
     },
-    enabled: currentView === 'detail' && !isAnyTopModalOpen
+    enabled: (currentView === 'detail' || currentView === 'stations') && !isAnyTopModalOpen
   });
 
   // Sync to localStorage and Firestore
@@ -337,6 +339,26 @@ export default function App() {
     };
 
     setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+  };
+
+  // Handler: Open Refuel with Station info pre-filled
+  const handleOpenRefuelWithStation = (station: Station, fuelOrPlug: { price: number; type: EnergySourceType; name: string }) => {
+    if (vehicles.length === 0) {
+      showToast('Aggiungi prima un veicolo al tuo garage per registrare un rifornimento!', 'error');
+      return;
+    }
+    setEditingRefuel({
+      id: `ref_${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      km: 0,
+      quantity: 0,
+      price: fuelOrPlug.price,
+      type: 'full',
+      energyType: fuelOrPlug.type,
+      notes: `Rifornito presso: ${fuelOrPlug.name}`
+    });
+    setRefuelDefaultEnergyType(fuelOrPlug.type);
+    setIsRefuelModalOpen(true);
   };
 
   // Handler: Delete Refuel
@@ -517,9 +539,18 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* 2. MAIN VIEW (HOME GARAGE OR VEHICLE DETAIL) */}
-      <main className="flex-1 flex flex-col">
-        {currentView === 'garage' ? (
+      {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL & CHARGING MAP) */}
+      <main className="flex-1 flex flex-col pb-24">
+        {currentView === 'stations' ? (
+          <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 md:p-8 animate-in fade-in duration-200">
+            <FuelAndChargingMap 
+              vehicles={vehicles}
+              selectedVehicle={selectedVehicle}
+              settings={settings}
+              onOpenRefuelWithStation={handleOpenRefuelWithStation}
+            />
+          </div>
+        ) : currentView === 'garage' ? (
           <GarageHome 
             vehicles={vehicles}
             settings={settings}
@@ -579,19 +610,17 @@ export default function App() {
         )}
       </main>
 
-      {/* 3. FOOTER */}
-      <footer className="bg-white border-t border-[#e2e8f0] py-4 px-6 text-center text-xs text-[#64748b] flex flex-wrap justify-between items-center max-w-7xl mx-auto w-full mt-auto">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-[#0f172a]">Gestionale Auto PWA</span>
-          <span>•</span>
-          <span>{vehicles.length} veicoli nel garage</span>
-        </div>
-        <div>
-          <span>Micro-Cache Locale & Offline Ready</span>
-        </div>
-      </footer>
+      {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}
+      <BottomNavigation 
+        activeTab={currentView === 'stations' ? 'stations' : 'garage'}
+        onSelectTab={(tab) => {
+          setCurrentView(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        vehiclesCount={vehicles.length}
+      />
 
-      {/* 4. TOAST NOTIFICATION CONTAINER */}
+      {/* 5. TOAST NOTIFICATION CONTAINER */}
       {toastMessage && (
         <div 
           id="toast-notification"
