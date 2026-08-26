@@ -49,9 +49,22 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
   const [notes, setNotes] = useState(editingRefuel?.notes || '');
   const [chargingPowerKw, setChargingPowerKw] = useState<number | ''>(editingRefuel?.chargingPowerKw ?? '');
 
+  const handleCloseOrDelete = () => {
+    if (isEditing && onDelete && editingRefuel) {
+      if (window.confirm('Sei sicuro di voler eliminare questa registrazione?')) {
+        onDelete(editingRefuel.id);
+        onClose();
+      }
+    } else {
+      if (window.confirm('Sei sicuro di voler annullare? I dati non salvati andranno persi.')) {
+        onClose();
+      }
+    }
+  };
+
   // Support swipe right gesture to go back / close
   useSwipeBack({
-    onBack: onClose,
+    onBack: handleCloseOrDelete,
     enabled: isOpen
   });
 
@@ -131,19 +144,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
         
         {/* HEADER */}
         <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            {/* Top-Left Indietro Button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
-              title="Torna indietro"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              <span>Indietro</span>
-            </button>
-
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 hidden xs:flex ${
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
               energyType === 'electricity' 
                 ? 'bg-amber-50 text-amber-600 border-amber-200' 
                 : 'bg-blue-50 text-[#2563eb] border-blue-100'
@@ -161,8 +163,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           </div>
           <button 
             id="btn-close-refuel-modal"
-            onClick={onClose} 
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+            type="button"
+            onClick={handleCloseOrDelete} 
+            title={isEditing ? 'Elimina registrazione' : 'Annulla inserimento'}
+            className="text-slate-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -425,39 +429,14 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
-            {isEditing && onDelete ? (
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (confirm('Sei sicuro di voler eliminare questa registrazione?')) {
-                    onDelete(editingRefuel!.id);
-                    onClose();
-                  }
-                }}
-                className="bg-red-50 hover:bg-red-100 text-[#dc2626] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Elimina</span>
-              </button>
-            ) : <div />}
-
-            <div className="flex items-center gap-2">
-              <button 
-                type="button" 
-                onClick={onClose}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
-              >
-                Annulla
-              </button>
-              <button 
-                type="submit" 
-                id="btn-submit-refuel-form"
-                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors shadow-xs"
-              >
-                {isEditing ? 'Salva Registrazione' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}
-              </button>
-            </div>
+          <div className="flex items-center justify-end pt-3 border-t border-[#e2e8f0]">
+            <button 
+              type="submit" 
+              id="btn-submit-refuel-form"
+              className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-xs cursor-pointer text-center"
+            >
+              {isEditing ? 'Salva Modifiche' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}
+            </button>
           </div>
 
         </form>

@@ -29,9 +29,22 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   const [workshop, setWorkshop] = useState(editingMaintenance?.workshop || '');
   const [description, setDescription] = useState(editingMaintenance?.description || '');
 
+  const handleCloseOrDelete = () => {
+    if (isEditing && onDelete && editingMaintenance) {
+      if (window.confirm('Sei sicuro di voler eliminare questo intervento di manutenzione?')) {
+        onDelete(editingMaintenance.id);
+        onClose();
+      }
+    } else {
+      if (window.confirm('Sei sicuro di voler annullare? I dati non salvati andranno persi.')) {
+        onClose();
+      }
+    }
+  };
+
   // Support swipe right gesture to go back / close
   useSwipeBack({
-    onBack: onClose,
+    onBack: handleCloseOrDelete,
     enabled: isOpen
   });
 
@@ -74,19 +87,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
         
         {/* HEADER */}
         <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            {/* Top-Left Indietro Button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
-              title="Torna indietro"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-              <span>Indietro</span>
-            </button>
-
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center border border-emerald-100 shrink-0 hidden xs:flex">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center border border-emerald-100 shrink-0">
               <Wrench className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -98,8 +100,10 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
           </div>
           <button 
             id="btn-close-maint-modal"
-            onClick={onClose} 
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+            type="button"
+            onClick={handleCloseOrDelete} 
+            title={isEditing ? 'Elimina intervento' : 'Annulla inserimento'}
+            className="text-slate-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -198,39 +202,14 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
-            {isEditing && onDelete ? (
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (confirm('Sei sicuro di voler eliminare questo intervento?')) {
-                    onDelete(editingMaintenance!.id);
-                    onClose();
-                  }
-                }}
-                className="bg-red-50 hover:bg-red-100 text-[#dc2626] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Elimina</span>
-              </button>
-            ) : <div />}
-
-            <div className="flex items-center gap-2">
-              <button 
-                type="button" 
-                onClick={onClose}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
-              >
-                Annulla
-              </button>
-              <button 
-                type="submit" 
-                id="btn-submit-maint-form"
-                className="bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors shadow-xs"
-              >
-                {isEditing ? 'Salva Intervento' : 'Registra Intervento'}
-              </button>
-            </div>
+          <div className="flex items-center justify-end pt-3 border-t border-[#e2e8f0]">
+            <button 
+              type="submit" 
+              id="btn-submit-maint-form"
+              className="w-full sm:w-auto bg-[#059669] hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-xs cursor-pointer text-center"
+            >
+              {isEditing ? 'Salva Modifiche' : 'Registra Intervento'}
+            </button>
           </div>
 
         </form>
