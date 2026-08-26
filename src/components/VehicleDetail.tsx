@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
+import { BoardTripsModal } from './modals/BoardTripsModal';
+import { RefuelsRegistryModal } from './modals/RefuelsRegistryModal';
+import { MaintenancesRegistryModal } from './modals/MaintenancesRegistryModal';
 import { calculateVehicleConsumptionMetrics, RefuelWithCalculation } from '../utils/consumptionCalculator';
 
 interface VehicleDetailProps {
@@ -50,6 +53,11 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'refuels' | 'maintenances'>('refuels');
   const [selectedDetailData, setSelectedDetailData] = useState<DetailModalData | null>(null);
+
+  // Dedicated Modals for Registries and Board Trips
+  const [isBoardTripsModalOpen, setIsBoardTripsModalOpen] = useState(false);
+  const [isRefuelsRegistryOpen, setIsRefuelsRegistryOpen] = useState(false);
+  const [isMaintenancesRegistryOpen, setIsMaintenancesRegistryOpen] = useState(false);
 
   // Accordion & View Controls for Refuels / Maintenances
   const [isSectionOpen, setIsSectionOpen] = useState(true);
@@ -340,7 +348,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       </section>
 
-      {/* 2. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN) */}
+      {/* 2. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
       <section className="bg-white rounded-3xl border border-[#e2e8f0] p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
         
         {/* Header Sezione Statistiche */}
@@ -380,7 +388,16 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           </div>
 
           {/* Card 2: Carburante & Ricarica Elettrica (CON SUPPORTO PHEV / BEV / TERMICHE) */}
-          <div className="pt-3 md:pt-0 md:px-4 flex flex-col justify-between min-w-0">
+          <div 
+            onClick={() => {
+              if (metrics.boardTrips.length > 0) {
+                setIsBoardTripsModalOpen(true);
+              } else {
+                setIsRefuelsRegistryOpen(true);
+              }
+            }}
+            className="pt-3 md:pt-0 md:px-4 flex flex-col justify-between min-w-0 hover:bg-blue-50/40 p-2 rounded-2xl transition-colors cursor-pointer group"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 min-w-0">
               <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                 {isPHEV ? <Zap className="w-3.5 h-3.5 text-amber-500" /> : <Fuel className="w-3.5 h-3.5 text-[#2563eb]" />}
@@ -408,9 +425,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               )}
             </div>
 
-            <div className="my-1.5">
+            <div className="my-1.5 flex items-baseline justify-between">
               <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#2563eb] truncate block">
                 {settings.currency} {metrics.totalFuelSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
+                {metrics.boardTrips.length > 0 ? 'Vedi Trip →' : 'Registro →'}
               </span>
             </div>
 
@@ -442,7 +462,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           </div>
 
           {/* Card 3: Manutenzioni */}
-          <div className="pt-3 md:pt-0 md:px-4 last:pr-0 flex flex-col justify-between min-w-0">
+          <div 
+            onClick={() => setIsMaintenancesRegistryOpen(true)}
+            className="pt-3 md:pt-0 md:px-4 last:pr-0 flex flex-col justify-between min-w-0 hover:bg-emerald-50/40 p-2 rounded-2xl transition-colors cursor-pointer group"
+          >
             <div className="flex items-center justify-between gap-1">
               <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider flex items-center gap-1.5 truncate">
                 <Wrench className="w-3.5 h-3.5 text-[#059669] shrink-0" /> Manutenzioni
@@ -451,9 +474,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 {(vehicle.maintenances || []).length} interventi
               </span>
             </div>
-            <div className="my-1.5">
+            <div className="my-1.5 flex items-baseline justify-between">
               <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#059669] truncate block">
                 {settings.currency} {metrics.totalMaintSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
+                Libretto →
               </span>
             </div>
             <p className="text-[11px] text-[#64748b]">
@@ -462,6 +488,45 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           </div>
 
         </div>
+
+        {/* INTERACTIVE BANNER: TRIP DI BORDO (SE PRESENTI PIENO-PIENO) */}
+        {metrics.boardTrips.length > 0 ? (
+          <div 
+            onClick={() => setIsBoardTripsModalOpen(true)}
+            className="mt-1 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group select-none relative overflow-hidden"
+          >
+            <div className="flex items-center gap-3.5 min-w-0 relative z-10">
+              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Gauge className="w-5 h-5 text-blue-200" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm font-black text-white tracking-tight">
+                    Andamento Trip di Bordo (Cicli Pieno-Pieno)
+                  </span>
+                  <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs animate-pulse">
+                    {metrics.boardTrips.length} {metrics.boardTrips.length === 1 ? 'Trip Disponibile' : 'Trip Disponibili'}
+                  </span>
+                </div>
+                <p className="text-xs text-blue-200 mt-0.5">
+                  Consumo medio certificato: <strong className="text-white">{metrics.kmPerUnit} km/{fuelUnit}</strong> ({metrics.unitPer100Km} {fuelUnit}/100km) • Distanza monitorata: <strong className="text-white">{metrics.boardTrips.reduce((acc, t) => acc + t.distanceKm, 0).toLocaleString('it-IT')} km</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/15 group-hover:bg-white/25 rounded-xl text-xs font-black text-white shrink-0 self-end sm:self-center transition-colors">
+              <span>Apri Analisi Trip</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-2">
+              <Gauge className="w-4 h-4 text-slate-400 shrink-0" />
+              <span>Registra almeno 2 rifornimenti completi ("Pieno") per attivare l'analisi automatica dei Trip di Bordo e l'andamento dei consumi.</span>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 3. TASTI AZIONE: RIFORNIMENTO/RICARICA UNO SOPRA L'ALTRO, E DI FIANCO MANUTENZIONE */}
@@ -637,574 +702,215 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       )}
 
-      {/* 4. REGISTRO ATTIVITÀ & STORICO A TENDINA: RIFORNIMENTI E MANUTENZIONI */}
-      <section className="bg-white rounded-3xl border border-[#e2e8f0] flex flex-col overflow-hidden shadow-xs min-w-0">
+      {/* 4. SEPARAZIONE REGISTRI: 2 SEZIONI PULITE, DISTINTE E MODALI DEDICATI */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 min-w-0">
         
-        {/* Section Header with Collapsible Toggle */}
-        <div className="px-4 sm:px-5 py-3.5 border-b border-[#e2e8f0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#fafbfc] min-w-0">
-          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
-            <div className="flex items-center gap-2">
+        {/* CARD A: REGISTRO RIFORNIMENTI & RICARICHE */}
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between">
+          
+          <div>
+            {/* Header Registro Rifornimenti */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
+                  <Fuel className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    {isPHEV ? 'Registro Rifornimenti & Ricariche' : (isBEV ? 'Registro Ricariche Elettriche' : 'Registro Rifornimenti')}
+                  </h3>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {(vehicle.refuels || []).length} registrazioni • {settings.currency} {metrics.totalFuelSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setIsSectionOpen(!isSectionOpen)}
-                className="flex items-center gap-2 text-left font-black text-sm text-[#0f172a] hover:text-blue-600 transition-colors cursor-pointer select-none"
+                onClick={() => setIsRefuelsRegistryOpen(true)}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-black flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
-                  <Receipt className="w-4 h-4" />
-                </div>
-                <span>Registro Storico Attività</span>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSectionOpen ? 'rotate-180 text-blue-600' : ''}`} />
+                <span>Apri Registro</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Quick Record Counter Badges */}
-            <div className="flex items-center gap-1.5 sm:hidden">
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                {(vehicle.refuels || []).length} Riforn.
-              </span>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {(vehicle.maintenances || []).length} Manut.
-              </span>
+            {/* List preview (recent 3 items) */}
+            <div className="p-3 sm:p-4 flex flex-col gap-2">
+              {(vehicle.refuels || []).length === 0 ? (
+                <div className="py-8 text-center flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <Fuel className="w-8 h-8 text-slate-300" />
+                  <p className="text-xs font-bold text-slate-600">Nessun rifornimento registrato</p>
+                  <p className="text-[11px] text-slate-400">Registra il primo rifornimento per tracciare i consumi.</p>
+                </div>
+              ) : (
+                metrics.calculatedRefuels.slice(0, 3).map((refuel) => {
+                  const isElectric = refuel.energyType === 'electricity' || refuel.unit === 'kWh';
+                  const unit = refuel.unit || fuelUnit;
+
+                  return (
+                    <div
+                      key={refuel.id}
+                      onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
+                      className="p-3 bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                          isElectric ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {isElectric ? <Zap className="w-4 h-4" /> : <Fuel className="w-4 h-4" />}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-slate-900">{refuel.date}</span>
+                            <span className={`text-[9.5px] font-extrabold px-1.5 py-0.2 rounded ${
+                              refuel.type === 'full' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'
+                            }`}>
+                              {refuel.type === 'full' ? 'Pieno' : 'Parziale'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+                            <span>{Number(refuel.km).toLocaleString('it-IT')} km</span>
+                            {refuel.intervalConsumption && (
+                              <span className="font-bold text-emerald-700">
+                                • {refuel.intervalConsumption.formattedKmPerUnit} km/{unit}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 flex items-center gap-2">
+                        <div>
+                          <span className="text-xs sm:text-sm font-black text-blue-700 block">
+                            {settings.currency} {Number(refuel.price).toFixed(2)}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            {refuel.quantity} {unit}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
-          {isSectionOpen && (
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
-              {/* Tab Selector Buttons */}
-              <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl shrink-0">
-                <button 
-                  id="tab-refuels-btn"
-                  onClick={() => setActiveTab('refuels')}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
-                    activeTab === 'refuels' 
-                      ? 'bg-white text-[#2563eb] shadow-xs' 
-                      : 'text-[#64748b] hover:text-[#0f172a]'
-                  }`}
-                >
-                  <Fuel className="w-3.5 h-3.5 shrink-0" />
-                  <span>Rifornimenti ({(vehicle.refuels || []).length})</span>
-                </button>
+          {/* Footer Card A */}
+          <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500">
+              Visualizzati gli ultimi {Math.min(3, (vehicle.refuels || []).length)} di {(vehicle.refuels || []).length}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsRefuelsRegistryOpen(true)}
+              className="text-xs font-black text-blue-700 hover:text-blue-800 flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              Vedi tutto lo storico ({metrics.calculatedRefuels.length}) →
+            </button>
+          </div>
 
-                <button 
-                  id="tab-maintenances-btn"
-                  onClick={() => setActiveTab('maintenances')}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
-                    activeTab === 'maintenances' 
-                      ? 'bg-white text-[#059669] shadow-xs' 
-                      : 'text-[#64748b] hover:text-[#0f172a]'
-                  }`}
-                >
-                  <Wrench className="w-3.5 h-3.5 shrink-0" />
-                  <span>Manutenzioni ({(vehicle.maintenances || []).length})</span>
-                </button>
-              </div>
-
-              {/* View Mode Toggle Button */}
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold text-slate-600 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('compact')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    viewMode === 'compact' ? 'bg-white text-slate-900 shadow-2xs font-extrabold' : 'hover:text-slate-900'
-                  }`}
-                  title="Vista Compatta con pulsante Espandi"
-                >
-                  Compatta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grouped')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    viewMode === 'grouped' ? 'bg-white text-slate-900 shadow-2xs font-extrabold' : 'hover:text-slate-900'
-                  }`}
-                  title="Raggruppa per Anno a tendina"
-                >
-                  Per Anno
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Collapsed Preview Summary Bar */}
-        {!isSectionOpen && (
-          <div 
-            onClick={() => setIsSectionOpen(true)}
-            className="p-3.5 bg-slate-50 hover:bg-blue-50/50 transition-colors flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-600"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-slate-900 font-bold">
-                {(vehicle.refuels || []).length} Rifornimenti • {(vehicle.maintenances || []).length} Manutenzioni
-              </span>
-              <span className="hidden sm:inline text-slate-400">|</span>
-              <span className="hidden sm:inline text-slate-500">
-                Totale Speso: <strong className="text-slate-800">{settings.currency} {metrics.totalOverallSpent.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</strong>
-              </span>
+        {/* CARD B: LIBRETTO MANUTENZIONI & OFFICINA */}
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between">
+          
+          <div>
+            {/* Header Manutenzioni */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Wrench className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Libretto Manutenzioni & Officina
+                  </h3>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    {(vehicle.maintenances || []).length} interventi • {settings.currency} {metrics.totalMaintSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsMaintenancesRegistryOpen(true)}
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-black flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <span>Apri Libretto</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <span className="text-blue-600 font-bold flex items-center gap-1 hover:underline">
-              Espandi registro <ChevronDown className="w-3.5 h-3.5" />
+
+            {/* List preview (recent 3 items) */}
+            <div className="p-3 sm:p-4 flex flex-col gap-2">
+              {(vehicle.maintenances || []).length === 0 ? (
+                <div className="py-8 text-center flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <Wrench className="w-8 h-8 text-slate-300" />
+                  <p className="text-xs font-bold text-slate-600">Nessun intervento registrato</p>
+                  <p className="text-[11px] text-slate-400">Registra tagliandi, pastiglie freni o interventi d'officina.</p>
+                </div>
+              ) : (
+                (vehicle.maintenances || []).slice(0, 3).map((maint) => {
+                  return (
+                    <div
+                      key={maint.id}
+                      onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
+                      className="p-3 bg-slate-50/80 hover:bg-emerald-50/60 border border-slate-200/80 hover:border-emerald-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                          <Wrench className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-slate-900">{maint.date}</span>
+                            <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 truncate max-w-[120px]">
+                              {maint.category || maint.type || 'Manutenzione'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5 truncate">
+                            <span>{Number(maint.km).toLocaleString('it-IT')} km</span>
+                            {maint.workshop && <span>• {maint.workshop}</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0 flex items-center gap-2">
+                        <div>
+                          <span className="text-xs sm:text-sm font-black text-emerald-700 block">
+                            {settings.currency} {Number(maint.cost).toFixed(2)}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            Costo spesa
+                          </span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Footer Card B */}
+          <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-500">
+              Visualizzati gli ultimi {Math.min(3, (vehicle.maintenances || []).length)} di {(vehicle.maintenances || []).length}
             </span>
+            <button
+              type="button"
+              onClick={() => setIsMaintenancesRegistryOpen(true)}
+              className="text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              Vedi tutto il libretto ({(vehicle.maintenances || []).length}) →
+            </button>
           </div>
-        )}
 
-        {isSectionOpen && (
-          <div className="p-3.5 sm:p-4 flex flex-col gap-3">
-            
-            {/* Quick Filter Year Toolbar if multiple years exist */}
-            {availableYears.length > 1 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-1 shrink-0">
-                  <Filter className="w-3 h-3" /> Anno:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedYear('all')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                    selectedYear === 'all' 
-                      ? 'bg-slate-900 text-white shadow-2xs' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  Tutti ({activeTab === 'refuels' ? (vehicle.refuels || []).length : (vehicle.maintenances || []).length})
-                </button>
-                {availableYears.map(yr => (
-                  <button
-                    key={yr}
-                    type="button"
-                    onClick={() => setSelectedYear(yr)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                      selectedYear === yr 
-                        ? 'bg-blue-600 text-white shadow-2xs' 
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {yr}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* TAB 1: RIFORNIMENTI */}
-            {activeTab === 'refuels' && (
-              <div className="flex flex-col gap-2.5">
-                {filteredRefuels.length === 0 ? (
-                  <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center">
-                      <Fuel className="w-6 h-6" />
-                    </div>
-                    <div className="max-w-sm px-2">
-                      <p className="text-sm font-bold text-[#0f172a]">Nessun rifornimento registrato</p>
-                      <p className="text-xs text-[#64748b] mt-0.5">
-                        Registra i rifornimenti per calcolare i consumi medi e la spesa chilometrica.
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => onOpenAddRefuel()}
-                      className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> + Aggiungi Rifornimento
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* View Mode 1: Compact List (with expand/collapse if > 4 items) */}
-                    {viewMode === 'compact' && (
-                      <div className="flex flex-col gap-2">
-                        {(showAllRefuels ? filteredRefuels : filteredRefuels.slice(0, 4)).map((refuel) => {
-                          const qty = Number(refuel.quantity) || 0;
-                          const price = Number(refuel.price) || 0;
-                          const isFull = refuel.type === 'full';
-                          const isEV = refuel.energyType === 'electricity' || refuel.unit === 'kWh' || (isBEV && !refuel.energyType);
-                          const isLPG = refuel.energyType === 'lpg';
-                          const isCNG = refuel.energyType === 'cng';
-                          const unit = refuel.unit || (isEV ? 'kWh' : (isCNG ? 'Kg' : 'L'));
-
-                          return (
-                            <div 
-                              key={refuel.id}
-                              onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
-                              className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#93c5fd] rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
-                            >
-                              {/* Left: Icon, Date, Type Badge & Km */}
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                                  isEV 
-                                    ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                                    : (isLPG 
-                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                                      : (isCNG 
-                                        ? 'bg-teal-50 text-teal-600 border-teal-200' 
-                                        : 'bg-blue-50 text-[#2563eb] border-blue-100'))
-                                }`}>
-                                  {isEV ? <Zap className="w-4 h-4 sm:w-5 sm:h-5" /> : <Fuel className="w-4 h-4 sm:w-5 sm:h-5" />}
-                                </div>
-                                
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-xs sm:text-sm font-black text-[#0f172a]">
-                                      {refuel.date.split('-').reverse().join('/')}
-                                    </span>
-                                    {isEV ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
-                                        ⚡ Elettrica {isFull ? '100%' : 'Parz.'}
-                                      </span>
-                                    ) : isLPG ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-200 whitespace-nowrap">
-                                        🔵 GPL {isFull ? 'Pieno' : 'Parz.'}
-                                      </span>
-                                    ) : isCNG ? (
-                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-teal-100 text-teal-900 border border-teal-200 whitespace-nowrap">
-                                        🟢 Metano {isFull ? 'Pieno' : 'Parz.'}
-                                      </span>
-                                    ) : (
-                                      <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase whitespace-nowrap ${
-                                        isFull ? 'bg-emerald-50 text-[#059669] border border-emerald-100' : 'bg-slate-100 text-[#64748b] border border-slate-200'
-                                      }`}>
-                                        {isFull ? 'Pieno' : 'Parziale'}
-                                      </span>
-                                    )}
-
-                                    {/* Interval Consumption badge if computed */}
-                                    {refuel.intervalConsumption && (
-                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-black bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
-                                        {refuel.intervalConsumption.formattedKmPerUnit} km/{unit} ({refuel.intervalConsumption.formattedUnitPer100Km} {unit}/100km)
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-2 text-xs text-[#64748b] mt-0.5 flex-wrap">
-                                    <span className="font-semibold text-[#334155]">{refuel.km.toLocaleString('it-IT')} km</span>
-                                    {refuel.deltaKm !== null && refuel.deltaKm > 0 && (
-                                      <span className="text-[11px] text-blue-600 font-bold hidden sm:inline">
-                                        (+{refuel.deltaKm.toLocaleString('it-IT')} km)
-                                      </span>
-                                    )}
-                                    {refuel.notes && (
-                                      <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
-                                        • {refuel.notes}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right: Quantity, Price & Actions */}
-                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
-                                <div className="text-left sm:text-right">
-                                  <div className="text-sm sm:text-base font-black text-[#0f172a] whitespace-nowrap">
-                                    {settings.currency} {price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </div>
-                                  <div className="text-xs text-[#64748b] font-medium whitespace-nowrap">
-                                    {qty.toLocaleString('it-IT', { minimumFractionDigits: 2 })} {unit}
-                                    {refuel.unitPrice && <span className="text-[10.5px] ml-1 text-slate-400">({refuel.unitPrice} €/{unit})</span>}
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 ml-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenEditRefuel(refuel);
-                                    }}
-                                    className="p-1.5 sm:p-2 rounded-xl text-[#64748b] hover:text-[#2563eb] hover:bg-blue-50 transition-colors"
-                                    title="Modifica rapida"
-                                  >
-                                    <Edit3 className="w-4 h-4" />
-                                  </button>
-                                  
-                                  <div className="p-1.5 sm:p-2 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-400 group-hover:text-[#2563eb] transition-colors">
-                                    <ChevronRight className="w-4 h-4" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {/* Accordion expand/collapse pill for refuels */}
-                        {filteredRefuels.length > 4 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowAllRefuels(!showAllRefuels)}
-                            className="mt-1 w-full py-2.5 px-4 bg-slate-50 hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 rounded-xl text-xs font-black text-blue-700 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                          >
-                            {showAllRefuels ? (
-                              <>
-                                <ChevronUp className="w-4 h-4" />
-                                <span>Mostra meno (visualizza solo gli ultimi 4)</span>
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="w-4 h-4" />
-                                <span>Mostra tutti i {filteredRefuels.length} rifornimenti registrati</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Mode 2: Grouped by Year Accordion */}
-                    {viewMode === 'grouped' && (
-                      <div className="flex flex-col gap-3">
-                        {(Object.entries(refuelsByYear) as [string, RefuelWithCalculation[]][]).map(([year, records]) => {
-                          const isYearCollapsed = !!collapsedYears[`refuel-${year}`];
-                          const totalYearSpend = records.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
-                          const totalYearQty = records.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-
-                          return (
-                            <div key={year} className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
-                              {/* Year Group Accordion Header */}
-                              <button
-                                type="button"
-                                onClick={() => toggleYearCollapse(`refuel-${year}`)}
-                                className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer border-b border-slate-100"
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isYearCollapsed ? '-rotate-90' : ''}`} />
-                                  <span className="text-sm font-black text-slate-900">Anno {year}</span>
-                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                                    {records.length} {records.length === 1 ? 'rifornimento' : 'rifornimenti'}
-                                  </span>
-                                </div>
-
-                                <div className="text-xs font-bold text-slate-600">
-                                  <span>{settings.currency} {totalYearSpend.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
-                                  <span className="hidden sm:inline text-slate-400 font-normal ml-1.5">({totalYearQty.toFixed(1)} {fuelUnit})</span>
-                                </div>
-                              </button>
-
-                              {!isYearCollapsed && (
-                                <div className="p-2.5 flex flex-col gap-2 divide-y divide-slate-100">
-                                  {records.map(refuel => {
-                                    const qty = Number(refuel.quantity) || 0;
-                                    const price = Number(refuel.price) || 0;
-                                    const isFull = refuel.type === 'full';
-                                    const isEV = refuel.energyType === 'electricity' || refuel.unit === 'kWh';
-                                    const unit = refuel.unit || (isEV ? 'kWh' : 'L');
-
-                                    return (
-                                      <div
-                                        key={refuel.id}
-                                        onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
-                                        className="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-slate-50 p-1.5 rounded-lg transition-colors cursor-pointer"
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                          <span className="font-bold text-slate-900 whitespace-nowrap">{refuel.date.split('-').reverse().join('/')}</span>
-                                          <span className="text-slate-600 font-medium whitespace-nowrap">{refuel.km.toLocaleString('it-IT')} km</span>
-                                          {refuel.intervalConsumption && (
-                                            <span className="hidden md:inline px-1.5 py-0.2 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
-                                              {refuel.intervalConsumption.formattedKmPerUnit} km/{unit}
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        <div className="flex items-center gap-2 shrink-0">
-                                          <span className="font-black text-slate-900">{settings.currency} {price.toFixed(2)}</span>
-                                          <span className="text-slate-500 font-medium">({qty.toFixed(1)} {unit})</span>
-                                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: MANUTENZIONI */}
-            {activeTab === 'maintenances' && (
-              <div className="flex flex-col gap-2.5">
-                {filteredMaintenances.length === 0 ? (
-                  <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center">
-                      <Wrench className="w-6 h-6" />
-                    </div>
-                    <div className="max-w-sm px-2">
-                      <p className="text-sm font-bold text-[#0f172a]">Nessuna manutenzione registrata</p>
-                      <p className="text-xs text-[#64748b] mt-0.5">
-                        Tieni traccia di tagliandi, pastiglie freni, gomme e revisioni per mantenere alto il valore della tua auto.
-                      </p>
-                    </div>
-                    <button 
-                      onClick={onOpenAddMaintenance}
-                      className="bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> + Aggiungi Manutenzione
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* View Mode 1: Compact List (with expand/collapse if > 4 items) */}
-                    {viewMode === 'compact' && (
-                      <div className="flex flex-col gap-2">
-                        {(showAllMaintenances ? filteredMaintenances : filteredMaintenances.slice(0, 4)).map((maint) => {
-                          const cost = Number(maint.cost) || 0;
-
-                          return (
-                            <div 
-                              key={maint.id}
-                              onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
-                              className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#a7f3d0] rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
-                            >
-                              {/* Left: Date, Category & Workshop */}
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                  <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
-                                </div>
-                                
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-xs sm:text-sm font-black text-[#0f172a]">
-                                      {maint.date.split('-').reverse().join('/')}
-                                    </span>
-                                    <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-emerald-50 text-[#059669] border border-emerald-100 whitespace-nowrap">
-                                      {maint.category}
-                                    </span>
-                                  </div>
-
-                                  <div className="text-xs text-[#64748b] mt-0.5 flex items-center gap-2 flex-wrap">
-                                    <span className="font-semibold text-[#334155]">{maint.km.toLocaleString('it-IT')} km</span>
-                                    {maint.workshop && (
-                                      <span className="truncate max-w-[120px] sm:max-w-[180px]">• {maint.workshop}</span>
-                                    )}
-                                    {maint.description && (
-                                      <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
-                                        • {maint.description}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right: Cost & Actions */}
-                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
-                                <div className="text-left sm:text-right">
-                                  <div className="text-sm sm:text-base font-black text-[#059669] whitespace-nowrap">
-                                    {settings.currency} {cost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </div>
-                                  <div className="text-[11px] text-[#64748b] whitespace-nowrap font-medium">
-                                    Spesa registrata
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-1 ml-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenEditMaintenance(maint);
-                                    }}
-                                    className="p-1.5 sm:p-2 rounded-xl text-[#64748b] hover:text-[#059669] hover:bg-emerald-50 transition-colors"
-                                    title="Modifica rapida"
-                                  >
-                                    <Edit3 className="w-4 h-4" />
-                                  </button>
-                                  
-                                  <div className="p-1.5 sm:p-2 rounded-xl bg-slate-100 group-hover:bg-emerald-50 text-slate-400 group-hover:text-[#059669] transition-colors">
-                                    <ChevronRight className="w-4 h-4" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {/* Accordion expand/collapse pill for maintenances */}
-                        {filteredMaintenances.length > 4 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowAllMaintenances(!showAllMaintenances)}
-                            className="mt-1 w-full py-2.5 px-4 bg-slate-50 hover:bg-emerald-50/70 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs font-black text-emerald-700 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                          >
-                            {showAllMaintenances ? (
-                              <>
-                                <ChevronUp className="w-4 h-4" />
-                                <span>Mostra meno (visualizza solo gli ultimi 4)</span>
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="w-4 h-4" />
-                                <span>Mostra tutte le {filteredMaintenances.length} manutenzioni registrate</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Mode 2: Grouped by Year Accordion */}
-                    {viewMode === 'grouped' && (
-                      <div className="flex flex-col gap-3">
-                        {(Object.entries(maintenancesByYear) as [string, MaintenanceRecord[]][]).map(([year, records]) => {
-                          const isYearCollapsed = !!collapsedYears[`maint-${year}`];
-                          const totalYearSpend = records.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
-
-                          return (
-                            <div key={year} className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
-                              {/* Year Group Accordion Header */}
-                              <button
-                                type="button"
-                                onClick={() => toggleYearCollapse(`maint-${year}`)}
-                                className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer border-b border-slate-100"
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isYearCollapsed ? '-rotate-90' : ''}`} />
-                                  <span className="text-sm font-black text-slate-900">Anno {year}</span>
-                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
-                                    {records.length} {records.length === 1 ? 'intervento' : 'interventi'}
-                                  </span>
-                                </div>
-
-                                <div className="text-xs font-bold text-emerald-700">
-                                  <span>{settings.currency} {totalYearSpend.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
-                                </div>
-                              </button>
-
-                              {!isYearCollapsed && (
-                                <div className="p-2.5 flex flex-col gap-2 divide-y divide-slate-100">
-                                  {records.map(maint => {
-                                    const cost = Number(maint.cost) || 0;
-
-                                    return (
-                                      <div
-                                        key={maint.id}
-                                        onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
-                                        className="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-slate-50 p-1.5 rounded-lg transition-colors cursor-pointer"
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                          <span className="font-bold text-slate-900 whitespace-nowrap">{maint.date.split('-').reverse().join('/')}</span>
-                                          <span className="text-emerald-700 font-bold px-1.5 py-0.2 bg-emerald-50 rounded whitespace-nowrap">{maint.category}</span>
-                                          <span className="text-slate-600 font-medium whitespace-nowrap">{maint.km.toLocaleString('it-IT')} km</span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 shrink-0">
-                                          <span className="font-black text-[#059669]">{settings.currency} {cost.toFixed(2)}</span>
-                                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-          </div>
-        )}
+        </div>
 
       </section>
 
@@ -1284,7 +990,51 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       </section>
 
-      {/* 5. MODALE SCHERMATA COMPLETA PER DETTAGLI (OVERLAY IN PRIMO PIANO) */}
+      {/* 6. MODALE DEDICATO: TRIP DI BORDO & EFFICIENZA ENERGETICA */}
+      <BoardTripsModal
+        isOpen={isBoardTripsModalOpen}
+        onClose={() => setIsBoardTripsModalOpen(false)}
+        vehicle={vehicle}
+        metrics={metrics}
+        settings={settings}
+      />
+
+      {/* 7. MODALE DEDICATO: REGISTRO RIFORNIMENTI & RICARICHE */}
+      <RefuelsRegistryModal
+        isOpen={isRefuelsRegistryOpen}
+        onClose={() => setIsRefuelsRegistryOpen(false)}
+        vehicle={vehicle}
+        metrics={metrics}
+        settings={settings}
+        onOpenAddRefuel={onOpenAddRefuel}
+        onOpenEditRefuel={onOpenEditRefuel}
+        onSelectRefuelDetail={(r) => {
+          setSelectedDetailData({ 
+            type: 'refuel', 
+            item: r, 
+            deltaKm: r.deltaKm, 
+            unitPrice: r.unitPrice 
+          });
+        }}
+      />
+
+      {/* 8. MODALE DEDICATO: LIBRETTO MANUTENZIONI & OFFICINA */}
+      <MaintenancesRegistryModal
+        isOpen={isMaintenancesRegistryOpen}
+        onClose={() => setIsMaintenancesRegistryOpen(false)}
+        vehicle={vehicle}
+        settings={settings}
+        onOpenAddMaintenance={onOpenAddMaintenance}
+        onOpenEditMaintenance={onOpenEditMaintenance}
+        onSelectMaintenanceDetail={(m) => {
+          setSelectedDetailData({ 
+            type: 'maintenance', 
+            item: m 
+          });
+        }}
+      />
+
+      {/* 9. MODALE SCHERMATA COMPLETA PER DETTAGLI SINGOLO RECORD (OVERLAY IN PRIMO PIANO) */}
       <DetailViewModal
         isOpen={!!selectedDetailData}
         data={selectedDetailData}
