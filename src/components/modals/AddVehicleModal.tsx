@@ -404,6 +404,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     }
   };
 
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
+
   // Debounced auto-search for motorizations when Brand and Model are specified
   useEffect(() => {
     if (!isOpen) return;
@@ -415,8 +421,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       return () => clearTimeout(timer);
     }
   }, [brand, model, regDate, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleBrandChange = (newBrand: string) => {
     setBrand(newBrand);
@@ -600,12 +604,6 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
     onClose();
   };
-
-  // Support swipe right gesture to go back / close
-  useSwipeBack({
-    onBack: onClose,
-    enabled: isOpen
-  });
 
   if (!isOpen) return null;
 
