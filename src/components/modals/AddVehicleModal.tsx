@@ -930,15 +930,15 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              {/* MOTORIZZAZIONE / ALLESTIMENTO (DROPDOWN A TENDINA) */}
-              <div ref={motorizationContainerRef} className="relative flex flex-col gap-1 sm:col-span-2">
+              {/* MOTORIZZAZIONE / ALLESTIMENTO (DROPDOWN A TENDINA AD ALTA DEFINIZIONE) */}
+              <div ref={motorizationContainerRef} className="relative flex flex-col gap-1.5 sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#0f172a] flex items-center gap-1.5">
-                    Motorizzazione / Allestimento *
+                    Motorizzazione & Allestimento *
                   </label>
                   {allAvailableMotorizations.length > 0 && (
-                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                      {allAvailableMotorizations.length} versioni disponibili
+                    <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md shadow-2xs">
+                      {allAvailableMotorizations.length} versioni trovate
                     </span>
                   )}
                 </div>
@@ -946,20 +946,20 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 <div className="relative">
                   <input 
                     type="text"
-                    placeholder="Scegli dalla tendina o digita liberamente (es. 1.6 JTDm 120 CV, 2.0 TDI 150 CV...)"
+                    placeholder="Scegli dalla tendina o digita (es. 1.6 TDI 120 CV, 2.0 Hybrid 184 CV, Dual Motor...)"
                     value={motorization}
                     onFocus={() => setShowMotorizationDropdown(true)}
                     onChange={(e) => {
                       setMotorization(e.target.value);
                       setShowMotorizationDropdown(true);
                     }}
-                    className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden transition-all pr-9"
+                    className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:bg-white text-xs font-bold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden transition-all pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowMotorizationDropdown(!showMotorizationDropdown)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-                    title="Mostra tutte le motorizzazioni disponibili"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="Mostra / nascondi elenco motorizzazioni"
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showMotorizationDropdown ? 'rotate-180 text-blue-600' : ''}`} />
                   </button>
@@ -967,107 +967,203 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
                 {/* Motorization Dropdown Menu */}
                 {showMotorizationDropdown && (
-                  <div className="absolute left-0 right-0 top-[66px] z-40 bg-white border border-[#cbd5e1] rounded-2xl shadow-2xl max-h-80 overflow-y-auto p-2 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute left-0 right-0 top-[68px] z-50 bg-white border border-[#cbd5e1] rounded-2xl shadow-2xl max-h-88 overflow-y-auto p-2.5 divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150">
                     
-                    {/* Mini Fuel Filters within Dropdown */}
-                    <div className="pb-2 flex items-center gap-1 overflow-x-auto text-[10px] font-bold">
-                      {[
-                        { key: 'all', label: 'Tutte' },
-                        { key: 'Diesel', label: 'Diesel' },
-                        { key: 'Benzina', label: 'Benzina' },
-                        { key: 'Hybrid', label: 'Ibrida / PHEV' },
-                        { key: 'Elettrica (BEV)', label: 'Elettrica' },
-                        { key: 'GPL/Metano', label: 'GPL / Metano' }
-                      ].map((f) => (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => setSelectedFuelFilter(f.key)}
-                          className={`px-2 py-0.5 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
-                            selectedFuelFilter === f.key 
-                              ? 'bg-blue-600 text-white border-blue-600 font-black shadow-2xs' 
-                              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-                          }`}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
+                    {/* Fuel Filters Toolbar */}
+                    <div className="pb-2.5 flex items-center justify-between gap-1 overflow-x-auto text-[10px] font-bold">
+                      <div className="flex items-center gap-1">
+                        {[
+                          { key: 'all', label: 'Tutte' },
+                          { key: 'Diesel', label: 'Diesel' },
+                          { key: 'Benzina', label: 'Benzina' },
+                          { key: 'Hybrid', label: 'Ibrida / PHEV' },
+                          { key: 'Elettrica (BEV)', label: 'Elettrica' },
+                          { key: 'GPL/Metano', label: 'GPL / Metano' }
+                        ].map((f) => (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() => setSelectedFuelFilter(f.key)}
+                            className={`px-2.5 py-1 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+                              selectedFuelFilter === f.key 
+                                ? 'bg-blue-600 text-white border-blue-600 font-black shadow-2xs' 
+                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <span className="text-[10px] font-medium text-slate-400 hidden sm:inline shrink-0">
+                        {filteredMotorizations.length} riscontri
+                      </span>
                     </div>
 
                     {/* Motorizations Options List */}
-                    <div className="pt-1.5 flex flex-col gap-1">
+                    <div className="pt-2 flex flex-col gap-1.5">
                       {isAiLoading && (
-                        <div className="p-3 text-center text-xs text-blue-700 font-bold bg-blue-50/70 rounded-xl flex items-center justify-center gap-2">
+                        <div className="p-3.5 text-center text-xs text-blue-700 font-bold bg-blue-50/70 rounded-xl flex items-center justify-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                          <span>Ricerca motorizzazioni in corso...</span>
+                          <span>Ricerca e analisi motorizzazioni in corso...</span>
                         </div>
                       )}
 
                       {filteredMotorizations.length > 0 ? (
                         filteredMotorizations.map((m, idx) => {
                           const isSelected = motorization.trim().toLowerCase() === m.name.trim().toLowerCase();
+                          const isElectric = m.fuelType.includes('Elettrica') || m.fuelType.includes('BEV');
+                          const isHyb = m.fuelType.includes('Hybrid') || m.fuelType.includes('Ibrida') || m.fuelType.includes('PHEV');
+                          const isGas = m.fuelType.includes('GPL') || m.fuelType.includes('Metano');
+                          const isDies = m.fuelType.includes('Diesel');
+
                           return (
                             <button
                               key={m.name + idx}
                               type="button"
                               onClick={() => applyMotorization(m)}
-                              className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                              className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                                 isSelected
-                                  ? 'bg-blue-50 border-blue-400 ring-1 ring-blue-300'
-                                  : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-200 text-[#0f172a]'
+                                  ? 'bg-blue-50/80 border-blue-400 ring-2 ring-blue-200 shadow-2xs'
+                                  : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-[#0f172a]'
                               }`}
                             >
                               <div className="flex-1 min-w-0">
+                                {/* Title & Generation line */}
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   {(m.brandName || m.modelName) && (
-                                    <span className="text-[9.5px] font-black px-1.5 py-0.2 bg-blue-100 text-blue-900 border border-blue-200 rounded">
+                                    <span className="text-[9.5px] font-black px-1.5 py-0.5 bg-blue-100 text-blue-900 border border-blue-200 rounded">
                                       {[m.brandName, m.modelName].filter(Boolean).join(' ')}
                                     </span>
                                   )}
                                   <span className="font-black text-xs text-[#0f172a]">{m.name}</span>
                                   {m.generation && (
-                                    <span className="text-[9px] font-bold px-1.5 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
+                                    <span className="text-[9.5px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded">
                                       {m.generation}
                                     </span>
                                   )}
                                   {m.years && (
-                                    <span className="text-[9px] font-medium px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded">
+                                    <span className="text-[9px] font-medium px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
                                       {m.years}
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 mt-0.5 text-[10.5px] text-slate-500 font-semibold">
-                                  <span className="text-slate-700">{m.fuelType}</span>
-                                  {m.displacementCc && <span>• {m.displacementCc} cc</span>}
-                                  {m.tankCapacity > 0 && <span>• Serbatoio: {m.tankCapacity}L</span>}
-                                  {m.batteryCapacity && <span className="text-amber-700">• Batt: {m.batteryCapacity} kWh</span>}
-                                  {m.secondaryTankCapacity && <span className="text-teal-700">• Gas: {m.secondaryTankCapacity} L/Kg</span>}
+
+                                {/* Specs badges */}
+                                <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] flex-wrap">
+                                  <span className={`px-1.5 py-0.5 rounded font-bold border ${
+                                    isElectric 
+                                      ? 'bg-amber-50 text-amber-900 border-amber-200' 
+                                      : isHyb 
+                                        ? 'bg-emerald-50 text-emerald-900 border-emerald-200' 
+                                        : isGas 
+                                          ? 'bg-teal-50 text-teal-900 border-teal-200' 
+                                          : isDies 
+                                            ? 'bg-blue-50 text-blue-900 border-blue-200' 
+                                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                                  }`}>
+                                    {m.fuelType}
+                                  </span>
+
+                                  {m.displacementCc && (
+                                    <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">
+                                      {m.displacementCc} cc
+                                    </span>
+                                  )}
+
+                                  {m.tankCapacity > 0 && (
+                                    <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">
+                                      Serbatoio: {m.tankCapacity}L
+                                    </span>
+                                  )}
+
+                                  {m.batteryCapacity && (
+                                    <span className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold border border-amber-200">
+                                      ⚡ Batt: {m.batteryCapacity} kWh
+                                    </span>
+                                  )}
+
+                                  {m.secondaryTankCapacity && (
+                                    <span className="bg-teal-100 text-teal-900 px-1.5 py-0.5 rounded font-bold border border-teal-200">
+                                      Gas: {m.secondaryTankCapacity} L/Kg
+                                    </span>
+                                  )}
+
+                                  {m.avgConsumptionL100km && (
+                                    <span className="bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded font-bold border border-emerald-200">
+                                      WLTP: {m.avgConsumptionL100km} L/100km
+                                    </span>
+                                  )}
+
+                                  {m.avgConsumptionKwh100km && (
+                                    <span className="bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200">
+                                      WLTP: {m.avgConsumptionKwh100km} kWh/100km
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
+                              {/* Power & Selection check */}
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[11px] font-black bg-slate-900 text-white px-2 py-0.5 rounded-lg shadow-2xs whitespace-nowrap">
-                                  {m.cv} CV <span className="text-slate-300 font-normal">({m.kw} kW)</span>
-                                </span>
+                                <div className="text-right">
+                                  <span className="text-xs font-black bg-slate-900 text-white px-2.5 py-1 rounded-lg shadow-2xs block whitespace-nowrap">
+                                    {m.cv} CV
+                                  </span>
+                                  <span className="text-[10px] font-bold text-slate-500 block mt-0.5">
+                                    {m.kw} kW
+                                  </span>
+                                </div>
+
                                 {isSelected && (
-                                  <Check className="w-4 h-4 text-blue-600" />
+                                  <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xs">
+                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                  </div>
                                 )}
                               </div>
                             </button>
                           );
                         })
                       ) : (
-                        <div className="p-3 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">
-                          Nessuna motorizzazione preimpostata per questi filtri. Puoi digitare liberamente o premere &quot;Cerca Scheda Tecnica e Foto Reali&quot;.
+                        <div className="p-4 text-center text-xs text-slate-500 bg-slate-50 rounded-xl">
+                          Nessuna motorizzazione trovata per questo filtro. Digita liberamente nel campo di testo oppure premi &quot;Cerca Scheda Tecnica e Foto Reali&quot;.
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
+                {/* Applied Motorization Summary Badge & Quick Chips */}
+                {motorization && !showMotorizationDropdown && (
+                  <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5 flex items-center justify-between gap-3 text-xs animate-in fade-in">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                        <Check className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-black text-blue-950 block truncate">{motorization}</span>
+                        <div className="flex items-center gap-2 text-[10.5px] text-blue-800 font-semibold mt-0.5 flex-wrap">
+                          <span>{fuelType}</span>
+                          {powerCv && <span>• {powerCv} CV ({powerKw || Math.round(Number(powerCv) * 0.7355)} kW)</span>}
+                          {tankCapacity && <span>• Serbatoio {tankCapacity}L</span>}
+                          {batteryCapacity && <span>• Batteria {batteryCapacity} kWh</span>}
+                          {secondaryTankCapacity && <span>• Gas {secondaryTankCapacity} L/Kg</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMotorizationDropdown(true)}
+                      className="text-blue-700 hover:text-blue-900 font-bold text-[11px] underline shrink-0 cursor-pointer"
+                    >
+                      Cambia
+                    </button>
+                  </div>
+                )}
+
                 {/* Quick Motorization Chips under the field */}
-                {allAvailableMotorizations.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
+                {allAvailableMotorizations.length > 0 && !showMotorizationDropdown && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
                     {allAvailableMotorizations.slice(0, 4).map((m) => (
                       <button
                         key={m.name}

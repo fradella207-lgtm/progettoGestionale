@@ -10,16 +10,22 @@ import {
   CheckCircle2, 
   Zap, 
   ChevronRight, 
+  ChevronDown,
   Receipt, 
   Calendar, 
   Gauge, 
   Camera, 
   BatteryCharging, 
   Layers,
-  ArrowRight
+  ArrowRight,
+  Filter,
+  SlidersHorizontal,
+  ChevronUp,
+  Check
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
+import { calculateVehicleConsumptionMetrics, RefuelWithCalculation } from '../utils/consumptionCalculator';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
@@ -45,6 +51,14 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const [activeTab, setActiveTab] = useState<'refuels' | 'maintenances'>('refuels');
   const [selectedDetailData, setSelectedDetailData] = useState<DetailModalData | null>(null);
 
+  // Accordion & View Controls for Refuels / Maintenances
+  const [isSectionOpen, setIsSectionOpen] = useState(true);
+  const [showAllRefuels, setShowAllRefuels] = useState(false);
+  const [showAllMaintenances, setShowAllMaintenances] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'compact' | 'grouped'>('compact');
+  const [collapsedYears, setCollapsedYears] = useState<Record<string, boolean>>({});
+
   // Compute current km
   const currentKm = useMemo(() => {
     const refuelsKm = (vehicle.refuels || []).map(r => Number(r.km) || 0);
@@ -58,109 +72,71 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const isCNG = vehicle.fuelType.includes('Metano');
   const fuelUnit = isBEV ? 'kWh' : (isCNG ? 'Kg' : 'L');
 
-  // Metrics Calculations (Supporting Plug-in Hybrid dual electric + thermal consumption)
+  // Metrological & Rigorous Consumption Metrics
   const metrics = useMemo(() => {
-    const refuels = [...(vehicle.refuels || [])].sort((a, b) => Number(a.km) - Number(b.km));
-    const maintenances = vehicle.maintenances || [];
+    return calculateVehicleConsumptionMetrics(vehicle);
+  }, [vehicle]);
 
-    const totalFuelSpent = refuels.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
-    const totalMaintSpent = maintenances.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
-    const totalOverallSpent = totalFuelSpent + totalMaintSpent;
+  // Extract available years for filtering
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    (vehicle.refuels || []).forEach(r => {
+      if (r.date) years.add(r.date.split('-')[0]);
+    });
+    (vehicle.maintenances || []).forEach(m => {
+      if (m.date) years.add(m.date.split('-')[0]);
+    });
+    return Array.from(years).sort().reverse();
+  }, [vehicle]);
 
-    const minKm = refuels.length > 0 ? Number(refuels[0].km) : (Number(vehicle.initialKm) || 0);
-    const totalDistance = Math.max(0, currentKm - minKm);
-
-    const costPerKm = totalDistance > 0 ? (totalOverallSpent / totalDistance).toFixed(3) : '0.000';
-    const fuelCostPerKm = totalDistance > 0 ? (totalFuelSpent / totalDistance).toFixed(3) : '0.000';
-    const costPer100Km = totalDistance > 0 ? ((totalFuelSpent / totalDistance) * 100).toFixed(2) : '--';
-
-    // Separate Electric vs Thermal Fuel for PHEV / Dual Fuel
-    const electricRefuels = refuels.filter(r => r.energyType === 'electricity' || r.unit === 'kWh' || (isBEV && !r.energyType));
-    const thermalFuelRefuels = refuels.filter(r => r.energyType === 'fuel' || r.unit === 'L' || (!r.energyType && !r.unit && !isBEV));
-
-    const totalElectricKwh = electricRefuels.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-    const totalElectricSpent = electricRefuels.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
-
-    const totalThermalLiters = thermalFuelRefuels.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-    const totalThermalSpent = thermalFuelRefuels.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
-
-    // Electric & Thermal consumption metrics
-    let electricKwhPer100Km = '--';
-    let thermalLPer100Km = '--';
-    let kmPerKwh = '--';
-    let kmPerLiter = '--';
-
-    if (totalDistance > 0) {
-      if (totalElectricKwh > 0) {
-        const val = (totalElectricKwh / totalDistance) * 100;
-        electricKwhPer100Km = val.toFixed(1);
-        kmPerKwh = (totalDistance / totalElectricKwh).toFixed(1);
-      }
-      if (totalThermalLiters > 0) {
-        const val = (totalThermalLiters / totalDistance) * 100;
-        thermalLPer100Km = val.toFixed(1);
-        kmPerLiter = (totalDistance / totalThermalLiters).toFixed(1);
-      }
+  // Filtered Refuels
+  const filteredRefuels = useMemo(() => {
+    let list = metrics.calculatedRefuels;
+    if (selectedYear !== 'all') {
+      list = list.filter(r => r.date && r.date.startsWith(selectedYear));
     }
+    return list;
+  }, [metrics.calculatedRefuels, selectedYear]);
 
-    // Standard single-source calculation (Certified full tank)
-    const fullRefuels = refuels.filter(r => r.type === 'full');
-    let isCertified = false;
-    let kmPerUnit = 0;
-    let unitPer100Km = 0;
+  // Grouped Refuels by Year
+  const refuelsByYear = useMemo(() => {
+    const groups: Record<string, RefuelWithCalculation[]> = {};
+    filteredRefuels.forEach(r => {
+      const year = r.date ? r.date.split('-')[0] : 'Altro';
+      if (!groups[year]) groups[year] = [];
+      groups[year].push(r);
+    });
+    return groups;
+  }, [filteredRefuels]);
 
-    if (fullRefuels.length >= 2) {
-      let deltaKmTotal = 0;
-      let deltaUnitsTotal = 0;
-      for (let i = 1; i < fullRefuels.length; i++) {
-        const prev = fullRefuels[i - 1];
-        const curr = fullRefuels[i];
-        const dKm = Number(curr.km) - Number(prev.km);
-        const dQty = Number(curr.quantity);
-        if (dKm > 0 && dQty > 0) {
-          deltaKmTotal += dKm;
-          deltaUnitsTotal += dQty;
-        }
-      }
-      if (deltaUnitsTotal > 0 && deltaKmTotal > 0) {
-        isCertified = true;
-        kmPerUnit = deltaKmTotal / deltaUnitsTotal;
-        unitPer100Km = (deltaUnitsTotal / deltaKmTotal) * 100;
-      }
+  // Filtered Maintenances
+  const filteredMaintenances = useMemo(() => {
+    let list = [...(vehicle.maintenances || [])].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (timeA !== timeB) return timeB - timeA;
+      return (Number(b.km) || 0) - (Number(a.km) || 0);
+    });
+    if (selectedYear !== 'all') {
+      list = list.filter(m => m.date && m.date.startsWith(selectedYear));
     }
+    return list;
+  }, [vehicle.maintenances, selectedYear]);
 
-    if (!isCertified) {
-      const totalQty = refuels.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-      if (totalDistance > 0 && totalQty > 0) {
-        kmPerUnit = totalDistance / totalQty;
-        unitPer100Km = (totalQty / totalDistance) * 100;
-      }
-    }
+  // Grouped Maintenances by Year
+  const maintenancesByYear = useMemo(() => {
+    const groups: Record<string, MaintenanceRecord[]> = {};
+    filteredMaintenances.forEach(m => {
+      const year = m.date ? m.date.split('-')[0] : 'Altro';
+      if (!groups[year]) groups[year] = [];
+      groups[year].push(m);
+    });
+    return groups;
+  }, [filteredMaintenances]);
 
-    return {
-      isCertified,
-      kmPerUnit: kmPerUnit > 0 ? kmPerUnit.toFixed(1) : '--',
-      unitPer100Km: unitPer100Km > 0 ? unitPer100Km.toFixed(2) : '--',
-      totalFuelSpent,
-      totalMaintSpent,
-      totalOverallSpent,
-      fuelCostPerKm,
-      costPerKm,
-      costPer100Km,
-      totalDistance,
-      // PHEV specifics
-      electricRefuelsCount: electricRefuels.length,
-      thermalRefuelsCount: thermalFuelRefuels.length,
-      totalElectricKwh,
-      totalElectricSpent,
-      totalThermalLiters,
-      totalThermalSpent,
-      electricKwhPer100Km,
-      thermalLPer100Km,
-      kmPerKwh,
-      kmPerLiter
-    };
-  }, [vehicle, currentKm, isBEV]);
+  const toggleYearCollapse = (year: string) => {
+    setCollapsedYears(prev => ({ ...prev, [year]: !prev[year] }));
+  };
 
   // AI Maintenance Advice Rule Engine
   const aiAdvices = useMemo((): AIAdvice[] => {
@@ -661,275 +637,572 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       )}
 
-      {/* 4. REGISTRO ATTIVITÀ & STORICO A SCHEDE: RIFORNIMENTI E MANUTENZIONI */}
+      {/* 4. REGISTRO ATTIVITÀ & STORICO A TENDINA: RIFORNIMENTI E MANUTENZIONI */}
       <section className="bg-white rounded-3xl border border-[#e2e8f0] flex flex-col overflow-hidden shadow-xs min-w-0">
         
-        {/* Navigation Tabs Header */}
-        <div className="px-4 sm:px-5 py-3 border-b border-[#e2e8f0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 bg-[#fafbfc] min-w-0">
-          <div className="flex items-center gap-1.5 bg-[#f1f5f9] p-1 rounded-xl w-full sm:w-auto overflow-x-auto">
-            <button 
-              id="tab-refuels-btn"
-              onClick={() => setActiveTab('refuels')}
-              className={`flex-1 sm:flex-initial text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
-                activeTab === 'refuels' 
-                  ? 'bg-white text-[#2563eb] shadow-xs' 
-                  : 'text-[#64748b] hover:text-[#0f172a]'
-              }`}
-            >
-              <Fuel className="w-3.5 h-3.5 shrink-0" />
-              <span>Rifornimenti / Ricariche ({(vehicle.refuels || []).length})</span>
-            </button>
+        {/* Section Header with Collapsible Toggle */}
+        <div className="px-4 sm:px-5 py-3.5 border-b border-[#e2e8f0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#fafbfc] min-w-0">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSectionOpen(!isSectionOpen)}
+                className="flex items-center gap-2 text-left font-black text-sm text-[#0f172a] hover:text-blue-600 transition-colors cursor-pointer select-none"
+              >
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <span>Registro Storico Attività</span>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSectionOpen ? 'rotate-180 text-blue-600' : ''}`} />
+              </button>
+            </div>
 
-            <button 
-              id="tab-maintenances-btn"
-              onClick={() => setActiveTab('maintenances')}
-              className={`flex-1 sm:flex-initial text-xs px-3.5 py-1.5 rounded-lg font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
-                activeTab === 'maintenances' 
-                  ? 'bg-white text-[#059669] shadow-xs' 
-                  : 'text-[#64748b] hover:text-[#0f172a]'
-              }`}
-            >
-              <Wrench className="w-3.5 h-3.5 shrink-0" />
-              <span>Manutenzioni ({(vehicle.maintenances || []).length})</span>
-            </button>
+            {/* Quick Record Counter Badges */}
+            <div className="flex items-center gap-1.5 sm:hidden">
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                {(vehicle.refuels || []).length} Riforn.
+              </span>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {(vehicle.maintenances || []).length} Manut.
+              </span>
+            </div>
           </div>
 
-          <span className="text-[11px] text-[#64748b] font-medium hidden md:inline">
-            Tocca una voce per visualizzare tutti i dettagli nella schermata
-          </span>
-        </div>
-
-        {/* TAB 1: RIFORNIMENTI */}
-        {activeTab === 'refuels' && (
-          <div className="p-3 sm:p-4 flex flex-col gap-2">
-            {(!vehicle.refuels || vehicle.refuels.length === 0) ? (
-              <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center">
-                  <Fuel className="w-6 h-6" />
-                </div>
-                <div className="max-w-sm px-2">
-                  <p className="text-sm font-bold text-[#0f172a]">Nessun rifornimento registrato</p>
-                  <p className="text-xs text-[#64748b] mt-0.5">
-                    Registra i rifornimenti per calcolare i consumi medi e la spesa chilometrica.
-                  </p>
-                </div>
+          {isSectionOpen && (
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto pb-1 sm:pb-0">
+              {/* Tab Selector Buttons */}
+              <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl shrink-0">
                 <button 
-                  onClick={onOpenAddRefuel}
-                  className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                  id="tab-refuels-btn"
+                  onClick={() => setActiveTab('refuels')}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
+                    activeTab === 'refuels' 
+                      ? 'bg-white text-[#2563eb] shadow-xs' 
+                      : 'text-[#64748b] hover:text-[#0f172a]'
+                  }`}
                 >
-                  <Plus className="w-3.5 h-3.5" /> + Aggiungi Rifornimento
+                  <Fuel className="w-3.5 h-3.5 shrink-0" />
+                  <span>Rifornimenti ({(vehicle.refuels || []).length})</span>
+                </button>
+
+                <button 
+                  id="tab-maintenances-btn"
+                  onClick={() => setActiveTab('maintenances')}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
+                    activeTab === 'maintenances' 
+                      ? 'bg-white text-[#059669] shadow-xs' 
+                      : 'text-[#64748b] hover:text-[#0f172a]'
+                  }`}
+                >
+                  <Wrench className="w-3.5 h-3.5 shrink-0" />
+                  <span>Manutenzioni ({(vehicle.maintenances || []).length})</span>
                 </button>
               </div>
-            ) : (
-              [...vehicle.refuels]
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((refuel, idx, sortedArr) => {
-                  const qty = Number(refuel.quantity) || 0;
-                  const price = Number(refuel.price) || 0;
-                  const isFull = refuel.type === 'full';
-                  const isEV = refuel.energyType === 'electricity' || refuel.unit === 'kWh' || (isBEV && !refuel.energyType);
-                  const isLPG = refuel.energyType === 'lpg';
-                  const isCNG = refuel.energyType === 'cng';
-                  const unit = refuel.unit || (isEV ? 'kWh' : (isCNG ? 'Kg' : 'L'));
-                  const unitPrice = qty > 0 ? (price / qty).toFixed(3) : null;
-                  
-                  // Calculate distance since previous refuel
-                  const prevRefuel = sortedArr[idx + 1];
-                  const deltaKm = prevRefuel ? Math.max(0, Number(refuel.km) - Number(prevRefuel.km)) : null;
 
-                  return (
-                    <div 
-                      key={refuel.id}
-                      onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm, unitPrice })}
-                      className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#93c5fd] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
-                    >
-                      {/* Left: Date, Badge, Km & Notes */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
-                          isEV 
-                            ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                            : (isLPG 
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                              : (isCNG 
-                                ? 'bg-teal-50 text-teal-600 border-teal-200' 
-                                : 'bg-blue-50 text-[#2563eb] border-blue-100'))
-                        }`}>
-                          {isEV ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
-                        </div>
-                        
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-sm font-black text-[#0f172a]">
-                              {refuel.date.split('-').reverse().join('/')}
-                            </span>
-                            {isEV ? (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
-                                ⚡ Ricarica Elettrica {isFull ? '100%' : 'Parz.'}
-                              </span>
-                            ) : isLPG ? (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-100 text-emerald-900 border border-emerald-200 whitespace-nowrap">
-                                🔵 GPL {isFull ? 'Pieno' : 'Parz.'}
-                              </span>
-                            ) : isCNG ? (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-teal-100 text-teal-900 border border-teal-200 whitespace-nowrap">
-                                🟢 Metano {isFull ? 'Pieno' : 'Parz.'}
-                              </span>
-                            ) : (
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase whitespace-nowrap ${
-                                isFull ? 'bg-emerald-50 text-[#059669] border border-emerald-100' : 'bg-slate-100 text-[#64748b] border border-slate-200'
-                              }`}>
-                                {isFull ? 'Pieno Carburante' : 'Rifornimento Parz.'}
-                              </span>
-                            )}
-                          </div>
+              {/* View Mode Toggle Button */}
+              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-[11px] font-bold text-slate-600 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('compact')}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    viewMode === 'compact' ? 'bg-white text-slate-900 shadow-2xs font-extrabold' : 'hover:text-slate-900'
+                  }`}
+                  title="Vista Compatta con pulsante Espandi"
+                >
+                  Compatta
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grouped')}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    viewMode === 'grouped' ? 'bg-white text-slate-900 shadow-2xs font-extrabold' : 'hover:text-slate-900'
+                  }`}
+                  title="Raggruppa per Anno a tendina"
+                >
+                  Per Anno
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-                          <div className="flex items-center gap-2 text-xs text-[#64748b] mt-0.5 flex-wrap">
-                            <span className="font-semibold text-[#334155]">{refuel.km.toLocaleString('it-IT')} km</span>
-                            {deltaKm !== null && deltaKm > 0 && (
-                              <span className="text-[11px] text-blue-600 font-medium hidden sm:inline">
-                                (+{deltaKm.toLocaleString('it-IT')} km)
-                              </span>
-                            )}
-                            {refuel.notes && (
-                              <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
-                                • {refuel.notes}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Quantity, Total Price & Actions */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
-                        <div className="text-left sm:text-right">
-                          <div className="text-base font-black text-[#0f172a] whitespace-nowrap">
-                            {settings.currency} {price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                          <div className="text-xs text-[#64748b] font-medium whitespace-nowrap">
-                            {qty.toLocaleString('it-IT', { minimumFractionDigits: 2 })} {unit}
-                            {unitPrice && <span className="text-[11px] ml-1 text-slate-400">({unitPrice} {settings.currency}/{unit})</span>}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 ml-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenEditRefuel(refuel);
-                            }}
-                            className="p-2 rounded-xl text-[#64748b] hover:text-[#2563eb] hover:bg-blue-50 transition-colors"
-                            title="Modifica rapida"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          
-                          <div className="p-2 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-400 group-hover:text-[#2563eb] transition-colors">
-                            <ChevronRight className="w-4 h-4" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-            )}
+        {/* Collapsed Preview Summary Bar */}
+        {!isSectionOpen && (
+          <div 
+            onClick={() => setIsSectionOpen(true)}
+            className="p-3.5 bg-slate-50 hover:bg-blue-50/50 transition-colors flex items-center justify-between cursor-pointer text-xs font-semibold text-slate-600"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-slate-900 font-bold">
+                {(vehicle.refuels || []).length} Rifornimenti • {(vehicle.maintenances || []).length} Manutenzioni
+              </span>
+              <span className="hidden sm:inline text-slate-400">|</span>
+              <span className="hidden sm:inline text-slate-500">
+                Totale Speso: <strong className="text-slate-800">{settings.currency} {metrics.totalOverallSpent.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</strong>
+              </span>
+            </div>
+            <span className="text-blue-600 font-bold flex items-center gap-1 hover:underline">
+              Espandi registro <ChevronDown className="w-3.5 h-3.5" />
+            </span>
           </div>
         )}
 
-        {/* TAB 2: MANUTENZIONI */}
-        {activeTab === 'maintenances' && (
-          <div className="p-3 sm:p-4 flex flex-col gap-2">
-            {(!vehicle.maintenances || vehicle.maintenances.length === 0) ? (
-              <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center">
-                  <Wrench className="w-6 h-6" />
-                </div>
-                <div className="max-w-sm px-2">
-                  <p className="text-sm font-bold text-[#0f172a]">Nessuna manutenzione registrata</p>
-                  <p className="text-xs text-[#64748b] mt-0.5">
-                    Tieni traccia di tagliandi, pastiglie freni, gomme e revisioni per mantenere alto il valore della tua auto.
-                  </p>
-                </div>
-                <button 
-                  onClick={onOpenAddMaintenance}
-                  className="bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+        {isSectionOpen && (
+          <div className="p-3.5 sm:p-4 flex flex-col gap-3">
+            
+            {/* Quick Filter Year Toolbar if multiple years exist */}
+            {availableYears.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-1 shrink-0">
+                  <Filter className="w-3 h-3" /> Anno:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedYear('all')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                    selectedYear === 'all' 
+                      ? 'bg-slate-900 text-white shadow-2xs' 
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
                 >
-                  <Plus className="w-3.5 h-3.5" /> + Aggiungi Manutenzione
+                  Tutti ({activeTab === 'refuels' ? (vehicle.refuels || []).length : (vehicle.maintenances || []).length})
                 </button>
+                {availableYears.map(yr => (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => setSelectedYear(yr)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                      selectedYear === yr 
+                        ? 'bg-blue-600 text-white shadow-2xs' 
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
               </div>
-            ) : (
-              [...vehicle.maintenances]
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((maint) => {
-                  const cost = Number(maint.cost) || 0;
-
-                  return (
-                    <div 
-                      key={maint.id}
-                      onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
-                      className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#a7f3d0] rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
-                    >
-                      {/* Left: Date, Category & Workshop */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                          <Wrench className="w-5 h-5" />
-                        </div>
-                        
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-sm font-black text-[#0f172a]">
-                              {maint.date.split('-').reverse().join('/')}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-emerald-50 text-[#059669] border border-emerald-100 whitespace-nowrap">
-                              {maint.category}
-                            </span>
-                          </div>
-
-                          <div className="text-xs text-[#64748b] mt-0.5 flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-[#334155]">{maint.km.toLocaleString('it-IT')} km</span>
-                            {maint.workshop && (
-                              <span className="truncate max-w-[120px] sm:max-w-[180px]">• {maint.workshop}</span>
-                            )}
-                            {maint.description && (
-                              <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
-                                • {maint.description}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Cost & Actions */}
-                      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
-                        <div className="text-left sm:text-right">
-                          <div className="text-base font-black text-[#059669] whitespace-nowrap">
-                            {settings.currency} {cost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                          <div className="text-[11px] text-[#64748b] whitespace-nowrap">
-                            Spesa registrata
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 ml-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenEditMaintenance(maint);
-                            }}
-                            className="p-2 rounded-xl text-[#64748b] hover:text-[#059669] hover:bg-emerald-50 transition-colors"
-                            title="Modifica rapida"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          
-                          <div className="p-2 rounded-xl bg-slate-100 group-hover:bg-emerald-50 text-slate-400 group-hover:text-[#059669] transition-colors">
-                            <ChevronRight className="w-4 h-4" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
             )}
+
+            {/* TAB 1: RIFORNIMENTI */}
+            {activeTab === 'refuels' && (
+              <div className="flex flex-col gap-2.5">
+                {filteredRefuels.length === 0 ? (
+                  <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center">
+                      <Fuel className="w-6 h-6" />
+                    </div>
+                    <div className="max-w-sm px-2">
+                      <p className="text-sm font-bold text-[#0f172a]">Nessun rifornimento registrato</p>
+                      <p className="text-xs text-[#64748b] mt-0.5">
+                        Registra i rifornimenti per calcolare i consumi medi e la spesa chilometrica.
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => onOpenAddRefuel()}
+                      className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> + Aggiungi Rifornimento
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* View Mode 1: Compact List (with expand/collapse if > 4 items) */}
+                    {viewMode === 'compact' && (
+                      <div className="flex flex-col gap-2">
+                        {(showAllRefuels ? filteredRefuels : filteredRefuels.slice(0, 4)).map((refuel) => {
+                          const qty = Number(refuel.quantity) || 0;
+                          const price = Number(refuel.price) || 0;
+                          const isFull = refuel.type === 'full';
+                          const isEV = refuel.energyType === 'electricity' || refuel.unit === 'kWh' || (isBEV && !refuel.energyType);
+                          const isLPG = refuel.energyType === 'lpg';
+                          const isCNG = refuel.energyType === 'cng';
+                          const unit = refuel.unit || (isEV ? 'kWh' : (isCNG ? 'Kg' : 'L'));
+
+                          return (
+                            <div 
+                              key={refuel.id}
+                              onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
+                              className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#93c5fd] rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
+                            >
+                              {/* Left: Icon, Date, Type Badge & Km */}
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                                  isEV 
+                                    ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                                    : (isLPG 
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                                      : (isCNG 
+                                        ? 'bg-teal-50 text-teal-600 border-teal-200' 
+                                        : 'bg-blue-50 text-[#2563eb] border-blue-100'))
+                                }`}>
+                                  {isEV ? <Zap className="w-4 h-4 sm:w-5 sm:h-5" /> : <Fuel className="w-4 h-4 sm:w-5 sm:h-5" />}
+                                </div>
+                                
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs sm:text-sm font-black text-[#0f172a]">
+                                      {refuel.date.split('-').reverse().join('/')}
+                                    </span>
+                                    {isEV ? (
+                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-200 whitespace-nowrap">
+                                        ⚡ Elettrica {isFull ? '100%' : 'Parz.'}
+                                      </span>
+                                    ) : isLPG ? (
+                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-emerald-100 text-emerald-900 border border-emerald-200 whitespace-nowrap">
+                                        🔵 GPL {isFull ? 'Pieno' : 'Parz.'}
+                                      </span>
+                                    ) : isCNG ? (
+                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-teal-100 text-teal-900 border border-teal-200 whitespace-nowrap">
+                                        🟢 Metano {isFull ? 'Pieno' : 'Parz.'}
+                                      </span>
+                                    ) : (
+                                      <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase whitespace-nowrap ${
+                                        isFull ? 'bg-emerald-50 text-[#059669] border border-emerald-100' : 'bg-slate-100 text-[#64748b] border border-slate-200'
+                                      }`}>
+                                        {isFull ? 'Pieno' : 'Parziale'}
+                                      </span>
+                                    )}
+
+                                    {/* Interval Consumption badge if computed */}
+                                    {refuel.intervalConsumption && (
+                                      <span className="px-2 py-0.5 rounded-md text-[9.5px] font-black bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                                        {refuel.intervalConsumption.formattedKmPerUnit} km/{unit} ({refuel.intervalConsumption.formattedUnitPer100Km} {unit}/100km)
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-2 text-xs text-[#64748b] mt-0.5 flex-wrap">
+                                    <span className="font-semibold text-[#334155]">{refuel.km.toLocaleString('it-IT')} km</span>
+                                    {refuel.deltaKm !== null && refuel.deltaKm > 0 && (
+                                      <span className="text-[11px] text-blue-600 font-bold hidden sm:inline">
+                                        (+{refuel.deltaKm.toLocaleString('it-IT')} km)
+                                      </span>
+                                    )}
+                                    {refuel.notes && (
+                                      <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
+                                        • {refuel.notes}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right: Quantity, Price & Actions */}
+                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
+                                <div className="text-left sm:text-right">
+                                  <div className="text-sm sm:text-base font-black text-[#0f172a] whitespace-nowrap">
+                                    {settings.currency} {price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </div>
+                                  <div className="text-xs text-[#64748b] font-medium whitespace-nowrap">
+                                    {qty.toLocaleString('it-IT', { minimumFractionDigits: 2 })} {unit}
+                                    {refuel.unitPrice && <span className="text-[10.5px] ml-1 text-slate-400">({refuel.unitPrice} €/{unit})</span>}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 ml-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenEditRefuel(refuel);
+                                    }}
+                                    className="p-1.5 sm:p-2 rounded-xl text-[#64748b] hover:text-[#2563eb] hover:bg-blue-50 transition-colors"
+                                    title="Modifica rapida"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                  
+                                  <div className="p-1.5 sm:p-2 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-400 group-hover:text-[#2563eb] transition-colors">
+                                    <ChevronRight className="w-4 h-4" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Accordion expand/collapse pill for refuels */}
+                        {filteredRefuels.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAllRefuels(!showAllRefuels)}
+                            className="mt-1 w-full py-2.5 px-4 bg-slate-50 hover:bg-blue-50/70 border border-slate-200 hover:border-blue-300 rounded-xl text-xs font-black text-blue-700 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                          >
+                            {showAllRefuels ? (
+                              <>
+                                <ChevronUp className="w-4 h-4" />
+                                <span>Mostra meno (visualizza solo gli ultimi 4)</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="w-4 h-4" />
+                                <span>Mostra tutti i {filteredRefuels.length} rifornimenti registrati</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* View Mode 2: Grouped by Year Accordion */}
+                    {viewMode === 'grouped' && (
+                      <div className="flex flex-col gap-3">
+                        {(Object.entries(refuelsByYear) as [string, RefuelWithCalculation[]][]).map(([year, records]) => {
+                          const isYearCollapsed = !!collapsedYears[`refuel-${year}`];
+                          const totalYearSpend = records.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
+                          const totalYearQty = records.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
+
+                          return (
+                            <div key={year} className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                              {/* Year Group Accordion Header */}
+                              <button
+                                type="button"
+                                onClick={() => toggleYearCollapse(`refuel-${year}`)}
+                                className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer border-b border-slate-100"
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isYearCollapsed ? '-rotate-90' : ''}`} />
+                                  <span className="text-sm font-black text-slate-900">Anno {year}</span>
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                    {records.length} {records.length === 1 ? 'rifornimento' : 'rifornimenti'}
+                                  </span>
+                                </div>
+
+                                <div className="text-xs font-bold text-slate-600">
+                                  <span>{settings.currency} {totalYearSpend.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
+                                  <span className="hidden sm:inline text-slate-400 font-normal ml-1.5">({totalYearQty.toFixed(1)} {fuelUnit})</span>
+                                </div>
+                              </button>
+
+                              {!isYearCollapsed && (
+                                <div className="p-2.5 flex flex-col gap-2 divide-y divide-slate-100">
+                                  {records.map(refuel => {
+                                    const qty = Number(refuel.quantity) || 0;
+                                    const price = Number(refuel.price) || 0;
+                                    const isFull = refuel.type === 'full';
+                                    const isEV = refuel.energyType === 'electricity' || refuel.unit === 'kWh';
+                                    const unit = refuel.unit || (isEV ? 'kWh' : 'L');
+
+                                    return (
+                                      <div
+                                        key={refuel.id}
+                                        onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
+                                        className="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-slate-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className="font-bold text-slate-900 whitespace-nowrap">{refuel.date.split('-').reverse().join('/')}</span>
+                                          <span className="text-slate-600 font-medium whitespace-nowrap">{refuel.km.toLocaleString('it-IT')} km</span>
+                                          {refuel.intervalConsumption && (
+                                            <span className="hidden md:inline px-1.5 py-0.2 bg-blue-50 text-blue-700 text-[10px] font-bold rounded">
+                                              {refuel.intervalConsumption.formattedKmPerUnit} km/{unit}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="font-black text-slate-900">{settings.currency} {price.toFixed(2)}</span>
+                                          <span className="text-slate-500 font-medium">({qty.toFixed(1)} {unit})</span>
+                                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MANUTENZIONI */}
+            {activeTab === 'maintenances' && (
+              <div className="flex flex-col gap-2.5">
+                {filteredMaintenances.length === 0 ? (
+                  <div className="text-center py-10 flex flex-col items-center justify-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center">
+                      <Wrench className="w-6 h-6" />
+                    </div>
+                    <div className="max-w-sm px-2">
+                      <p className="text-sm font-bold text-[#0f172a]">Nessuna manutenzione registrata</p>
+                      <p className="text-xs text-[#64748b] mt-0.5">
+                        Tieni traccia di tagliandi, pastiglie freni, gomme e revisioni per mantenere alto il valore della tua auto.
+                      </p>
+                    </div>
+                    <button 
+                      onClick={onOpenAddMaintenance}
+                      className="bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> + Aggiungi Manutenzione
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* View Mode 1: Compact List (with expand/collapse if > 4 items) */}
+                    {viewMode === 'compact' && (
+                      <div className="flex flex-col gap-2">
+                        {(showAllMaintenances ? filteredMaintenances : filteredMaintenances.slice(0, 4)).map((maint) => {
+                          const cost = Number(maint.cost) || 0;
+
+                          return (
+                            <div 
+                              key={maint.id}
+                              onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
+                              className="group bg-[#fafbfc] hover:bg-white border border-[#e2e8f0] hover:border-[#a7f3d0] rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all duration-150 shadow-2xs hover:shadow-xs cursor-pointer select-none"
+                            >
+                              {/* Left: Date, Category & Workshop */}
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                  <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
+                                </div>
+                                
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs sm:text-sm font-black text-[#0f172a]">
+                                      {maint.date.split('-').reverse().join('/')}
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-md text-[9.5px] font-extrabold uppercase bg-emerald-50 text-[#059669] border border-emerald-100 whitespace-nowrap">
+                                      {maint.category}
+                                    </span>
+                                  </div>
+
+                                  <div className="text-xs text-[#64748b] mt-0.5 flex items-center gap-2 flex-wrap">
+                                    <span className="font-semibold text-[#334155]">{maint.km.toLocaleString('it-IT')} km</span>
+                                    {maint.workshop && (
+                                      <span className="truncate max-w-[120px] sm:max-w-[180px]">• {maint.workshop}</span>
+                                    )}
+                                    {maint.description && (
+                                      <span className="text-slate-400 truncate max-w-[120px] sm:max-w-[200px]">
+                                        • {maint.description}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right: Cost & Actions */}
+                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f1f5f9] shrink-0">
+                                <div className="text-left sm:text-right">
+                                  <div className="text-sm sm:text-base font-black text-[#059669] whitespace-nowrap">
+                                    {settings.currency} {cost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </div>
+                                  <div className="text-[11px] text-[#64748b] whitespace-nowrap font-medium">
+                                    Spesa registrata
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 ml-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenEditMaintenance(maint);
+                                    }}
+                                    className="p-1.5 sm:p-2 rounded-xl text-[#64748b] hover:text-[#059669] hover:bg-emerald-50 transition-colors"
+                                    title="Modifica rapida"
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </button>
+                                  
+                                  <div className="p-1.5 sm:p-2 rounded-xl bg-slate-100 group-hover:bg-emerald-50 text-slate-400 group-hover:text-[#059669] transition-colors">
+                                    <ChevronRight className="w-4 h-4" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Accordion expand/collapse pill for maintenances */}
+                        {filteredMaintenances.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAllMaintenances(!showAllMaintenances)}
+                            className="mt-1 w-full py-2.5 px-4 bg-slate-50 hover:bg-emerald-50/70 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs font-black text-emerald-700 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                          >
+                            {showAllMaintenances ? (
+                              <>
+                                <ChevronUp className="w-4 h-4" />
+                                <span>Mostra meno (visualizza solo gli ultimi 4)</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="w-4 h-4" />
+                                <span>Mostra tutte le {filteredMaintenances.length} manutenzioni registrate</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* View Mode 2: Grouped by Year Accordion */}
+                    {viewMode === 'grouped' && (
+                      <div className="flex flex-col gap-3">
+                        {(Object.entries(maintenancesByYear) as [string, MaintenanceRecord[]][]).map(([year, records]) => {
+                          const isYearCollapsed = !!collapsedYears[`maint-${year}`];
+                          const totalYearSpend = records.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
+
+                          return (
+                            <div key={year} className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                              {/* Year Group Accordion Header */}
+                              <button
+                                type="button"
+                                onClick={() => toggleYearCollapse(`maint-${year}`)}
+                                className="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between gap-3 text-left transition-colors cursor-pointer border-b border-slate-100"
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isYearCollapsed ? '-rotate-90' : ''}`} />
+                                  <span className="text-sm font-black text-slate-900">Anno {year}</span>
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                                    {records.length} {records.length === 1 ? 'intervento' : 'interventi'}
+                                  </span>
+                                </div>
+
+                                <div className="text-xs font-bold text-emerald-700">
+                                  <span>{settings.currency} {totalYearSpend.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                              </button>
+
+                              {!isYearCollapsed && (
+                                <div className="p-2.5 flex flex-col gap-2 divide-y divide-slate-100">
+                                  {records.map(maint => {
+                                    const cost = Number(maint.cost) || 0;
+
+                                    return (
+                                      <div
+                                        key={maint.id}
+                                        onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
+                                        className="pt-2 first:pt-0 flex items-center justify-between gap-2 text-xs hover:bg-slate-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          <span className="font-bold text-slate-900 whitespace-nowrap">{maint.date.split('-').reverse().join('/')}</span>
+                                          <span className="text-emerald-700 font-bold px-1.5 py-0.2 bg-emerald-50 rounded whitespace-nowrap">{maint.category}</span>
+                                          <span className="text-slate-600 font-medium whitespace-nowrap">{maint.km.toLocaleString('it-IT')} km</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="font-black text-[#059669]">{settings.currency} {cost.toFixed(2)}</span>
+                                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 
