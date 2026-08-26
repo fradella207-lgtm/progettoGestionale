@@ -49,22 +49,9 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
   const [notes, setNotes] = useState(editingRefuel?.notes || '');
   const [chargingPowerKw, setChargingPowerKw] = useState<number | ''>(editingRefuel?.chargingPowerKw ?? '');
 
-  const handleCloseOrDelete = () => {
-    if (isEditing && onDelete && editingRefuel) {
-      if (window.confirm('Sei sicuro di voler eliminare questa registrazione?')) {
-        onDelete(editingRefuel.id);
-        onClose();
-      }
-    } else {
-      if (window.confirm('Sei sicuro di voler annullare? I dati non salvati andranno persi.')) {
-        onClose();
-      }
-    }
-  };
-
   // Support swipe right gesture to go back / close
   useSwipeBack({
-    onBack: handleCloseOrDelete,
+    onBack: onClose,
     enabled: isOpen
   });
 
@@ -164,9 +151,9 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           <button 
             id="btn-close-refuel-modal"
             type="button"
-            onClick={handleCloseOrDelete} 
-            title={isEditing ? 'Elimina registrazione' : 'Annulla inserimento'}
-            className="text-slate-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors cursor-pointer"
+            onClick={onClose} 
+            title="Chiudi"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -429,11 +416,27 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-end pt-3 border-t border-[#e2e8f0]">
+          <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
+            {isEditing && onDelete ? (
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (confirm('Sei sicuro di voler eliminare questa registrazione?')) {
+                    onDelete(editingRefuel!.id);
+                    onClose();
+                  }
+                }}
+                className="bg-red-50 hover:bg-red-100 text-[#dc2626] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Elimina</span>
+              </button>
+            ) : <div />}
+
             <button 
               type="submit" 
               id="btn-submit-refuel-form"
-              className="w-full sm:w-auto bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-xs cursor-pointer text-center"
+              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer text-center"
             >
               {isEditing ? 'Salva Modifiche' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}
             </button>
