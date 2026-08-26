@@ -13,6 +13,7 @@ import { NotificationsModal } from './components/modals/NotificationsModal';
 import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
+import { useSwipeBack } from './hooks/useSwipeBack';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
 function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
@@ -165,6 +166,17 @@ export default function App() {
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Support swipe right gesture to navigate from detail view back to garage
+  const isAnyTopModalOpen = isAddCarModalOpen || isRefuelModalOpen || isMaintenanceModalOpen || isSettingsModalOpen || isNotificationsModalOpen || isAccountModalOpen || isAuthModalOpen;
+  useSwipeBack({
+    onBack: () => {
+      if (currentView === 'detail') {
+        setCurrentView('garage');
+      }
+    },
+    enabled: currentView === 'detail' && !isAnyTopModalOpen
+  });
 
   // Sync to localStorage and Firestore
   useEffect(() => {

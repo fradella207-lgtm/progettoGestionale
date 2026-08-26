@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, 
+  ArrowLeft,
   Car, 
   Fuel, 
   Zap, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Vehicle, AppSettings } from '../../types';
 import { DetailedConsumptionMetrics, BoardTrip, RefuelWithCalculation } from '../../utils/consumptionCalculator';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface BoardTripsModalProps {
   isOpen: boolean;
@@ -39,6 +41,12 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 }) => {
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
   const [selectedSort, setSelectedSort] = useState<'chronological' | 'efficiency' | 'distance'>('chronological');
+
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   if (!isOpen) return null;
 
@@ -61,26 +69,37 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
       <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between relative overflow-hidden shrink-0">
+        <div className="p-4 sm:p-6 bg-slate-900 text-white flex items-center justify-between gap-3 relative overflow-hidden shrink-0">
           <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-600/20 rounded-full blur-2xl pointer-events-none" />
           
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner">
-              <BarChart3 className="w-6 h-6" />
+          <div className="flex items-center gap-2.5 sm:gap-3 relative z-10 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-black border border-white/20 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-400 shrink-0 shadow-inner hidden xs:flex">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-widest text-blue-400">
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-blue-400 truncate">
                   Computer di Bordo & Efficienza
                 </span>
-                <span className="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-400/30">
+                <span className="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-400/30 shrink-0">
                   Full-to-Full
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <h2 className="text-base sm:text-2xl font-black text-white tracking-tight flex items-center gap-2 truncate">
                 Trip di Bordo ({trips.length})
               </h2>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-slate-300 truncate">
                 {vehicle.brand} {vehicle.model} • {vehicle.plate || 'Nessuna targa'}
               </p>
             </div>

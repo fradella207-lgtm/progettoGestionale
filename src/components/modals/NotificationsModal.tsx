@@ -1,6 +1,7 @@
 import React from 'react';
-import { X, Bell, CheckCircle2, AlertTriangle, Wrench, Sparkles, Trash2 } from 'lucide-react';
+import { X, ArrowLeft, Bell, CheckCircle2, AlertTriangle, Wrench, Sparkles, Trash2 } from 'lucide-react';
 import { AppNotification } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -19,6 +20,12 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   onMarkAllAsRead,
   onClearNotifications
 }) => {
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
+
   if (!isOpen) return null;
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -41,21 +48,32 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100">
+        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 shrink-0 hidden xs:flex">
               <Bell className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-extrabold text-[#0f172a]">Centro Notifiche</h3>
+                <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">Notifiche</h3>
                 {unreadCount > 0 && (
-                  <span className="bg-[#dc2626] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  <span className="bg-[#dc2626] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
                     {unreadCount} nuove
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#64748b]">Avvisi su tagliandi, scadenze e consigli predittivi AI</p>
+              <p className="text-xs text-[#64748b] truncate">Avvisi tagliandi, scadenze e consigli AI</p>
             </div>
           </div>
           <button 

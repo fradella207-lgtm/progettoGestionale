@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   X, 
+  ArrowLeft,
   Car, 
   Fuel, 
   Zap, 
@@ -32,6 +33,7 @@ import {
   optimizeImageFile, 
   OptimizationResult 
 } from '../../utils/imageOptimizer';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 import { 
   POPULAR_BRANDS,
   ALL_BRAND_NAMES,
@@ -599,6 +601,14 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     onClose();
   };
 
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
+
+  if (!isOpen) return null;
+
   const isPHEV = fuelType === 'Plug-in Hybrid (PHEV)';
   const isBEV = fuelType === 'Elettrica (BEV)';
   const isLPG = fuelType === 'GPL (Benzina + GPL)' || fuelType === 'GPL';
@@ -609,22 +619,33 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden font-['Plus_Jakarta_Sans',sans-serif] border border-[#e2e8f0]">
         
         {/* HEADER */}
-        <div className="px-5 py-4 border-b border-[#e2e8f0] flex items-center justify-between bg-[#fafbfc]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center shadow-2xs">
-              <Car className="w-5 h-5" />
+        <div className="px-4 sm:px-5 py-4 border-b border-[#e2e8f0] flex items-center justify-between gap-2 bg-[#fafbfc]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 text-[#2563eb] border border-blue-100 flex items-center justify-center shadow-2xs shrink-0 hidden xs:flex">
+              <Car className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-black text-[#0f172a] leading-tight">
+                <h3 className="text-sm sm:text-base md:text-lg font-black text-[#0f172a] leading-tight truncate">
                   {isEditing ? 'Modifica Veicolo' : 'Aggiungi Nuovo Veicolo'}
                 </h3>
-                <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200">
+                <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200 shrink-0 hidden sm:inline">
                   Supporto 360°
                 </span>
               </div>
-              <p className="text-xs text-[#64748b] mt-0.5">
-                {isEditing ? 'Aggiorna i dati della scheda tecnica' : 'Compatibile con qualsiasi marca, modello, anno e foto reali autentiche'}
+              <p className="text-xs text-[#64748b] mt-0.5 truncate">
+                {isEditing ? 'Aggiorna i dati della scheda tecnica' : 'Compatibile con qualsiasi marca, modello, anno e foto reali'}
               </p>
             </div>
           </div>

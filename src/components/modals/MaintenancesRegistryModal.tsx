@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   X, 
+  ArrowLeft,
   Wrench, 
   Plus, 
   Search, 
@@ -16,6 +17,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Vehicle, MaintenanceRecord, AppSettings } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface MaintenancesRegistryModalProps {
   isOpen: boolean;
@@ -41,7 +43,11 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'km-desc' | 'cost-desc'>('date-desc');
 
-  if (!isOpen) return null;
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   const rawMaints = vehicle.maintenances || [];
 
@@ -118,29 +124,42 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
     return rawMaints.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
   }, [rawMaints]);
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white flex items-center justify-between relative overflow-hidden shrink-0">
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner">
-              <Wrench className="w-6 h-6 text-emerald-300" />
+        <div className="p-4 sm:p-6 bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 text-white flex items-center justify-between gap-3 relative overflow-hidden shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 relative z-10 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-black border border-white/20 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner hidden xs:flex">
+              <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-300" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-widest text-emerald-300">
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-emerald-300 truncate">
                   Libretto Service Ufficiale
                 </span>
-                <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                  {rawMaints.length} Interventi
+                <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
+                  {rawMaints.length}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h2 className="text-base sm:text-2xl font-black text-white tracking-tight truncate">
                 Storico Manutenzioni & Officina
               </h2>
-              <p className="text-xs text-emerald-100">
+              <p className="text-xs text-emerald-100 truncate">
                 {vehicle.brand} {vehicle.model} • {vehicle.plate || 'Nessuna targa'}
               </p>
             </div>

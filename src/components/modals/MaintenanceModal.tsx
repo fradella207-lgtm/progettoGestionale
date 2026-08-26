@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Wrench, Trash2 } from 'lucide-react';
+import { X, ArrowLeft, Wrench, Trash2 } from 'lucide-react';
 import { MaintenanceRecord, Vehicle } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface MaintenanceModalProps {
   vehicle: Vehicle;
@@ -27,6 +28,12 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   const [cost, setCost] = useState<number | ''>(editingMaintenance?.cost ?? '');
   const [workshop, setWorkshop] = useState(editingMaintenance?.workshop || '');
   const [description, setDescription] = useState(editingMaintenance?.description || '');
+
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -66,16 +73,27 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
       <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center border border-emerald-100">
+        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center border border-emerald-100 shrink-0 hidden xs:flex">
               <Wrench className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">
-                {isEditing ? 'Modifica Intervento' : 'Nuova Manutenzione / Tagliando'}
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">
+                {isEditing ? 'Modifica Intervento' : 'Nuova Manutenzione'}
               </h3>
-              <p className="text-xs text-[#64748b]">{vehicle.brand} {vehicle.model} ({vehicle.plate})</p>
+              <p className="text-xs text-[#64748b] truncate">{vehicle.brand} {vehicle.model} ({vehicle.plate})</p>
             </div>
           </div>
           <button 

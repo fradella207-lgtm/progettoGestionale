@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   X, 
+  ArrowLeft,
   Fuel, 
   Wrench, 
   Sparkles, 
@@ -20,6 +21,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { RefuelRecord, MaintenanceRecord, AIAdvice, Vehicle, AppSettings } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 export type DetailModalData = 
   | { type: 'refuel'; item: RefuelRecord; deltaKm?: number | null; unitPrice?: string | null }
@@ -47,49 +49,66 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
   onEditMaintenance,
   onAddMaintenanceFromAdvice
 }) => {
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen && !!data
+  });
+
   if (!isOpen || !data) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden font-['Plus_Jakarta_Sans',sans-serif] border border-[#e2e8f0]">
         
         {/* MODAL HEADER */}
-        <div className="px-6 py-4.5 border-b border-[#e2e8f0] flex items-center justify-between bg-[#fafbfc]">
-          <div className="flex items-center gap-3">
+        <div className="px-4 sm:px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between gap-2 bg-[#fafbfc]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
             {data.type === 'refuel' && (() => {
               const isEV = data.item.energyType === 'electricity' || data.item.unit === 'kWh';
               return (
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xs border ${
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-2xs border shrink-0 hidden xs:flex ${
                   isEV ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-blue-50 text-[#2563eb] border-blue-100'
                 }`}>
-                  {isEV ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
+                  {isEV ? <Zap className="w-4 h-4 sm:w-5 sm:h-5" /> : <Fuel className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </div>
               );
             })()}
 
             {data.type === 'maintenance' && (
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center shadow-2xs">
-                <Wrench className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center shadow-2xs shrink-0 hidden xs:flex">
+                <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             )}
 
             {data.type === 'advice' && (
-              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-2xs ${
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shadow-2xs shrink-0 hidden xs:flex ${
                 data.item.urgency === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-600'
               }`}>
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             )}
 
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-black text-[#0f172a] leading-tight">
-                  {data.type === 'refuel' && (data.item.energyType === 'electricity' ? 'Dettaglio Ricarica Elettrica' : 'Dettaglio Rifornimento')}
+                <h3 className="text-sm sm:text-base font-black text-[#0f172a] leading-tight truncate">
+                  {data.type === 'refuel' && (data.item.energyType === 'electricity' ? 'Dettaglio Ricarica' : 'Dettaglio Rifornimento')}
                   {data.type === 'maintenance' && 'Dettaglio Intervento'}
-                  {data.type === 'advice' && 'Consiglio & Analisi AI'}
+                  {data.type === 'advice' && 'Consiglio AI'}
                 </h3>
               </div>
-              <p className="text-xs text-[#64748b] mt-0.5">
+              <p className="text-xs text-[#64748b] mt-0.5 truncate">
                 {vehicle.brand} {vehicle.model} • <span className="font-bold text-[#0f172a]">{vehicle.plate}</span>
               </p>
             </div>

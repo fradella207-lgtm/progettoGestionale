@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, 
+  ArrowLeft,
   Mail, 
   Lock, 
   User, 
@@ -23,6 +24,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from '../../firebase';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface AuthLoginModalProps {
   isOpen: boolean;
@@ -51,6 +53,12 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   if (!isOpen) return null;
 
@@ -252,21 +260,32 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
       <div className="bg-white rounded-[24px] w-full max-w-md p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[92vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in zoom-in-95 duration-200">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100">
-              <KeyRound className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100 shrink-0 hidden xs:flex">
+              <KeyRound className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a] leading-tight">
-                {authMode === 'login' ? 'Accedi al Garage' : authMode === 'register' ? 'Crea Nuovo Account' : 'Reimposta Password'}
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] leading-tight truncate">
+                {authMode === 'login' ? 'Accedi al Garage' : authMode === 'register' ? 'Crea Account' : 'Password'}
               </h3>
-              <p className="text-xs text-[#64748b]">
+              <p className="text-xs text-[#64748b] truncate">
                 {authMode === 'login' 
-                  ? 'Accedi con Google o con credenziali email' 
+                  ? 'Accedi con Google o email' 
                   : authMode === 'register' 
-                    ? 'Registrati per sincronizzare il tuo parco auto' 
-                    : 'Inserisci la tua email per ricevere il link di recupero'}
+                    ? 'Sincronizza il tuo parco auto' 
+                    : 'Recupero credenziali'}
               </p>
             </div>
           </div>

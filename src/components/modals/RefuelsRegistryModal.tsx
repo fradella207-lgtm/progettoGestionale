@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   X, 
+  ArrowLeft,
   Fuel, 
   Zap, 
   Plus, 
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, AppSettings, EnergySourceType } from '../../types';
 import { DetailedConsumptionMetrics, RefuelWithCalculation } from '../../utils/consumptionCalculator';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface RefuelsRegistryModalProps {
   isOpen: boolean;
@@ -47,7 +49,11 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   const [selectedFuelType, setSelectedFuelType] = useState<string>('all'); // all, fuel, electricity, lpg, cng
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'km-desc' | 'cost-desc'>('date-desc');
 
-  if (!isOpen) return null;
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   const isPHEV = vehicle.fuelType === 'Plug-in Hybrid (PHEV)';
   const isBEV = vehicle.fuelType.includes('Elettrica') || vehicle.fuelType.includes('BEV');
@@ -130,29 +136,42 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
     return filteredRefuels.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
   }, [filteredRefuels]);
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 text-white flex items-center justify-between relative overflow-hidden shrink-0">
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner">
-              {isPHEV ? <Zap className="w-6 h-6 text-amber-300" /> : <Fuel className="w-6 h-6" />}
+        <div className="p-4 sm:p-6 bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 text-white flex items-center justify-between gap-3 relative overflow-hidden shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 relative z-10 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-black border border-white/20 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner hidden xs:flex">
+              {isPHEV ? <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300" /> : <Fuel className="w-5 h-5 sm:w-6 sm:h-6" />}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-widest text-blue-200">
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-blue-200 truncate">
                   Registro Ufficiale
                 </span>
-                <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
-                  {metrics.calculatedRefuels.length} Registrazioni
+                <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
+                  {metrics.calculatedRefuels.length}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                {isPHEV ? 'Registro Rifornimenti & Ricariche' : (isBEV ? 'Registro Ricariche Elettriche' : 'Registro Rifornimenti Carburante')}
+              <h2 className="text-base sm:text-2xl font-black text-white tracking-tight truncate">
+                {isPHEV ? 'Rifornimenti & Ricariche' : (isBEV ? 'Ricariche Elettriche' : 'Registro Rifornimenti')}
               </h2>
-              <p className="text-xs text-blue-100">
+              <p className="text-xs text-blue-100 truncate">
                 {vehicle.brand} {vehicle.model} • {vehicle.plate || 'Nessuna targa'}
               </p>
             </div>

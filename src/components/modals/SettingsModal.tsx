@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Sliders, Database, Download, Upload, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { X, ArrowLeft, Settings, Sliders, Database, Download, Upload, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { AppSettings, Vehicle } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,6 +27,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [fuelPriceAlerts, setFuelPriceAlerts] = useState<boolean>(settings.fuelPriceAlerts);
   const [predictiveAlerts, setPredictiveAlerts] = useState<boolean>(settings.predictiveAlerts);
   const [autoBackup, setAutoBackup] = useState<boolean>(settings.autoBackup);
+
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -89,14 +96,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100">
+        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100 shrink-0 hidden xs:flex">
               <Settings className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">Impostazioni Generali</h3>
-              <p className="text-xs text-[#64748b]">Personalizza unità di misura, notifiche e gestione dati</p>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">Impostazioni</h3>
+              <p className="text-xs text-[#64748b] truncate">Personalizza unità, notifiche e dati</p>
             </div>
           </div>
           <button 

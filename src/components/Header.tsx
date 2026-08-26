@@ -46,14 +46,26 @@ export const Header: React.FC<HeaderProps> = ({
       {/* LEFT SECTION */}
       <div className="flex items-center gap-3 sm:gap-4">
         {currentView === 'detail' ? (
-          <button
-            id="btn-back-to-garage"
-            onClick={onNavigateGarage}
-            className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#0f172a] flex items-center justify-center transition-colors border border-[#e2e8f0] cursor-pointer"
-            title="Torna al Garage"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              id="btn-back-to-garage"
+              onClick={onNavigateGarage}
+              className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-[#0f172a] transition-all border border-[#cbd5e1] cursor-pointer shadow-2xs group"
+              title="Torna al Garage"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#2563eb] group-hover:-translate-x-0.5 transition-transform" />
+              <span className="text-xs sm:text-sm font-black">Indietro</span>
+            </button>
+            
+            {selectedVehicle && (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-slate-300 font-bold hidden xs:inline">/</span>
+                <span className="text-xs sm:text-sm font-bold text-slate-800 truncate max-w-[130px] sm:max-w-[200px]">
+                  {selectedVehicle.brand} {selectedVehicle.model}
+                </span>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             <div className="w-10 h-10 rounded-xl bg-[#2563eb] flex items-center justify-center text-white shadow-xs shrink-0">

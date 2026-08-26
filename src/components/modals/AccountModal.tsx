@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, 
+  ArrowLeft,
   User, 
   ShieldCheck, 
   Mail, 
@@ -15,6 +16,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { UserAccount } from '../../types';
+import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -39,6 +41,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [email, setEmail] = useState(account.email);
   const [syncStatus, setSyncStatus] = useState<UserAccount['syncStatus']>(account.syncStatus);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Support swipe right gesture to go back / close
+  useSwipeBack({
+    onBack: onClose,
+    enabled: isOpen
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -71,14 +79,25 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            {/* Top-Left Indietro Button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              title="Torna indietro"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Indietro</span>
+            </button>
+
+            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100 shrink-0 hidden xs:flex">
               <User className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">Profilo & Account Utente</h3>
-              <p className="text-xs text-[#64748b]">Gestione credenziali, stato cloud e sincronizzazione PWA</p>
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">Profilo Account</h3>
+              <p className="text-xs text-[#64748b] truncate">Credenziali e sincronizzazione cloud</p>
             </div>
           </div>
           <button 
