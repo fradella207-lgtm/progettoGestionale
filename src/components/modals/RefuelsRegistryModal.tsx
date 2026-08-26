@@ -1,25 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  X, 
   ArrowLeft,
   Fuel, 
   Zap, 
   Plus, 
   Search, 
   Filter, 
-  Calendar, 
   Gauge, 
-  Receipt, 
   Edit3, 
-  Trash2, 
   ChevronRight, 
-  ArrowUpDown,
-  CheckCircle2,
-  FileText,
-  SlidersHorizontal
+  ArrowUpDown
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, AppSettings, EnergySourceType } from '../../types';
-import { DetailedConsumptionMetrics, RefuelWithCalculation } from '../../utils/consumptionCalculator';
+import { DetailedConsumptionMetrics } from '../../utils/consumptionCalculator';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
 interface RefuelsRegistryModalProps {
@@ -48,6 +41,17 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   const [selectedType, setSelectedType] = useState<string>('all'); // all, full, partial
   const [selectedFuelType, setSelectedFuelType] = useState<string>('all'); // all, fuel, electricity, lpg, cng
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'km-desc' | 'cost-desc'>('date-desc');
+
+  // Prevent background scrolling when page is active
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -139,120 +143,123 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
-        
-        {/* Header */}
-        <div className="p-4 sm:p-6 bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 text-white flex items-center justify-between gap-3 relative overflow-hidden shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3 relative z-10 min-w-0">
-            {/* Top-Left Indietro Button */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-black border border-white/20 transition-all cursor-pointer shrink-0 shadow-2xs group"
-              title="Torna indietro"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-              <span>Indietro</span>
-            </button>
+    <div className="fixed inset-0 z-50 bg-[#f8fafc] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
+      
+      {/* STICKY TOP APP BAR - Clean & Minimal with ONLY the Top-Left Back Arrow */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Top-Left Indietro Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+            title="Torna alla scheda veicolo"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-700" />
+            <span>Indietro</span>
+          </button>
 
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white shrink-0 shadow-inner hidden xs:flex">
-              {isPHEV ? <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300" /> : <Fuel className="w-5 h-5 sm:w-6 sm:h-6" />}
+          <div className="h-6 w-px bg-slate-200 hidden xs:block shrink-0" />
+
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 hidden sm:flex">
+              {isPHEV ? <Zap className="w-5 h-5 text-amber-500" /> : <Fuel className="w-5 h-5" />}
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-blue-200 truncate">
-                  Registro Ufficiale
-                </span>
-                <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
-                  {metrics.calculatedRefuels.length}
-                </span>
-              </div>
-              <h2 className="text-base sm:text-2xl font-black text-white tracking-tight truncate">
-                {isPHEV ? 'Rifornimenti & Ricariche' : (isBEV ? 'Ricariche Elettriche' : 'Registro Rifornimenti')}
-              </h2>
-              <p className="text-xs text-blue-100 truncate">
-                {vehicle.brand} {vehicle.model} • {vehicle.plate || 'Nessuna targa'}
+              <h1 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">
+                {isPHEV ? 'Registro Rifornimenti & Ricariche' : (isBEV ? 'Registro Ricariche Elettriche' : 'Registro Rifornimenti')}
+              </h1>
+              <p className="text-xs text-slate-500 truncate">
+                {vehicle.brand} {vehicle.model} • <span className="font-bold text-slate-700">{vehicle.plate || 'Garage'}</span>
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 relative z-10">
-            {isPHEV ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onOpenAddRefuel('fuel')}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Benzina</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenAddRefuel('electricity')}
-                  className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span>Ricarica</span>
-                </button>
-              </div>
-            ) : (
+        {/* Action Button on the Right */}
+        <div className="flex items-center gap-2 shrink-0">
+          {isPHEV ? (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => onOpenAddRefuel()}
-                className="hidden sm:flex px-4 py-2 bg-white text-blue-900 hover:bg-blue-50 rounded-xl text-xs font-black items-center gap-1.5 shadow-xs cursor-pointer"
+                onClick={() => onOpenAddRefuel('fuel')}
+                className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
               >
                 <Plus className="w-4 h-4" />
-                <span>Nuovo Rifornimento</span>
+                <span className="hidden sm:inline">Nuova</span> Benzina
               </button>
-            )}
-
-            <button 
+              <button
+                type="button"
+                onClick={() => onOpenAddRefuel('electricity')}
+                className="px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+              >
+                <Zap className="w-4 h-4" />
+                <span className="hidden sm:inline">Nuova</span> Ricarica
+              </button>
+            </div>
+          ) : (
+            <button
               type="button"
-              onClick={onClose}
-              className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              onClick={() => onOpenAddRefuel()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
+              <span>Nuovo Rifornimento</span>
             </button>
-          </div>
+          )}
         </div>
+      </header>
 
-        {/* Quick KPI Strip */}
-        <div className="bg-slate-50 border-b border-slate-200 p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-          <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">Spesa Filtrata</span>
-            <span className="text-lg sm:text-xl font-black text-blue-700 block mt-0.5">
+      {/* MAIN PAGE BODY */}
+      <main className="max-w-5xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6 flex-1 flex flex-col">
+        
+        {/* KPI Strip */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Spesa Filtrata</span>
+            <span className="text-xl sm:text-2xl font-black text-blue-600 block mt-1">
               {settings.currency} {currentFilteredSpend.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+              {filteredRefuels.length} rifornimenti
+            </span>
           </div>
 
-          <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">Quantità Totale</span>
-            <span className="text-lg sm:text-xl font-black text-slate-900 block mt-0.5">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Quantità Totale</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-1">
               {currentFilteredQuantity.toLocaleString('it-IT', { maximumFractionDigits: 1 })} <span className="text-xs font-bold text-slate-500">{defaultFuelUnit}</span>
             </span>
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+              Volume erogato
+            </span>
           </div>
 
-          <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">Consumo Medio Certificato</span>
-            <span className="text-lg sm:text-xl font-black text-emerald-700 block mt-0.5">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Consumo Medio</span>
+            <span className="text-xl sm:text-2xl font-black text-emerald-600 block mt-1">
               {metrics.kmPerUnit} <span className="text-xs font-bold text-emerald-600">km/{defaultFuelUnit}</span>
             </span>
-          </div>
-
-          <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block">Costo Chilometrico</span>
-            <span className="text-lg sm:text-xl font-black text-slate-900 block mt-0.5">
-              {metrics.fuelCostPerKm} <span className="text-xs font-bold text-slate-500">{settings.currency}/km</span>
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+              {metrics.unitPer100Km} {defaultFuelUnit}/100km
             </span>
           </div>
-        </div>
 
-        {/* Filter Toolbar */}
-        <div className="p-3 sm:p-4 bg-white border-b border-slate-200 flex flex-col gap-3 shrink-0">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Costo Chilometrico</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-1">
+              {metrics.fuelCostPerKm} <span className="text-xs font-bold text-slate-500">{settings.currency}/km</span>
+            </span>
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+              Media globale
+            </span>
+          </div>
+        </section>
+
+        {/* Filter & Search Toolbar */}
+        <section className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            {/* Search Input */}
+            {/* Search Bar */}
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input 
@@ -260,7 +267,7 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Cerca per distributore, note, data, km o prezzo..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all"
+                className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all text-slate-800 placeholder:text-slate-400"
               />
               {searchTerm && (
                 <button
@@ -273,13 +280,13 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
               )}
             </div>
 
-            {/* Sorting */}
+            {/* Sort Selector */}
             <div className="flex items-center gap-2 shrink-0">
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+              <ArrowUpDown className="w-4 h-4 text-slate-400 shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold px-3 py-2 text-slate-700 outline-hidden cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold px-3 py-2.5 text-slate-700 outline-hidden cursor-pointer hover:border-slate-300 transition-all"
               >
                 <option value="date-desc">Data più recente</option>
                 <option value="date-asc">Data meno recente</option>
@@ -290,16 +297,16 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
           </div>
 
           {/* Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto text-xs pb-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs pt-1 border-t border-slate-100">
             <span className="text-[11px] font-bold text-slate-400 shrink-0 flex items-center gap-1">
-              <Filter className="w-3 h-3" /> Anno:
+              <Filter className="w-3.5 h-3.5" /> Anno:
             </span>
             <button
               type="button"
               onClick={() => setSelectedYear('all')}
-              className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
+              className={`px-3 py-1.5 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
                 selectedYear === 'all' 
-                  ? 'bg-blue-600 text-white border-blue-600' 
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
                   : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
               }`}
             >
@@ -310,9 +317,9 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                 key={yr}
                 type="button"
                 onClick={() => setSelectedYear(yr)}
-                className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
+                className={`px-3 py-1.5 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
                   selectedYear === yr 
-                    ? 'bg-blue-600 text-white border-blue-600' 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' 
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -320,179 +327,145 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
               </button>
             ))}
 
-            <div className="w-[1px] h-4 bg-slate-200 shrink-0 mx-1" />
-
-            <span className="text-[11px] font-bold text-slate-400 shrink-0">Tipo:</span>
-            <button
-              type="button"
-              onClick={() => setSelectedType('all')}
-              className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
-                selectedType === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Tutti
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('full')}
-              className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
-                selectedType === 'full' ? 'bg-blue-700 text-white border-blue-700' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Solo Pieni
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedType('partial')}
-              className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer transition-all ${
-                selectedType === 'partial' ? 'bg-amber-600 text-white border-amber-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              Solo Parziali
-            </button>
-
+            {/* Dual Fuel filter if PHEV */}
             {isPHEV && (
-              <>
-                <div className="w-[1px] h-4 bg-slate-200 shrink-0 mx-1" />
+              <div className="flex items-center gap-1.5 ml-auto">
                 <button
                   type="button"
                   onClick={() => setSelectedFuelType('all')}
-                  className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer ${
-                    selectedFuelType === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                    selectedFuelType === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  Tutte Fonti
+                  Tutti
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedFuelType('fuel')}
-                  className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer ${
-                    selectedFuelType === 'fuel' ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-600 border-slate-200'
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    selectedFuelType === 'fuel' ? 'bg-blue-600 text-white border-blue-600' : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
                   }`}
                 >
-                  ⛽ Solo Benzina
+                  <Fuel className="w-3 h-3" /> Benzina
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedFuelType('electricity')}
-                  className={`px-2.5 py-1 rounded-lg border font-bold shrink-0 cursor-pointer ${
-                    selectedFuelType === 'electricity' ? 'bg-amber-500 text-amber-950 font-black' : 'bg-slate-50 text-slate-600 border-slate-200'
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    selectedFuelType === 'electricity' ? 'bg-amber-500 text-amber-950 border-amber-500' : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
                   }`}
                 >
-                  ⚡ Solo Ricariche
+                  <Zap className="w-3 h-3" /> Ricarica
                 </button>
-              </>
+              </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* List of Refuels */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-3 bg-slate-50/50">
+        {/* List of Refuel Records */}
+        <section className="space-y-3 pb-8 flex-1">
           {filteredRefuels.length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-10 text-center flex flex-col items-center justify-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-12 text-center flex flex-col items-center justify-center shadow-2xs">
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 border border-blue-100">
                 <Fuel className="w-7 h-7" />
               </div>
-              <h4 className="text-base font-black text-slate-900">Nessun rifornimento trovato</h4>
-              <p className="text-xs text-slate-500 max-w-sm">
-                Nessuna registrazione corrisponde ai filtri selezionati. Prova a reimpostare i filtri o aggiungi un nuovo rifornimento.
+              <h3 className="text-base font-black text-slate-800">Nessun rifornimento trovato</h3>
+              <p className="text-xs text-slate-500 max-w-sm mt-1">
+                {searchTerm ? 'Nessun risultato corrisponde ai filtri di ricerca applicati.' : 'Non è stato ancora registrato alcun rifornimento o ricarica per questo veicolo.'}
               </p>
               <button
                 type="button"
                 onClick={() => onOpenAddRefuel()}
-                className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
+                className="mt-5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>Registra Rifornimento</span>
+                Registra Primo Rifornimento
               </button>
             </div>
           ) : (
-            filteredRefuels.map((refuel) => {
+            filteredRefuels.map((refuel, idx) => {
               const isElectric = refuel.energyType === 'electricity' || refuel.unit === 'kWh';
-              const unit = refuel.unit || defaultFuelUnit;
-              const hasConsumption = !!refuel.intervalConsumption;
+              const unit = refuel.unit || (isElectric ? 'kWh' : defaultFuelUnit);
+              const unitPrice = (Number(refuel.price) && Number(refuel.quantity) > 0) 
+                ? (Number(refuel.price) / Number(refuel.quantity)).toFixed(3) 
+                : null;
 
               return (
                 <div 
-                  key={refuel.id}
+                  key={refuel.id || idx}
                   onClick={() => onSelectRefuelDetail(refuel)}
-                  className="bg-white border border-slate-200 hover:border-blue-300 rounded-2xl p-4 transition-all shadow-2xs hover:shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer group"
+                  className="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-400 p-4 sm:p-5 shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col gap-3"
                 >
-                  {/* Left Column */}
-                  <div className="flex items-start gap-3.5 min-w-0">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                      isElectric ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-700'
-                    }`}>
-                      {isElectric ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-black text-sm text-slate-900">{refuel.date}</span>
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
-                          refuel.type === 'full' 
-                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                            : 'bg-amber-50 text-amber-800 border-amber-200'
-                        }`}>
-                          {refuel.type === 'full' ? 'Pieno Completo' : 'Rifornimento Parziale'}
-                        </span>
-                        {isElectric && (
-                          <span className="bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-black px-1.5 py-0.5 rounded-md">
-                            ⚡ Elettrico
-                          </span>
-                        )}
-                        {refuel.receiptUrl && (
-                          <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                            <Receipt className="w-3 h-3 text-emerald-600" /> Scontrino
-                          </span>
-                        )}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                        isElectric 
+                          ? 'bg-amber-50 text-amber-600 border-amber-200' 
+                          : 'bg-blue-50 text-blue-600 border-blue-100'
+                      }`}>
+                        {isElectric ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
                       </div>
-
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-500 flex-wrap">
-                        <span className="font-bold text-slate-800 flex items-center gap-1">
-                          <Gauge className="w-3.5 h-3.5 text-slate-400" />
-                          {Number(refuel.km).toLocaleString('it-IT')} km
-                        </span>
-                        {refuel.deltaKm !== null && refuel.deltaKm > 0 && (
-                          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
-                            +{refuel.deltaKm} km percorsi
+                      
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-slate-500">
+                            {refuel.date ? new Date(refuel.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Data n.d.'}
                           </span>
-                        )}
-                        {refuel.station && (
-                          <span className="truncate max-w-[200px] text-slate-600">
-                            • {refuel.station}
+                          <span className="text-slate-300">•</span>
+                          <span className="text-xs font-black text-slate-900">
+                            {Number(refuel.km).toLocaleString('it-IT')} km
                           </span>
-                        )}
-                      </div>
-
-                      {/* Interval consumption if certified */}
-                      {hasConsumption && refuel.intervalConsumption && (
-                        <div className="mt-2 flex items-center gap-2 text-xs">
-                          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-extrabold px-2 py-0.5 rounded-md">
-                            Consumo: {refuel.intervalConsumption.formattedKmPerUnit} km/{unit}
-                          </span>
-                          <span className="text-[11px] font-semibold text-slate-500">
-                            ({refuel.intervalConsumption.formattedUnitPer100Km} {unit}/100km)
+                          {refuel.deltaKm ? (
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                              +{refuel.deltaKm.toLocaleString('it-IT')} km
+                            </span>
+                          ) : null}
+                          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                            refuel.type === 'full' 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-200'
+                          }`}>
+                            {refuel.type === 'full' ? 'Pieno' : 'Parziale'}
                           </span>
                         </div>
-                      )}
+
+                        {refuel.station && (
+                          <p className="text-xs font-bold text-slate-700 mt-1">
+                            {refuel.station}
+                          </p>
+                        )}
+                        {refuel.notes && (
+                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 italic">
+                            &ldquo;{refuel.notes}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Cost & Volume */}
+                    <div className="text-right shrink-0">
+                      <span className="text-base sm:text-lg font-black text-slate-900 block">
+                        {settings.currency} {Number(refuel.price).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500 block">
+                        {Number(refuel.quantity).toLocaleString('it-IT', { maximumFractionDigits: 2 })} {unit}
+                        {unitPrice && <span className="text-[11px] text-slate-400 font-normal"> ({settings.currency} {unitPrice}/{unit})</span>}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Right Column (Price & Actions) */}
-                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
-                    <div className="text-left sm:text-right">
-                      <span className="text-base sm:text-lg font-black text-blue-700 block">
-                        {settings.currency} {Number(refuel.price).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                      <div className="flex items-center sm:justify-end gap-1.5 text-xs text-slate-500 font-bold">
-                        <span>{refuel.quantity} {unit}</span>
-                        {refuel.unitPrice && (
-                          <span className="text-[11px] font-medium text-slate-400">
-                            ({settings.currency} {refuel.unitPrice}/{unit})
-                          </span>
-                        )}
-                      </div>
+                  {/* Calculated metrics strip for this refuel */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                      {refuel.kmPerUnit ? (
+                        <span className="font-bold text-emerald-600 flex items-center gap-1">
+                          <Gauge className="w-3.5 h-3.5" />
+                          {refuel.kmPerUnit} km/{unit} ({refuel.unitPer100Km} {unit}/100km)
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">
+                          {refuel.type === 'partial' ? 'Pieno successivo necessario per calcolo consumo' : 'Primo pieno o riferimento'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -502,42 +475,21 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                           e.stopPropagation();
                           onOpenEditRefuel(refuel);
                         }}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
+                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
                         title="Modifica Rifornimento"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
-                      <div className="p-2 text-slate-400 group-hover:text-blue-600 transition-colors">
-                        <ChevronRight className="w-4 h-4" />
-                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors" />
                     </div>
                   </div>
                 </div>
               );
             })
           )}
-        </div>
+        </section>
 
-        {/* Footer */}
-        <div className="p-4 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-500">
-              Visualizzati: {filteredRefuels.length} di {metrics.calculatedRefuels.length} rifornimenti
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black shadow-xs hover:shadow transition-all cursor-pointer"
-            >
-              Chiudi
-            </button>
-          </div>
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 };
