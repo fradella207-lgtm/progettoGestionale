@@ -48,12 +48,24 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
-  // Data source state: Live from /api/stations with fallback to SEED_STATIONS
-  const [liveStations, setLiveStations] = useState<Station[]>(SEED_STATIONS);
+  // Data source state: Live from /api/stations with fallback to SEED_STATIONS and offline localStorage cache
+  const [liveStations, setLiveStations] = useState<Station[]>(() => {
+    try {
+      const cached = localStorage.getItem('garage_cached_stations_v1');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return SEED_STATIONS;
+  });
   const [isSyncingLive, setIsSyncingLive] = useState(false);
   const [isLoadingAreaStations, setIsLoadingAreaStations] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
-  const [totalDbCount, setTotalDbCount] = useState<number>(21591);
+  const [totalDbCount, setTotalDbCount] = useState<number>(21638);
+  const [currentZoom, setCurrentZoom] = useState<number>(11);
 
   // Helper parser from backend API model to UI Station model
   const parseBackendStations = (rawArray: any[]): Station[] => {
@@ -190,17 +202,44 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (json.data && Array.isArray(json.data) && json.data.length > 0) {
         const mapped = parseBackendStations(json.data);
         setLiveStations(mapped);
+        try {
+          // Cache in localStorage for instantaneous offline and mobile startup
+          localStorage.setItem('garage_cached_stations_v1', JSON.stringify(mapped.slice(0, 150)));
+        } catch {
+          // localStorage safe ignore
+        }
       }
     } catch (e) {
-      console.warn('Errore caricamento stazioni area:', e);
+      console.warn('Caricamento stazioni API non disponibile, utilizzo catalogo offline:', e);
     } finally {
       setIsLoadingAreaStations(false);
     }
   };
 
-  // Initial load
+  // Initial load: Attempt automatic GPS position on mobile & desktop, with graceful fallback
   useEffect(() => {
-    fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
+    if (navigator.geolocation && !localStorage.getItem('garage_location_dismissed')) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          setUserLocation(coords);
+          fetchAreaStations({ lat: coords.lat, lng: coords.lng, radius: 35, type: 'all' });
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([coords.lat, coords.lng], 12);
+          }
+        },
+        () => {
+          // Default fallback Milan
+          fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
+        },
+        { enableHighAccuracy: false, timeout: 6000 }
+      );
+    } else {
+      fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
+    }
   }, []);
 
   // Trigger manual sync with backend
@@ -644,12 +683,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       markersGroupRef.current = markersGroup;
       mapInstanceRef.current = map;
 
-      // Listen to map pan/zoom to dynamically load real MIMIT stations in the visible area
+      // Listen to map pan/zoom to dynamically load real MIMIT stations and handle clustering at different zoom levels
       let moveTimeout: any = null;
       map.on('moveend', () => {
         clearTimeout(moveTimeout);
         moveTimeout = setTimeout(() => {
           const z = map.getZoom();
+          setCurrentZoom(z);
           const bounds = map.getBounds();
           if (z >= 8) {
             const boundsStr = `${bounds.getSouth().toFixed(4)},${bounds.getWest().toFixed(4)},${bounds.getNorth().toFixed(4)},${bounds.getEast().toFixed(4)}`;
@@ -658,7 +698,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             const c = map.getCenter();
             fetchAreaStations({ lat: c.lat, lng: c.lng, radius: 50 });
           }
-        }, 450);
+        }, 350);
+      });
+      map.on('zoomend', () => {
+        setCurrentZoom(map.getZoom());
       });
     }
 
@@ -703,51 +746,180 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     userMarkerRef.current = marker;
   }, [userLocation]);
 
-  // UPDATE ALL STATION MARKERS ON MAP WITH COLOR-CODED PRICES
+  // UPDATE ALL STATION MARKERS ON MAP WITH INTELLIGENT CLUSTERING AT LOW ZOOMS & COLOR-CODED PINS AT HIGH ZOOMS
   useEffect(() => {
     if (!mapInstanceRef.current || !markersGroupRef.current) return;
 
     markersGroupRef.current.clearLayers();
 
-    filteredStations.forEach(st => {
-      const minInfo = getMinPrice(st);
-      const isBestPrice = st.id === lowestPriceStationId;
-      const isSelected = selectedStation?.id === st.id;
-      const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+    // If zoomed out (e.g. initial view of Italy or whole region zoom < 12), aggregate nearby stations into clean cluster badges
+    // When zoomed in (zoom >= 12), show individual detailed price pins with no overlap
+    if (currentZoom < 12 && filteredStations.length > 10) {
+      // Grid-based clustering calculation
+      const gridSize = currentZoom <= 7 ? 1.2 : (currentZoom <= 9 ? 0.45 : (currentZoom <= 10 ? 0.22 : 0.09));
+      const clusters: {
+        [key: string]: {
+          latSum: number;
+          lngSum: number;
+          stations: Station[];
+          minPrice: number;
+          hasEv: boolean;
+          hasFuel: boolean;
+        }
+      } = {};
 
-      let iconSymbol = '⛽';
-      if (st.type === 'ev') iconSymbol = '⚡';
-      if (st.type === 'both') iconSymbol = '⛽⚡';
+      filteredStations.forEach(st => {
+        const gridX = Math.floor(st.lat / gridSize);
+        const gridY = Math.floor(st.lng / gridSize);
+        const key = `${gridX}_${gridY}`;
 
-      const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
+        if (!clusters[key]) {
+          clusters[key] = {
+            latSum: 0,
+            lngSum: 0,
+            stations: [],
+            minPrice: Infinity,
+            hasEv: false,
+            hasFuel: false
+          };
+        }
 
-      const markerHtml = `
-        <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-120 z-50' : 'hover:scale-110'} transition-transform">
-          <div class="${colorScheme.bg} text-white px-2 py-1 rounded-xl shadow-md border ${isSelected ? 'border-amber-300 ring-3 ring-amber-400' : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400' : 'border-white/90')} text-[11px] font-black tracking-tight whitespace-nowrap flex items-center gap-1">
-            <span>${iconSymbol}</span>
-            <span>${priceText}</span>
+        const cl = clusters[key];
+        cl.latSum += st.lat;
+        cl.lngSum += st.lng;
+        cl.stations.push(st);
+
+        if (st.type === 'ev' || st.type === 'both') cl.hasEv = true;
+        if (st.type === 'fuel' || st.type === 'both') cl.hasFuel = true;
+
+        const p = getMinPrice(st).price;
+        if (p > 0 && p < cl.minPrice) {
+          cl.minPrice = p;
+        }
+      });
+
+      // Render each cluster badge or individual station if cluster size is 1
+      Object.values(clusters).forEach(cl => {
+        const count = cl.stations.length;
+        const centerLat = cl.latSum / count;
+        const centerLng = cl.lngSum / count;
+
+        if (count === 1) {
+          const st = cl.stations[0];
+          const minInfo = getMinPrice(st);
+          const isBestPrice = st.id === lowestPriceStationId;
+          const isSelected = selectedStation?.id === st.id;
+          const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+
+          let iconSymbol = '⛽';
+          if (st.type === 'ev') iconSymbol = '⚡';
+          if (st.type === 'both') iconSymbol = '⛽⚡';
+
+          const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
+
+          const markerHtml = `
+            <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-120 z-50' : 'hover:scale-110'} transition-transform">
+              <div class="${colorScheme.bg} text-white px-2 py-1 rounded-xl shadow-md border ${isSelected ? 'border-amber-300 ring-3 ring-amber-400' : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400' : 'border-white/90')} text-[11px] font-black tracking-tight whitespace-nowrap flex items-center gap-1">
+                <span>${iconSymbol}</span>
+                <span>${priceText}</span>
+              </div>
+              <div class="w-2 h-2 ${colorScheme.bg} rotate-45 -mt-1 shadow-xs border-r border-b border-black/10"></div>
+            </div>
+          `;
+
+          const customIcon = L.divIcon({
+            className: 'custom-station-pin-container',
+            html: markerHtml,
+            iconSize: [60, 30],
+            iconAnchor: [30, 30]
+          });
+
+          const marker = L.marker([st.lat, st.lng], { icon: customIcon });
+          marker.on('click', () => {
+            setSelectedStation(st);
+            mapInstanceRef.current?.panTo([st.lat, st.lng], { animate: true, duration: 0.5 });
+          });
+          markersGroupRef.current?.addLayer(marker);
+        } else {
+          // Clustered bubble icon with station count & min price tag
+          let typeIcon = '⛽';
+          if (cl.hasEv && cl.hasFuel) typeIcon = '⛽⚡';
+          else if (cl.hasEv) typeIcon = '⚡';
+
+          const priceBadge = cl.minPrice !== Infinity 
+            ? `<div class="bg-white/95 text-slate-900 px-1.5 py-0.5 rounded-full text-[10px] font-black shadow-xs border border-slate-200 whitespace-nowrap">da €${cl.minPrice.toFixed(3).replace('.', ',')}</div>`
+            : '';
+
+          const clusterHtml = `
+            <div class="custom-cluster-badge cursor-pointer flex flex-col items-center group transition-all duration-200">
+              <div class="bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-2xl px-2.5 py-1.5 shadow-lg border-2 border-white flex items-center gap-1.5 ring-2 ring-blue-500/30">
+                <span class="text-xs">${typeIcon}</span>
+                <span class="text-xs font-black tracking-tight">${count} stazioni</span>
+              </div>
+              ${priceBadge ? `<div class="-mt-1 z-10">${priceBadge}</div>` : ''}
+            </div>
+          `;
+
+          const clusterIcon = L.divIcon({
+            className: 'custom-cluster-container',
+            html: clusterHtml,
+            iconSize: [80, 42],
+            iconAnchor: [40, 21]
+          });
+
+          const clusterMarker = L.marker([centerLat, centerLng], { icon: clusterIcon });
+          
+          // Clicking cluster zooms in smoothly towards that city/area
+          clusterMarker.on('click', () => {
+            const nextZoom = Math.min(currentZoom + 3, 15);
+            mapInstanceRef.current?.flyTo([centerLat, centerLng], nextZoom, { duration: 0.8 });
+          });
+
+          markersGroupRef.current?.addLayer(clusterMarker);
+        }
+      });
+    } else {
+      // Zoom >= 12: High-resolution individual station markers with complete price tags
+      filteredStations.forEach(st => {
+        const minInfo = getMinPrice(st);
+        const isBestPrice = st.id === lowestPriceStationId;
+        const isSelected = selectedStation?.id === st.id;
+        const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+
+        let iconSymbol = '⛽';
+        if (st.type === 'ev') iconSymbol = '⚡';
+        if (st.type === 'both') iconSymbol = '⛽⚡';
+
+        const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
+
+        const markerHtml = `
+          <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-120 z-50' : 'hover:scale-110'} transition-transform">
+            <div class="${colorScheme.bg} text-white px-2 py-1 rounded-xl shadow-md border ${isSelected ? 'border-amber-300 ring-3 ring-amber-400' : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400' : 'border-white/90')} text-[11px] font-black tracking-tight whitespace-nowrap flex items-center gap-1">
+              <span>${iconSymbol}</span>
+              <span>${priceText}</span>
+            </div>
+            <div class="w-2 h-2 ${colorScheme.bg} rotate-45 -mt-1 shadow-xs border-r border-b border-black/10"></div>
           </div>
-          <div class="w-2 h-2 ${colorScheme.bg} rotate-45 -mt-1 shadow-xs border-r border-b border-black/10"></div>
-        </div>
-      `;
+        `;
 
-      const customIcon = L.divIcon({
-        className: 'custom-station-pin-container',
-        html: markerHtml,
-        iconSize: [60, 30],
-        iconAnchor: [30, 30]
+        const customIcon = L.divIcon({
+          className: 'custom-station-pin-container',
+          html: markerHtml,
+          iconSize: [60, 30],
+          iconAnchor: [30, 30]
+        });
+
+        const marker = L.marker([st.lat, st.lng], { icon: customIcon });
+
+        marker.on('click', () => {
+          setSelectedStation(st);
+          mapInstanceRef.current?.panTo([st.lat, st.lng], { animate: true, duration: 0.5 });
+        });
+
+        markersGroupRef.current?.addLayer(marker);
       });
-
-      const marker = L.marker([st.lat, st.lng], { icon: customIcon });
-
-      marker.on('click', () => {
-        setSelectedStation(st);
-        mapInstanceRef.current?.panTo([st.lat, st.lng], { animate: true, duration: 0.5 });
-      });
-
-      markersGroupRef.current?.addLayer(marker);
-    });
-  }, [filteredStations, selectedStation, lowestPriceStationId]);
+    }
+  }, [filteredStations, selectedStation, lowestPriceStationId, currentZoom]);
 
   return (
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
