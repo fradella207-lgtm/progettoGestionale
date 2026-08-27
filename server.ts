@@ -1,7 +1,9 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { sincronizzaMappaStazioni } from "./scripts/sync_stations";
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -153,6 +155,136 @@ async function startServer() {
   // Health endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // -------------------------------------------------------------
+  // IN-MEMORY CACHE & SPATIAL ENGINE PER 21.000+ STAZIONI MIMIT
+  // -------------------------------------------------------------
+  let stationsMemoryCache: any[] | null = null;
+  let stationsLastModified = '';
+
+  function getLoadedStations(): any[] {
+    const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
+    if (!fs.existsSync(liveFilePath)) return [];
+    try {
+      const stats = fs.statSync(liveFilePath);
+      const mtime = stats.mtime.toISOString();
+      if (!stationsMemoryCache || stationsLastModified !== mtime) {
+        const raw = fs.readFileSync(liveFilePath, 'utf-8');
+        stationsMemoryCache = JSON.parse(raw);
+        stationsLastModified = mtime;
+        console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache?.length} stazioni MIMIT`);
+      }
+      return stationsMemoryCache || [];
+    } catch (e) {
+      console.error("[STATIONS CACHE] Errore caricamento:", e);
+      return [];
+    }
+  }
+
+  function calcDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // -------------------------------------------------------------
+  // ENDPOINT MAPPA: RESTITUISCE TUTTI I DISTRIBUTORI & COLONNINE AGGIORNATI
+  // Supporta filtri per coordinate (lat, lng, radius), bounding box (bounds) e ricerca testuale (q)
+  // -------------------------------------------------------------
+  app.get("/api/stations", async (req, res) => {
+    try {
+      let stations = getLoadedStations();
+
+      // Se il file non esiste ancora, esegui una sincronizzazione iniziale
+      if (stations.length === 0) {
+        console.log("[API /api/stations] File non presente, avvio prima sincronizzazione...");
+        await sincronizzaMappaStazioni();
+        stations = getLoadedStations();
+      }
+
+      const totalDatabaseCount = stations.length;
+
+      const q = (req.query.q as string || '').trim().toLowerCase();
+      const latParam = req.query.lat ? parseFloat(req.query.lat as string) : NaN;
+      const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
+      const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 35; // default 35 km
+      const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
+      const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 300;
+
+      let filtered = stations;
+
+      // 1. Filtro per Bounding Box (Viewport della mappa)
+      if (boundsParam) {
+        const [minLat, minLng, maxLat, maxLng] = boundsParam.split(',').map(n => parseFloat(n.trim()));
+        if (!isNaN(minLat) && !isNaN(minLng) && !isNaN(maxLat) && !isNaN(maxLng)) {
+          filtered = filtered.filter(st => {
+            const lat = st.coordinate?.lat;
+            const lng = st.coordinate?.lng;
+            return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+          });
+        }
+      }
+      // 2. Filtro per coordinate + raggio (es. GPS utente o centro città)
+      else if (!isNaN(latParam) && !isNaN(lngParam)) {
+        const withDist = filtered.map(st => {
+          const lat = st.coordinate?.lat || 0;
+          const lng = st.coordinate?.lng || 0;
+          const dist = calcDistanceKm(latParam, lngParam, lat, lng);
+          return { st, dist };
+        }).filter(item => item.dist <= radiusParam);
+
+        withDist.sort((a, b) => a.dist - b.dist);
+        filtered = withDist.map(item => item.st);
+      }
+
+      // 3. Ricerca testuale (Città, comune, brand, via)
+      if (q) {
+        filtered = filtered.filter(st => {
+          const gestore = (st.nome_gestore || '').toLowerCase();
+          const indirizzo = (st.indirizzo_completo || '').toLowerCase();
+          const comune = (st.comune || '').toLowerCase();
+          return gestore.includes(q) || indirizzo.includes(q) || comune.includes(q);
+        });
+      }
+
+      // Limita il payload inviato al frontend per massima fluidità (default top 300)
+      const dataToSend = filtered.slice(0, Math.min(limitParam, 500));
+
+      return res.json({
+        success: true,
+        totalInDatabase: totalDatabaseCount,
+        count: dataToSend.length,
+        updatedAt: stationsLastModified || new Date().toISOString(),
+        data: dataToSend
+      });
+    } catch (err: any) {
+      console.error("Errore lettura stazioni:", err);
+      return res.status(500).json({ error: err?.message || "Errore lettura stazioni" });
+    }
+  });
+
+  // ENDPOINT DI TRIGGER PER CRON JOB O WEBHOOK ESTERNO
+  app.post("/api/stations/sync", async (req, res) => {
+    try {
+      const result = await sincronizzaMappaStazioni();
+      return res.json({
+        success: true,
+        message: "Sincronizzazione MIMIT e Open Charge Map completata con successo",
+        ...result
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err?.message || "Errore sincronizzazione"
+      });
+    }
   });
 
   // Dedicated Real Vehicle Photos Search endpoint (Wikipedia / Wikimedia Commons)
@@ -499,6 +631,35 @@ FORMATO RISPOSTA ESCLUSIVAMENTE JSON:
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
+
+    // Pianificazione automatica ogni mattina alle 08:30 (Ora Locale)
+    function pianificaProssimoAggiornamento() {
+      const now = new Date();
+      const nextRun = new Date();
+      nextRun.setHours(8, 30, 0, 0);
+
+      // Se le 08:30 di oggi sono già passate, programma per domani alle 08:30
+      if (now.getTime() >= nextRun.getTime()) {
+        nextRun.setDate(nextRun.getDate() + 1);
+      }
+
+      const msUntilNextRun = nextRun.getTime() - now.getTime();
+      const ore = (msUntilNextRun / (1000 * 60 * 60)).toFixed(1);
+      console.log(`[CRON ENGINE] Prossimo aggiornamento automatico MIMIT programmato tra ${ore} ore (${nextRun.toLocaleString('it-IT')})`);
+
+      setTimeout(async () => {
+        try {
+          console.log("[CRON ENGINE] Esecuzione aggiornamento automatico delle 08:30...");
+          await sincronizzaMappaStazioni();
+        } catch (e: any) {
+          console.error("[CRON ENGINE] Errore aggiornamento programmato:", e.message);
+        } finally {
+          pianificaProssimoAggiornamento();
+        }
+      }, msUntilNextRun);
+    }
+
+    pianificaProssimoAggiornamento();
   });
 }
 

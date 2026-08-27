@@ -48,6 +48,161 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
+  // Data source state: Live from /api/stations with fallback to SEED_STATIONS
+  const [liveStations, setLiveStations] = useState<Station[]>(SEED_STATIONS);
+  const [isSyncingLive, setIsSyncingLive] = useState(false);
+  const [isLoadingAreaStations, setIsLoadingAreaStations] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [totalDbCount, setTotalDbCount] = useState<number>(21591);
+
+  // Helper parser from backend API model to UI Station model
+  const parseBackendStations = (rawArray: any[]): Station[] => {
+    return rawArray.map((item: any) => {
+      if (item.fuelPrices || item.evPlugs) return item as Station;
+
+      const fuelPrices = (item.servizi_prezzi || [])
+        .filter((sp: any) => !sp.tipo_servizio?.toLowerCase().includes('kw') && !sp.tipo_servizio?.toLowerCase().includes('type') && !sp.tipo_servizio?.toLowerCase().includes('ccs'))
+        .map((sp: any) => {
+          const isSelf = sp.tipo_servizio?.toLowerCase().includes('self');
+          let fuelName: FuelType = 'Benzina';
+          if (sp.tipo_servizio?.toLowerCase().includes('gasolio') || sp.tipo_servizio?.toLowerCase().includes('diesel')) fuelName = 'Diesel';
+          else if (sp.tipo_servizio?.toLowerCase().includes('gpl')) fuelName = 'GPL';
+          else if (sp.tipo_servizio?.toLowerCase().includes('metano')) fuelName = 'Metano';
+          return {
+            fuel: fuelName,
+            price: sp.prezzo,
+            isSelf,
+            updatedAt: new Date(sp.ultimo_aggiornamento).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+          };
+        });
+
+      const evPlugs = (item.servizi_prezzi || [])
+        .filter((sp: any) => sp.tipo_servizio?.toLowerCase().includes('kw') || sp.tipo_servizio?.toLowerCase().includes('type') || sp.tipo_servizio?.toLowerCase().includes('ccs'))
+        .map((sp: any) => {
+          const matchKw = sp.tipo_servizio?.match(/(\d+)\s*kw/i);
+          const powerKw = matchKw ? parseInt(matchKw[1], 10) : 50;
+          return {
+            type: sp.tipo_servizio,
+            powerKw,
+            pricePerKwh: sp.prezzo,
+            availableCount: 2,
+            totalCount: 2,
+            status: 'available' as const
+          };
+        });
+
+      return {
+        id: item.id,
+        name: item.nome_gestore ? `${item.nome_gestore} - ${item.comune || ''}` : 'Stazione Rifornimento',
+        brand: item.nome_gestore || 'Distributore',
+        type: item.tipo === 'carburante' ? 'fuel' : (item.tipo === 'elettrico' ? 'ev' : 'both'),
+        address: item.indirizzo_completo || item.comune || '',
+        city: item.comune || 'Italia',
+        province: '',
+        lat: item.coordinate?.lat || 45.4642,
+        lng: item.coordinate?.lng || 9.1900,
+        isOpen24h: true,
+        hasCarWash: item.nome_gestore?.toLowerCase().includes('eni') || item.nome_gestore?.toLowerCase().includes('q8'),
+        hasBar: true,
+        hasShop: false,
+        rating: 4.5,
+        operatorName: item.nome_gestore,
+        fuelPrices: fuelPrices.length > 0 ? fuelPrices : undefined,
+        evPlugs: evPlugs.length > 0 ? evPlugs : undefined
+      };
+    });
+  };
+
+  // Dynamic fetcher from backend
+  const fetchAreaStations = async (options: { lat?: number; lng?: number; radius?: number; q?: string; bounds?: string }) => {
+    setIsLoadingAreaStations(true);
+    try {
+      const params = new URLSearchParams();
+      if (options.lat !== undefined && !isNaN(options.lat)) params.append('lat', options.lat.toString());
+      if (options.lng !== undefined && !isNaN(options.lng)) params.append('lng', options.lng.toString());
+      if (options.radius !== undefined) params.append('radius', options.radius.toString());
+      if (options.q) params.append('q', options.q);
+      if (options.bounds) params.append('bounds', options.bounds);
+      params.append('limit', '350');
+
+      const res = await fetch(`/api/stations?${params.toString()}`);
+      if (!res.ok) throw new Error('API error');
+      const json = await res.json();
+
+      if (json.totalInDatabase) {
+        setTotalDbCount(json.totalInDatabase);
+      }
+      if (json.updatedAt) {
+        setLastSyncTime(new Date(json.updatedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+      }
+
+      if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+        const mapped = parseBackendStations(json.data);
+        setLiveStations(mapped);
+      }
+    } catch (e) {
+      console.warn('Errore caricamento stazioni area:', e);
+    } finally {
+      setIsLoadingAreaStations(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 40 });
+  }, []);
+
+  // Trigger manual sync with backend
+  const handleManualSync = async () => {
+    setIsSyncingLive(true);
+    setLocationStatus('Sincronizzazione dati MIMIT & Open Charge Map in corso...');
+    try {
+      const res = await fetch('/api/stations/sync', { method: 'POST' });
+      if (!res.ok) throw new Error('Sync fallita');
+      const data = await res.json();
+      
+      // Reload stations
+      const refreshRes = await fetch('/api/stations');
+      if (refreshRes.ok) {
+        const refreshJson = await refreshRes.json();
+        if (refreshJson.data && refreshJson.data.length > 0) {
+          // Re-map as above
+          const mapped = refreshJson.data.map((item: any) => {
+            if (item.fuelPrices || item.evPlugs) return item;
+            return {
+              id: item.id,
+              name: item.nome_gestore ? `${item.nome_gestore} - ${item.comune}` : 'Stazione',
+              brand: item.nome_gestore || 'Distributore',
+              type: item.tipo === 'carburante' ? 'fuel' : 'ev',
+              address: item.indirizzo_completo,
+              city: item.comune,
+              lat: item.coordinate.lat,
+              lng: item.coordinate.lng,
+              isOpen24h: true,
+              hasCarWash: true,
+              hasBar: true,
+              fuelPrices: (item.servizi_prezzi || []).map((sp: any) => ({
+                fuel: sp.tipo_servizio.includes('Diesel') ? 'Diesel' : (sp.tipo_servizio.includes('GPL') ? 'GPL' : (sp.tipo_servizio.includes('Metano') ? 'Metano' : 'Benzina')),
+                price: sp.prezzo,
+                isSelf: sp.tipo_servizio.includes('Self'),
+                updatedAt: 'Oggi'
+              }))
+            };
+          });
+          setLiveStations(mapped);
+          setLastSyncTime(new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+        }
+      }
+      setLocationStatus(`Sincronizzazione completata con successo! ${data.totale || ''} stazioni aggiornate.`);
+      setTimeout(() => setLocationStatus(''), 4000);
+    } catch (err: any) {
+      setLocationStatus('Errore durante la sincronizzazione con i server MIMIT.');
+      setTimeout(() => setLocationStatus(''), 4000);
+    } finally {
+      setIsSyncingLive(false);
+    }
+  };
+
   // User coordinates
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -228,6 +383,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         setLocationStatus('Posizione GPS rilevata');
         setTimeout(() => setLocationStatus(''), 3000);
 
+        // Fetch all local MIMIT stations around user
+        fetchAreaStations({ lat: coords.lat, lng: coords.lng, radius: 35 });
+
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo([coords.lat, coords.lng], 13, { duration: 1.2 });
         }
@@ -258,6 +416,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     setLocationStatus(`Ricerca "${searchQuery}" in corso...`);
 
     try {
+      // Direct search in local database first for fast results
+      fetchAreaStations({ q: searchQuery });
+
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery + ', Italia')}&limit=1`);
       const data = await res.json();
       if (data && data.length > 0) {
@@ -267,15 +428,18 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         setLocationStatus(`Mappa centrata su ${data[0].display_name.split(',')[0]}`);
         setTimeout(() => setLocationStatus(''), 4000);
 
+        // Fetch all stations around searched coordinates
+        fetchAreaStations({ lat, lng: lon, radius: 35 });
+
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo([lat, lon], 13, { duration: 1.2 });
         }
       } else {
-        setLocationStatus('Località non trovata. Prova con un\'altra città.');
+        setLocationStatus('Località non trovata su OpenStreetMap, ricerca effettuata nel database MIMIT.');
         setTimeout(() => setLocationStatus(''), 4000);
       }
     } catch (err) {
-      setLocationStatus('Errore di connessione durante la ricerca.');
+      setLocationStatus('Errore durante la ricerca geografica.');
       setTimeout(() => setLocationStatus(''), 4000);
     } finally {
       setIsSearchingCity(false);
@@ -286,6 +450,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const handleSelectPresetCity = (cityName: string, lat: number, lng: number) => {
     setSearchQuery(cityName);
     setUserLocation({ lat, lng });
+    fetchAreaStations({ lat, lng, radius: 40 });
     if (mapInstanceRef.current) {
       mapInstanceRef.current.flyTo([lat, lng], 13, { duration: 1.2 });
     }
@@ -296,14 +461,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     const baseLat = userLocation?.lat ?? 45.4642; // default Milan if no GPS
     const baseLng = userLocation?.lng ?? 9.1900;
 
-    return SEED_STATIONS.map(st => {
+    return (liveStations.length > 0 ? liveStations : SEED_STATIONS).map(st => {
       const dist = calculateDistanceKm(baseLat, baseLng, st.lat, st.lng);
       return {
         ...st,
         distanceKm: dist
       };
     });
-  }, [userLocation]);
+  }, [userLocation, liveStations]);
 
   // Filtered and sorted stations (Showing ALL unless restricted by filters)
   const filteredStations = useMemo(() => {
@@ -423,6 +588,23 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       const markersGroup = L.layerGroup().addTo(map);
       markersGroupRef.current = markersGroup;
       mapInstanceRef.current = map;
+
+      // Listen to map pan/zoom to dynamically load real MIMIT stations in the visible area
+      let moveTimeout: any = null;
+      map.on('moveend', () => {
+        clearTimeout(moveTimeout);
+        moveTimeout = setTimeout(() => {
+          const z = map.getZoom();
+          const bounds = map.getBounds();
+          if (z >= 8) {
+            const boundsStr = `${bounds.getSouth().toFixed(4)},${bounds.getWest().toFixed(4)},${bounds.getNorth().toFixed(4)},${bounds.getEast().toFixed(4)}`;
+            fetchAreaStations({ bounds: boundsStr });
+          } else {
+            const c = map.getCenter();
+            fetchAreaStations({ lat: c.lat, lng: c.lng, radius: 50 });
+          }
+        }, 450);
+      });
     }
 
     const resizeObserver = new ResizeObserver(() => {
@@ -542,54 +724,88 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           </form>
 
           {/* FILTERS BUTTON (RACCHIUDE TUTTI I FILTRI) */}
-          <button
-            type="button"
-            id="btn-toggle-station-filters"
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-xs ${
-              isFiltersOpen || activeFiltersCount > 0
-                ? 'bg-blue-50 border-blue-300 text-[#2563eb]'
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span>Filtri</span>
-            {activeFiltersCount > 0 && (
-              <span className="bg-[#2563eb] text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                {activeFiltersCount}
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-sync-stations-live"
+              onClick={handleManualSync}
+              disabled={isSyncingLive}
+              title="Aggiorna listini MIMIT e Open Charge Map adesso"
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shrink-0 shadow-xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLive ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Aggiorna Dati MIMIT</span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-toggle-station-filters"
+              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-xs ${
+                isFiltersOpen || activeFiltersCount > 0
+                  ? 'bg-blue-50 border-blue-300 text-[#2563eb]'
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Filtri</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-[#2563eb] text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
 
         </div>
 
-        {/* ROW 2: PRESET CITIES SHORTCUTS */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-          <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">Città:</span>
-          {[
-            { name: 'Milano', lat: 45.4642, lng: 9.1900 },
-            { name: 'Roma', lat: 41.9028, lng: 12.4964 },
-            { name: 'Torino', lat: 45.0703, lng: 7.6869 },
-            { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
-            { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
-            { name: 'Napoli', lat: 40.8518, lng: 14.2681 },
-            { name: 'Bari', lat: 41.1171, lng: 16.8719 },
-            { name: 'Verona (Affi)', lat: 45.5532, lng: 10.7712 }
-          ].map(c => (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => handleSelectPresetCity(c.name, c.lat, c.lng)}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all shrink-0 cursor-pointer ${
-                searchQuery === c.name 
-                  ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs' 
-                  : 'bg-[#f8fafc] border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
+        {/* ROW 2: PRESET CITIES SHORTCUTS & NATIONAL COVERAGE BADGE */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">Città:</span>
+            {[
+              { name: 'Milano', lat: 45.4642, lng: 9.1900 },
+              { name: 'Roma', lat: 41.9028, lng: 12.4964 },
+              { name: 'Napoli', lat: 40.8518, lng: 14.2681 },
+              { name: 'Torino', lat: 45.0703, lng: 7.6869 },
+              { name: 'Palermo', lat: 38.1157, lng: 13.3615 },
+              { name: 'Genova', lat: 44.4056, lng: 8.9463 },
+              { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
+              { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
+              { name: 'Bari', lat: 41.1171, lng: 16.8719 },
+              { name: 'Catania', lat: 37.5079, lng: 15.0830 },
+              { name: 'Verona (Affi)', lat: 45.5532, lng: 10.7712 },
+              { name: 'Venezia', lat: 45.4408, lng: 12.3155 },
+              { name: 'Brescia', lat: 45.5416, lng: 10.2118 },
+              { name: 'Cagliari', lat: 39.2238, lng: 9.1217 }
+            ].map(c => (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => handleSelectPresetCity(c.name, c.lat, c.lng)}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all shrink-0 cursor-pointer ${
+                  searchQuery === c.name 
+                    ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs' 
+                    : 'bg-[#f8fafc] border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+              🏛️ {totalDbCount.toLocaleString('it-IT')} Stazioni MIMIT
+            </span>
+            {lastSyncTime && (
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Listino: {lastSyncTime}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* OPTIONAL GEOLOCATION PROMPT BANNER (PUÒ ESSERE RIFIUTATO E NASCOSTO) */}
@@ -991,34 +1207,47 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
               {/* ACTION BUTTONS & SIMPLE NAVIGATION COPY COMMAND */}
               <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {/* DIRECT GOOGLE MAPS LINK */}
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${selectedStation.lat},${selectedStation.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold py-2.5 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
+                    className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
+                    title="Apri itinerario su Google Maps con traffico in tempo reale"
                   >
-                    <Navigation className="w-4 h-4" />
-                    <span>Apri in Google Maps</span>
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>Google Maps</span>
                   </a>
 
-                  {/* SIMPLE COPY BUTTON FOR ANY NAVIGATOR (WAZE, APPLE MAPS, TOMTOM) */}
+                  {/* DIRECT WAZE LINK */}
+                  <a
+                    href={`https://waze.com/ul?ll=${selectedStation.lat},${selectedStation.lng}&navigate=yes`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#00d8ff] hover:bg-[#00bfe5] text-slate-900 text-xs font-bold py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5"
+                    title="Avvia navigazione su Waze per evitare il traffico e gli autovelox"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Waze</span>
+                  </a>
+
+                  {/* SIMPLE COPY BUTTON FOR ANY NAVIGATOR (APPLE MAPS, TOMTOM, NATIVE CAR GPS) */}
                   <button
                     type="button"
                     onClick={() => handleCopyNavigation(selectedStation)}
-                    className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                    title="Copia l'indirizzo e coordinate esatte per inserirlo nel tuo navigatore"
+                    className="col-span-2 sm:col-span-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Copia l'indirizzo e coordinate esatte per inserirlo nel navigatore dell'auto"
                   >
                     {copiedStationId === selectedStation.id ? (
                       <>
-                        <CheckCheck className="w-4 h-4 text-emerald-400" />
-                        <span className="text-emerald-400">Indirizzo Copiato!</span>
+                        <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400 text-[11px]">Copiato!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" />
-                        <span>Copia per Navigatore</span>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">Copia GPS</span>
                       </>
                     )}
                   </button>
