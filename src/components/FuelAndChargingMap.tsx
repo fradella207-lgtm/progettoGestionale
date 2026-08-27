@@ -698,72 +698,69 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
 
       {/* 1. TOP POSITION & CITY SEARCH BAR (SOPRA LA MAPPA) */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#e2e8f0] shadow-xs flex flex-col gap-3.5">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-[#e2e8f0] shadow-xs flex flex-col gap-2.5">
         
-        {/* ROW 1: SEARCH BAR + FILTERS BUTTON */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        {/* ROW 1: SEARCH BAR + COMPACT FILTERS & SYNC ICONS */}
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full">
           
           {/* SEARCH CITY OR ADDRESS */}
-          <form onSubmit={handleSearchCity} className="flex-1 relative flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5" />
+          <form onSubmit={handleSearchCity} className="flex-1 relative flex items-center min-w-0">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
             <input 
               type="text"
               id="input-search-stations-city"
-              placeholder="Cerca qualsiasi città o CAP (es. Milano, Roma, Torino, Bologna, A1...)"
+              placeholder="Cerca città o CAP (es. Milano, Roma, A1...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:border-[#2563eb] focus:bg-white text-xs font-medium text-[#0f172a] pl-10 pr-20 py-2.5 rounded-2xl outline-hidden transition-all shadow-2xs"
+              className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:border-[#2563eb] focus:bg-white text-xs font-medium text-[#0f172a] pl-9 pr-14 py-2 rounded-xl sm:rounded-2xl outline-hidden transition-all shadow-2xs"
             />
             <button
               type="submit"
               disabled={isSearchingCity}
-              className="absolute right-1.5 top-1.5 bottom-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-3 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+              className="absolute right-1 top-1 bottom-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
               {isSearchingCity ? <RefreshCw className="w-3 h-3 animate-spin" /> : <span>Cerca</span>}
             </button>
           </form>
 
-          {/* FILTERS BUTTON (RACCHIUDE TUTTI I FILTRI) */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              id="btn-sync-stations-live"
-              onClick={handleManualSync}
-              disabled={isSyncingLive}
-              title="Aggiorna listini MIMIT e Open Charge Map adesso"
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shrink-0 shadow-xs"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLive ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Aggiorna Dati MIMIT</span>
-            </button>
+          {/* FILTERS BUTTON (SOLO ICONA / LOGO AFFIANCATO AL CERCA) */}
+          <button
+            type="button"
+            id="btn-toggle-station-filters"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            title="Filtri carburante, marchio e raggio"
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border transition-all cursor-pointer relative shadow-2xs ${
+              isFiltersOpen || activeFiltersCount > 0
+                ? 'bg-blue-50 border-blue-400 text-[#2563eb] ring-2 ring-blue-100'
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
 
-            <button
-              type="button"
-              id="btn-toggle-station-filters"
-              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer shrink-0 shadow-xs ${
-                isFiltersOpen || activeFiltersCount > 0
-                  ? 'bg-blue-50 border-blue-300 text-[#2563eb]'
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span>Filtri</span>
-              {activeFiltersCount > 0 && (
-                <span className="bg-[#2563eb] text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {activeFiltersCount}
-                </span>
-              )}
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
+          {/* REFRESH / SYNC BUTTON (COMPATTO) */}
+          <button
+            type="button"
+            id="btn-sync-stations-live"
+            onClick={handleManualSync}
+            disabled={isSyncingLive}
+            title="Aggiorna listini MIMIT e colonnine adesso"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncingLive ? 'animate-spin' : ''}`} />
+          </button>
 
         </div>
 
-        {/* ROW 2: PRESET CITIES SHORTCUTS & NATIONAL COVERAGE BADGE */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap mr-1">Città:</span>
+        {/* ROW 2: PRESET CITIES SHORTCUTS & COMPACT STATUS */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 text-xs no-scrollbar">
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap mr-0.5">Città:</span>
             {[
               { name: 'Milano', lat: 45.4642, lng: 9.1900 },
               { name: 'Roma', lat: 41.9028, lng: 12.4964 },
@@ -784,7 +781,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 key={c.name}
                 type="button"
                 onClick={() => handleSelectPresetCity(c.name, c.lat, c.lng)}
-                className={`px-2.5 py-1 rounded-xl text-xs font-bold border transition-all shrink-0 cursor-pointer ${
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-all shrink-0 cursor-pointer ${
                   searchQuery === c.name 
                     ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs' 
                     : 'bg-[#f8fafc] border-slate-200 text-slate-600 hover:bg-slate-100'
@@ -795,14 +792,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[9px] sm:text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
               🏛️ {totalDbCount.toLocaleString('it-IT')} Stazioni MIMIT
             </span>
             {lastSyncTime && (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Listino: {lastSyncTime}
+              <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                {lastSyncTime}
               </span>
             )}
           </div>
@@ -810,28 +807,28 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
         {/* OPTIONAL GEOLOCATION PROMPT BANNER (PUÒ ESSERE RIFIUTATO E NASCOSTO) */}
         {!hasDeclinedLocation && !userLocation && (
-          <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs animate-in fade-in">
-            <div className="flex items-center gap-2.5 text-slate-700 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#2563eb] flex items-center justify-center shrink-0">
-                <LocateFixed className="w-4 h-4" />
+          <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl sm:rounded-2xl flex items-center justify-between gap-2 text-xs animate-in fade-in">
+            <div className="flex items-center gap-2 text-slate-700 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-blue-100 text-[#2563eb] flex items-center justify-center shrink-0">
+                <LocateFixed className="w-3.5 h-3.5" />
               </div>
-              <span className="truncate">
-                Vuoi attivare la posizione per calcolare la distanza esatta dai distributori?
+              <span className="truncate text-[11px]">
+                Attiva GPS per calcolare la distanza esatta dai distributori
               </span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => handleRequestLocation(true)}
                 disabled={isLocating}
-                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-2xs"
+                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs"
               >
-                {isLocating ? 'Rilevamento...' : 'Consenti'}
+                {isLocating ? 'Rilevo...' : 'Consenti'}
               </button>
               <button
                 type="button"
                 onClick={handleDismissLocationBanner}
-                className="bg-white hover:bg-slate-200 text-slate-600 border border-slate-200 text-xs font-bold px-2.5 py-1.5 rounded-xl transition-all"
+                className="bg-white hover:bg-slate-200 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg transition-all"
                 title="Non mostrare più"
               >
                 Rifiuta
@@ -842,12 +839,12 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
         {/* STATUS MESSAGE IF ANY */}
         {locationStatus && (
-          <div className="bg-blue-50/80 border border-blue-200 text-[#2563eb] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 shrink-0" />
-              <span>{locationStatus}</span>
+          <div className="bg-blue-50/80 border border-blue-200 text-[#2563eb] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-[11px]">{locationStatus}</span>
             </div>
-            <button type="button" onClick={() => setLocationStatus('')} className="p-1 hover:bg-blue-100 rounded-lg">
+            <button type="button" onClick={() => setLocationStatus('')} className="p-0.5 hover:bg-blue-100 rounded-lg">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -857,9 +854,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
       {/* 2. EXPANDABLE FILTERS PANEL (RACCHIUSO NEL TASTO FILTRI) */}
       {isFiltersOpen && (
-        <div className="bg-white rounded-3xl p-5 border border-blue-200 shadow-lg flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-blue-200 shadow-lg flex flex-col gap-3.5 animate-in fade-in slide-in-from-top-2 duration-150">
           
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-[#2563eb]" />
               <span className="text-xs font-black uppercase text-[#0f172a] tracking-wider">Filtri di Ricerca</span>
@@ -874,18 +871,18 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 setOnlyOpen24h(false);
                 setOnlyWithServices(false);
               }}
-              className="text-xs font-bold text-[#2563eb] hover:underline"
+              className="text-[11px] font-bold text-[#2563eb] hover:underline cursor-pointer"
             >
               Ripristina Filtri
             </button>
           </div>
 
           {/* MAIN CATEGORY TABS */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
               Tipologia Stazione
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
               {[
                 { id: 'all', label: 'Tutto', icon: Sparkles },
                 { id: 'fuel', label: 'Carburante', icon: Fuel },
@@ -899,7 +896,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => setTypeFilter(tab.id as any)}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-black border transition-all cursor-pointer ${
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
                       isActive 
                         ? 'bg-blue-50 text-[#2563eb] border-blue-300 shadow-2xs' 
                         : 'bg-[#f8fafc] text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -914,17 +911,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           </div>
 
           {/* SPECIFIC FUEL, BRAND, DISTANCE, SORT */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             
             {/* Specific Fuel */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
                 Carburante / Spina
               </label>
               <select
                 value={specificFuelFilter}
                 onChange={(e) => setSpecificFuelFilter(e.target.value)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-3 py-2 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
               >
                 <option value="all">Tutti i carburanti</option>
                 <option value="Benzina">Benzina (SP95)</option>
@@ -939,13 +936,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
             {/* Brand */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
                 Compagnia / Rete
               </label>
               <select
                 value={brandFilter}
                 onChange={(e) => setBrandFilter(e.target.value)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-3 py-2 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
               >
                 <option value="all">Tutte le compagnie</option>
                 <option value="Eni">Eni Live / Eni</option>
@@ -961,13 +958,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
             {/* Sort */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
+              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
                 Ordinamento
               </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-3 py-2 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
               >
                 <option value="price">Prezzo più Basso</option>
                 <option value="distance">Distanza (Più Vicino)</option>
@@ -978,8 +975,8 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           </div>
 
           {/* CHECKBOXES & CLOSE */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-            <div className="flex items-center gap-4 text-slate-700 font-bold">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100 text-xs">
+            <div className="flex items-center gap-3 text-slate-700 font-bold">
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -987,7 +984,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   onChange={(e) => setOnlyOpen24h(e.target.checked)}
                   className="w-4 h-4 rounded-md text-[#2563eb] accent-[#2563eb]"
                 />
-                <span>Aperto 24h</span>
+                <span className="text-[11px]">Aperto 24h</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
@@ -996,96 +993,104 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   onChange={(e) => setOnlyWithServices(e.target.checked)}
                   className="w-4 h-4 rounded-md text-[#2563eb] accent-[#2563eb]"
                 />
-                <span>Bar / Autolavaggio</span>
+                <span className="text-[11px]">Bar / Lavaggio</span>
               </label>
             </div>
 
             <button
               type="button"
               onClick={() => setIsFiltersOpen(false)}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all"
+              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs"
             >
-              Applica Filtri ({filteredStations.length} stazioni)
+              Applica ({filteredStations.length})
             </button>
           </div>
 
         </div>
       )}
 
-      {/* 3. COLOR LEGEND BAR FOR PRICES (COLORI PER DISTINGUERE I PREZZI) */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white rounded-2xl border border-slate-200 text-[11px] font-bold text-slate-600 overflow-x-auto gap-3">
-        <span className="text-slate-400 whitespace-nowrap">Legenda Prezzi:</span>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-emerald-600 shrink-0"></span>
-            <span>Economico / Miglior Prezzo</span>
+      {/* 3. COLOR LEGEND BAR FOR PRICES (COMPATTA) */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-white rounded-xl sm:rounded-2xl border border-slate-200 text-[10px] sm:text-[11px] font-bold text-slate-600 overflow-x-auto gap-2.5 no-scrollbar">
+        <span className="text-slate-400 whitespace-nowrap">Prezzi:</span>
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
+            <span>Conveniente</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-amber-600 shrink-0"></span>
-            <span>Prezzo Medio</span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0"></span>
+            <span>Medio</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-rose-600 shrink-0"></span>
-            <span>Sopra la Media</span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0"></span>
+            <span>Alto</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-teal-600 shrink-0"></span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-600 shrink-0"></span>
             <span>Colonnina EV</span>
           </div>
         </div>
       </div>
 
       {/* 4. MAIN MAP & LIST GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[560px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-5 min-h-[460px]">
         
-        {/* MAP CONTAINER (7 COLS ON DESKTOP) */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-3 border border-[#e2e8f0] shadow-xs flex flex-col relative overflow-hidden h-[420px] sm:h-[500px] lg:h-[620px]">
+        {/* MAP CONTAINER */}
+        <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl p-2 sm:p-2.5 border border-[#e2e8f0] shadow-xs flex flex-col relative overflow-hidden h-[340px] sm:h-[460px] lg:h-[600px]">
           
           <div 
             ref={mapContainerRef} 
-            className="w-full h-full rounded-2xl z-10"
+            className="w-full h-full rounded-xl sm:rounded-2xl z-10"
           />
 
           {/* Map Overlay Badge */}
-          <div className="absolute top-6 left-6 z-20 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2 pointer-events-none">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[11px] font-black text-[#0f172a]">Tutti i distributori rilevati ({filteredStations.length})</span>
+          <div className="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1.5 pointer-events-none">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-[10px] sm:text-[11px] font-black text-[#0f172a]">{filteredStations.length} distributori</span>
           </div>
 
+          {/* Loading indicator when panning/fetching */}
+          {isLoadingAreaStations && (
+            <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-200 shadow-xs flex items-center gap-1.5 pointer-events-none text-[10px] font-bold text-blue-600">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>Caricamento area...</span>
+            </div>
+          )}
+
           {/* Map Controls Floating Helper */}
-          <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none flex justify-center">
-            <div className="bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-semibold px-4 py-2 rounded-2xl shadow-lg border border-white/10 flex items-center gap-2">
-              <Info className="w-3.5 h-3.5 text-blue-400" />
-              <span>Clicca sui pin per i dettagli completi, prezzi e collegamento al navigatore</span>
+          <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-none flex justify-center">
+            <div className="bg-slate-900/80 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-medium px-3 py-1.5 rounded-xl shadow-md border border-white/10 flex items-center gap-1.5 text-center">
+              <Info className="w-3 h-3 text-blue-400 shrink-0" />
+              <span>Tocca un distributore per listino e navigazione</span>
             </div>
           </div>
 
         </div>
 
         {/* LIST / DETAIL SIDEBAR (5 COLS ON DESKTOP) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
+        <div className="lg:col-span-5 flex flex-col gap-3 sm:gap-4">
 
           {/* IF A STATION IS SELECTED: SHOW RICH DETAIL CARD */}
           {selectedStation ? (
-            <div className="bg-white rounded-3xl p-5 border-2 border-blue-500 shadow-md flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border-2 border-blue-500 shadow-md flex flex-col gap-3 animate-in fade-in slide-in-from-top-2">
               
               {/* Header */}
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-2xs shrink-0 ${
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center border shadow-2xs shrink-0 ${
                     selectedStation.type === 'ev' 
                       ? 'bg-teal-50 text-teal-600 border-teal-100' 
                       : 'bg-blue-50 text-[#2563eb] border-blue-100'
                   }`}>
-                    {selectedStation.type === 'ev' ? <Zap className="w-6 h-6" /> : <Fuel className="w-6 h-6" />}
+                    {selectedStation.type === 'ev' ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
                   </div>
-                  <div>
-                    <h3 className="text-base font-black text-[#0f172a] leading-tight">
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-black text-[#0f172a] leading-tight truncate">
                       {selectedStation.name}
                     </h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3 text-slate-400" />
-                      <span>{selectedStation.address}, {selectedStation.city} ({selectedStation.province})</span>
+                    <p className="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1 mt-0.5 truncate">
+                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{selectedStation.address}, {selectedStation.city}</span>
                     </p>
                   </div>
                 </div>
@@ -1093,22 +1098,22 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedStation(null)}
-                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Distance & Badges */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {selectedStation.distanceKm !== undefined && (
-                  <span className="bg-blue-50 text-[#2563eb] border border-blue-200 px-2.5 py-1 rounded-xl text-xs font-black">
-                    📍 {selectedStation.distanceKm} km da te
+                  <span className="bg-blue-50 text-[#2563eb] border border-blue-200 px-2 py-0.5 rounded-lg text-[11px] font-black">
+                    📍 {selectedStation.distanceKm} km
                   </span>
                 )}
                 {selectedStation.isOpen24h && (
                   <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                    Aperto 24/7
+                    24/7
                   </span>
                 )}
                 {selectedStation.rating && (
@@ -1118,13 +1123,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   </span>
                 )}
                 {selectedStation.hasCarWash && (
-                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                    🧼 Autolavaggio
+                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                    🧼 Lavaggio
                   </span>
                 )}
                 {selectedStation.hasBar && (
-                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                    ☕ Bar & Ristoro
+                  <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                    ☕ Bar
                   </span>
                 )}
               </div>
