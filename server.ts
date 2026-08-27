@@ -1,9 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
-import { sincronizzaMappaStazioni } from "./scripts/sync_stations";
+import { sincronizzaMappaStazioni, OutputStazione } from "./scripts/sync_stations";
+import { SEED_STATIONS } from "./src/data/seedStations";
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -148,7 +150,18 @@ async function fetchRealVehiclePhotos(
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+  // Global CORS & JSON Middlewares
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
 
   app.use(express.json());
 
@@ -158,14 +171,72 @@ async function startServer() {
   });
 
   // -------------------------------------------------------------
-  // IN-MEMORY CACHE & SPATIAL ENGINE PER 21.000+ STAZIONI MIMIT
+  // IN-MEMORY CACHE & SPATIAL ENGINE PER 21.000+ STAZIONI MIMIT + EV
   // -------------------------------------------------------------
   let stationsMemoryCache: any[] | null = null;
   let stationsLastModified = '';
+  let isSyncingInBackground = false;
+
+  function convertSeedStationsToBackend(seeds: typeof SEED_STATIONS): OutputStazione[] {
+    const nowIso = new Date().toISOString();
+    return seeds.map(st => {
+      const serviziPrezzi: any[] = [];
+      if (st.fuelPrices) {
+        st.fuelPrices.forEach(fp => {
+          serviziPrezzi.push({
+            tipo_servizio: `${fp.fuel} ${fp.isSelf ? 'Self' : 'Servito'}`,
+            prezzo: fp.price,
+            valuta: "EUR",
+            ultimo_aggiornamento: nowIso
+          });
+        });
+      }
+      if (st.evPlugs) {
+        st.evPlugs.forEach(ep => {
+          serviziPrezzi.push({
+            tipo_servizio: `${ep.type} ${ep.powerKw}kW`,
+            prezzo: ep.pricePerKwh,
+            valuta: "EUR",
+            ultimo_aggiornamento: nowIso
+          });
+        });
+      }
+      return {
+        id: st.id,
+        tipo: (st.type === 'ev' ? 'elettrico' : 'carburante') as "elettrico" | "carburante",
+        nome_gestore: st.brand || st.name,
+        indirizzo_completo: `${st.address}, ${st.city} (${st.province})`,
+        comune: st.city,
+        coordinate: {
+          lat: st.lat,
+          lng: st.lng
+        },
+        servizi_prezzi: serviziPrezzi
+      };
+    });
+  }
 
   function getLoadedStations(): any[] {
     const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
-    if (!fs.existsSync(liveFilePath)) return [];
+    if (!fs.existsSync(liveFilePath)) {
+      // Se il file JSON non è ancora generato, usa istantaneamente il database seed integrato
+      if (!isSyncingInBackground) {
+        isSyncingInBackground = true;
+        console.log("[STATIONS CACHE] Avvio prima sincronizzazione MIMIT ed EV in background...");
+        sincronizzaMappaStazioni()
+          .then(() => {
+            isSyncingInBackground = false;
+            stationsMemoryCache = null; // Forza ricaricamento
+            console.log("[STATIONS CACHE] Sincronizzazione background completata con successo.");
+          })
+          .catch((err) => {
+            isSyncingInBackground = false;
+            console.warn("[STATIONS CACHE] Sincronizzazione background non riuscita:", err?.message);
+          });
+      }
+      return convertSeedStationsToBackend(SEED_STATIONS);
+    }
+
     try {
       const stats = fs.statSync(liveFilePath);
       const mtime = stats.mtime.toISOString();
@@ -173,12 +244,12 @@ async function startServer() {
         const raw = fs.readFileSync(liveFilePath, 'utf-8');
         stationsMemoryCache = JSON.parse(raw);
         stationsLastModified = mtime;
-        console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache?.length} stazioni MIMIT`);
+        console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache?.length} stazioni MIMIT ed EV`);
       }
       return stationsMemoryCache || [];
     } catch (e) {
       console.error("[STATIONS CACHE] Errore caricamento:", e);
-      return [];
+      return convertSeedStationsToBackend(SEED_STATIONS);
     }
   }
 
@@ -196,31 +267,52 @@ async function startServer() {
 
   // -------------------------------------------------------------
   // ENDPOINT MAPPA: RESTITUISCE TUTTI I DISTRIBUTORI & COLONNINE AGGIORNATI
-  // Supporta filtri per coordinate (lat, lng, radius), bounding box (bounds) e ricerca testuale (q)
+  // Supporta filtri per coordinate, bounding box, tipo (fuel, ev, all) e ricerca testuale
   // -------------------------------------------------------------
   app.get("/api/stations", async (req, res) => {
     try {
-      let stations = getLoadedStations();
-
-      // Se il file non esiste ancora, esegui una sincronizzazione iniziale
-      if (stations.length === 0) {
-        console.log("[API /api/stations] File non presente, avvio prima sincronizzazione...");
-        await sincronizzaMappaStazioni();
-        stations = getLoadedStations();
-      }
-
+      const stations = getLoadedStations();
       const totalDatabaseCount = stations.length;
 
       const q = (req.query.q as string || '').trim().toLowerCase();
+      const typeParam = (req.query.type as string || 'all').toLowerCase(); // 'all' | 'fuel' | 'ev'
       const latParam = req.query.lat ? parseFloat(req.query.lat as string) : NaN;
       const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
-      const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 35; // default 35 km
+      const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 40; // default 40 km
       const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
-      const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 300;
+      const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 350;
 
       let filtered = stations;
 
-      // 1. Filtro per Bounding Box (Viewport della mappa)
+      // 1. Filtro Tipo (Carburante vs Colonnina Elettrica)
+      if (typeParam === 'ev' || typeParam === 'elettrico') {
+        filtered = filtered.filter(st => 
+          st.tipo === 'elettrico' || 
+          st.tipo === 'ev' || 
+          (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
+            sp.tipo_servizio?.toLowerCase().includes('kw') || 
+            sp.tipo_servizio?.toLowerCase().includes('type') || 
+            sp.tipo_servizio?.toLowerCase().includes('ccs') ||
+            sp.tipo_servizio?.toLowerCase().includes('tesla') ||
+            sp.tipo_servizio?.toLowerCase().includes('supercharger') ||
+            sp.tipo_servizio?.toLowerCase().includes('chademo')
+          ))
+        );
+      } else if (typeParam === 'fuel' || typeParam === 'carburante') {
+        filtered = filtered.filter(st => 
+          st.tipo === 'carburante' || 
+          st.tipo === 'fuel' || 
+          (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
+            sp.tipo_servizio?.toLowerCase().includes('benzina') || 
+            sp.tipo_servizio?.toLowerCase().includes('gasolio') || 
+            sp.tipo_servizio?.toLowerCase().includes('diesel') ||
+            sp.tipo_servizio?.toLowerCase().includes('gpl') ||
+            sp.tipo_servizio?.toLowerCase().includes('metano')
+          ))
+        );
+      }
+
+      // 2. Filtro per Bounding Box (Viewport della mappa)
       if (boundsParam) {
         const [minLat, minLng, maxLat, maxLng] = boundsParam.split(',').map(n => parseFloat(n.trim()));
         if (!isNaN(minLat) && !isNaN(minLng) && !isNaN(maxLat) && !isNaN(maxLng)) {
@@ -231,7 +323,7 @@ async function startServer() {
           });
         }
       }
-      // 2. Filtro per coordinate + raggio (es. GPS utente o centro città)
+      // 3. Filtro per coordinate + raggio (es. GPS utente o centro città)
       else if (!isNaN(latParam) && !isNaN(lngParam)) {
         const withDist = filtered.map(st => {
           const lat = st.coordinate?.lat || 0;
@@ -244,7 +336,7 @@ async function startServer() {
         filtered = withDist.map(item => item.st);
       }
 
-      // 3. Ricerca testuale (Città, comune, brand, via)
+      // 4. Ricerca testuale (Città, comune, brand, via)
       if (q) {
         filtered = filtered.filter(st => {
           const gestore = (st.nome_gestore || '').toLowerCase();
@@ -254,8 +346,21 @@ async function startServer() {
         });
       }
 
-      // Limita il payload inviato al frontend per massima fluidità (default top 300)
-      const dataToSend = filtered.slice(0, Math.min(limitParam, 500));
+      // 5. Quando richiesto 'all', garantisci che le colonnine EV nell'area non vengano sommerse dai distributori
+      let dataToSend = [];
+      if (typeParam === 'all') {
+        const evList = filtered.filter(st => st.tipo === 'elettrico' || st.tipo === 'ev');
+        const fuelList = filtered.filter(st => st.tipo !== 'elettrico' && st.tipo !== 'ev');
+        
+        // Includi tutti gli hub EV presenti nell'area (fino a 100) + distributori di carburante fino al limite
+        const evPortion = evList.slice(0, 100);
+        const remainingLimit = Math.max(limitParam - evPortion.length, 50);
+        const fuelPortion = fuelList.slice(0, remainingLimit);
+        
+        dataToSend = [...evPortion, ...fuelPortion];
+      } else {
+        dataToSend = filtered.slice(0, Math.min(limitParam, 500));
+      }
 
       return res.json({
         success: true,

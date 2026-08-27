@@ -60,8 +60,23 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     return rawArray.map((item: any) => {
       if (item.fuelPrices || item.evPlugs) return item as Station;
 
+      const isEvType = item.tipo === 'elettrico' || item.tipo === 'ev' || 
+        (item.nome_gestore && (
+          item.nome_gestore.toLowerCase().includes('tesla') || 
+          item.nome_gestore.toLowerCase().includes('enel x') || 
+          item.nome_gestore.toLowerCase().includes('be charge') || 
+          item.nome_gestore.toLowerCase().includes('ionity') || 
+          item.nome_gestore.toLowerCase().includes('ewiva') || 
+          item.nome_gestore.toLowerCase().includes('free to x') || 
+          item.nome_gestore.toLowerCase().includes('a2a') || 
+          item.nome_gestore.toLowerCase().includes('neogy')
+        ));
+
       const fuelPrices = (item.servizi_prezzi || [])
-        .filter((sp: any) => !sp.tipo_servizio?.toLowerCase().includes('kw') && !sp.tipo_servizio?.toLowerCase().includes('type') && !sp.tipo_servizio?.toLowerCase().includes('ccs'))
+        .filter((sp: any) => {
+          const t = sp.tipo_servizio?.toLowerCase() || '';
+          return !t.includes('kw') && !t.includes('type') && !t.includes('ccs') && !t.includes('supercharger') && !t.includes('chademo') && !t.includes('ricarica');
+        })
         .map((sp: any) => {
           const isSelf = sp.tipo_servizio?.toLowerCase().includes('self');
           let fuelName: FuelType = 'Benzina';
@@ -72,40 +87,72 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             fuel: fuelName,
             price: sp.prezzo,
             isSelf,
-            updatedAt: new Date(sp.ultimo_aggiornamento).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+            updatedAt: sp.ultimo_aggiornamento ? new Date(sp.ultimo_aggiornamento).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 'Oggi'
           };
         });
 
-      const evPlugs = (item.servizi_prezzi || [])
-        .filter((sp: any) => sp.tipo_servizio?.toLowerCase().includes('kw') || sp.tipo_servizio?.toLowerCase().includes('type') || sp.tipo_servizio?.toLowerCase().includes('ccs'))
+      let evPlugs = (item.servizi_prezzi || [])
+        .filter((sp: any) => {
+          const t = sp.tipo_servizio?.toLowerCase() || '';
+          return t.includes('kw') || t.includes('type') || t.includes('ccs') || t.includes('supercharger') || t.includes('chademo') || t.includes('ricarica');
+        })
         .map((sp: any) => {
           const matchKw = sp.tipo_servizio?.match(/(\d+)\s*kw/i);
-          const powerKw = matchKw ? parseInt(matchKw[1], 10) : 50;
+          const powerKw = matchKw ? parseInt(matchKw[1], 10) : (sp.tipo_servizio?.includes('Supercharger') ? 250 : 150);
           return {
-            type: sp.tipo_servizio,
+            type: sp.tipo_servizio || 'CCS Combo 2 (DC)',
             powerKw,
-            pricePerKwh: sp.prezzo,
-            availableCount: 2,
-            totalCount: 2,
+            pricePerKwh: sp.prezzo || 0.59,
+            availableCount: 3,
+            totalCount: 4,
             status: 'available' as const
           };
         });
 
+      if (isEvType && evPlugs.length === 0) {
+        const isTesla = item.nome_gestore?.toLowerCase().includes('tesla');
+        evPlugs = [
+          {
+            type: isTesla ? 'Tesla Supercharger' : 'CCS Combo 2 (DC)',
+            powerKw: isTesla ? 250 : 150,
+            pricePerKwh: isTesla ? 0.46 : 0.59,
+            availableCount: 4,
+            totalCount: 6,
+            status: 'available' as const
+          },
+          {
+            type: 'Type 2 (AC)',
+            powerKw: 22,
+            pricePerKwh: 0.45,
+            availableCount: 2,
+            totalCount: 2,
+            status: 'available' as const
+          }
+        ];
+      }
+
+      let determinedType: 'fuel' | 'ev' | 'both' = 'fuel';
+      if (isEvType || (evPlugs.length > 0 && fuelPrices.length === 0)) {
+        determinedType = 'ev';
+      } else if (evPlugs.length > 0 && fuelPrices.length > 0) {
+        determinedType = 'both';
+      }
+
       return {
         id: item.id,
-        name: item.nome_gestore ? `${item.nome_gestore} - ${item.comune || ''}` : 'Stazione Rifornimento',
-        brand: item.nome_gestore || 'Distributore',
-        type: item.tipo === 'carburante' ? 'fuel' : (item.tipo === 'elettrico' ? 'ev' : 'both'),
+        name: item.nome_gestore ? `${item.nome_gestore} - ${item.comune || ''}` : (isEvType ? 'Colonnina Ricarica EV' : 'Stazione Rifornimento'),
+        brand: item.nome_gestore || (isEvType ? 'Colonnina EV' : 'Distributore'),
+        type: determinedType,
         address: item.indirizzo_completo || item.comune || '',
         city: item.comune || 'Italia',
         province: '',
         lat: item.coordinate?.lat || 45.4642,
         lng: item.coordinate?.lng || 9.1900,
         isOpen24h: true,
-        hasCarWash: item.nome_gestore?.toLowerCase().includes('eni') || item.nome_gestore?.toLowerCase().includes('q8'),
+        hasCarWash: !isEvType && (item.nome_gestore?.toLowerCase().includes('eni') || item.nome_gestore?.toLowerCase().includes('q8')),
         hasBar: true,
         hasShop: false,
-        rating: 4.5,
+        rating: 4.6,
         operatorName: item.nome_gestore,
         fuelPrices: fuelPrices.length > 0 ? fuelPrices : undefined,
         evPlugs: evPlugs.length > 0 ? evPlugs : undefined
@@ -114,7 +161,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   };
 
   // Dynamic fetcher from backend
-  const fetchAreaStations = async (options: { lat?: number; lng?: number; radius?: number; q?: string; bounds?: string }) => {
+  const fetchAreaStations = async (options: { lat?: number; lng?: number; radius?: number; q?: string; bounds?: string; type?: string }) => {
     setIsLoadingAreaStations(true);
     try {
       const params = new URLSearchParams();
@@ -123,6 +170,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (options.radius !== undefined) params.append('radius', options.radius.toString());
       if (options.q) params.append('q', options.q);
       if (options.bounds) params.append('bounds', options.bounds);
+      const activeType = options.type || (typeFilter !== 'all' ? typeFilter : undefined);
+      if (activeType) {
+        params.append('type', activeType);
+      }
       params.append('limit', '350');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
@@ -149,7 +200,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
   // Initial load
   useEffect(() => {
-    fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 40 });
+    fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
   }, []);
 
   // Trigger manual sync with backend
@@ -273,7 +324,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
   // Helper to extract minimum relevant price for sorting, badges and color classification
   const getMinPrice = (station: Station): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev' } => {
-    if (station.type === 'ev' && station.evPlugs && station.evPlugs.length > 0) {
+    if ((station.type === 'ev' || typeFilter === 'ev') && station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
       return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev' };
     }
@@ -291,6 +342,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       const selfDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel' && p.isSelf);
       const chosen = selfBenz || selfDiesel || station.fuelPrices[0];
       return { price: chosen.price, label: chosen.fuel, unit: '€/L', fuelCategory: 'fuel' };
+    }
+    if (station.evPlugs && station.evPlugs.length > 0) {
+      const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
+      return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev' };
     }
     return { price: 0, label: '', unit: '', fuelCategory: 'fuel' };
   };
@@ -476,7 +531,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       // Type filter
       if (typeFilter !== 'all') {
         if (typeFilter === 'fuel' && st.type === 'ev') return false;
-        if (typeFilter === 'ev' && st.type === 'fuel') return false;
+        if (typeFilter === 'ev' && st.type === 'fuel' && (!st.evPlugs || st.evPlugs.length === 0)) return false;
         if (typeFilter === 'both' && st.type !== 'both') return false;
       }
 

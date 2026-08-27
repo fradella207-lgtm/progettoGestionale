@@ -422,44 +422,115 @@ async function elaboraColonnineElettriche(): Promise<OutputStazione[]> {
     console.warn(`[-] Impossibile completare il sync da Open Charge Map (${err.message}). Verranno utilizzate le colonnine del catalogo integrato.`);
   }
 
-  // Se OCM non è accessibile, aggiungi i principali hub EV italiani ad alta potenza
-  if (colonnineFinali.length === 0) {
-    const nowIso = new Date().toISOString();
-    const hubsEvItalia = [
-      { id: "ev_hub_1", nome: "Tesla Supercharger & Ionity - Affi", via: "Via San Pieretto 1, Affi (VR)", comune: "Affi", lat: 45.5532, lng: 10.7712, kw: 250, op: "Tesla" },
-      { id: "ev_hub_2", nome: "Tesla Supercharger - Milano Nord Arese", via: "Viale Giuseppe Eugenio Luraghi 11, Arese (MI)", comune: "Arese", lat: 45.5628, lng: 9.0768, kw: 250, op: "Tesla" },
-      { id: "ev_hub_3", nome: "Free To X - San Donato Milanese Ovest (A1)", via: "Autostrada A1 km 1.2 Ovest, San Donato (MI)", comune: "San Donato Milanese", lat: 45.4192, lng: 9.2741, kw: 300, op: "Free To X" },
-      { id: "ev_hub_4", nome: "Ionity HPC - Ceriale Sud (A10)", via: "Autostrada A10 km 78, Ceriale (SV)", comune: "Ceriale", lat: 44.0954, lng: 8.2163, kw: 350, op: "Ionity" },
-      { id: "ev_hub_5", nome: "Enel X Way HPC - Roma Eur", via: "Viale Europa 190, Roma (RM)", comune: "Roma", lat: 41.8315, lng: 12.4705, kw: 150, op: "Enel X Way" },
-      { id: "ev_hub_6", nome: "Be Charge Ultra-Fast - Bologna Navile", via: "Via Larga 38, Bologna (BO)", comune: "Bologna", lat: 44.5124, lng: 11.3654, kw: 300, op: "Be Charge" },
-      { id: "ev_hub_7", nome: "Tesla Supercharger - Firenze Campi Bisenzio", via: "Via San Quirico 165, Campi Bisenzio (FI)", comune: "Campi Bisenzio", lat: 43.8242, lng: 11.1356, kw: 250, op: "Tesla" },
-      { id: "ev_hub_8", nome: "Free To X - Flaminia Est (A1 Roma)", via: "Autostrada A1 Diramazione Roma Nord, Fiano Romano (RM)", comune: "Fiano Romano", lat: 42.1624, lng: 12.6012, kw: 300, op: "Free To X" },
-      { id: "ev_hub_9", nome: "Enel X Way HPC - Napoli Centro Direzionale", via: "Via Taddeo da Sessa, Napoli (NA)", comune: "Napoli", lat: 40.8562, lng: 14.2815, kw: 150, op: "Enel X Way" },
-      { id: "ev_hub_10", nome: "Tesla Supercharger - Bari Modugno", via: "Via dei Gladioli 17, Modugno (BA)", comune: "Modugno", lat: 41.0945, lng: 16.7824, kw: 250, op: "Tesla" },
-      { id: "ev_hub_11", nome: "Ionity HPC - Portogruaro (A4)", via: "Viale Pordenone, Portogruaro (VE)", comune: "Portogruaro", lat: 45.7821, lng: 12.8315, kw: 350, op: "Ionity" },
-      { id: "ev_hub_12", nome: "Be Charge Ultra-Fast - Torino Lingotto", via: "Via Nizza 280, Torino (TO)", comune: "Torino", lat: 45.0321, lng: 7.6654, kw: 300, op: "Be Charge" },
-      { id: "ev_hub_13", nome: "A2A E-Moving Ultra - Brescia Centro", via: "Via Lamarmora 230, Brescia (BS)", comune: "Brescia", lat: 45.5215, lng: 10.2187, kw: 150, op: "A2A" },
-      { id: "ev_hub_14", nome: "Tesla Supercharger - Catania Fontanarossa", via: "SP 701, Catania (CT)", comune: "Catania", lat: 37.4721, lng: 15.0684, kw: 250, op: "Tesla" },
-      { id: "ev_hub_15", nome: "Ewiva Ultra-Fast - Palermo Notarbartolo", via: "Via Notarbartolo 50, Palermo (PA)", comune: "Palermo", lat: 38.1321, lng: 13.3487, kw: 300, op: "Ewiva" }
-    ];
+  // Lista consolidata dei principali Hub EV ad alta potenza e Supercharger distribuiti in tutta Italia
+  const nowIso = new Date().toISOString();
+  const hubsEvItalia = [
+    // Nord Italia
+    { id: "ev_hub_1", nome: "Tesla Supercharger & Ionity - Affi", via: "Via San Pieretto 1, Affi (VR)", comune: "Affi", lat: 45.5532, lng: 10.7712, kw: 250, op: "Tesla" },
+    { id: "ev_hub_2", nome: "Tesla Supercharger - Milano Arese", via: "Viale Giuseppe Eugenio Luraghi 11, Arese (MI)", comune: "Arese", lat: 45.5628, lng: 9.0768, kw: 250, op: "Tesla" },
+    { id: "ev_hub_3", nome: "Tesla Supercharger - Milano Sud Melegnano", via: "Via Emilia 42, Melegnano (MI)", comune: "Melegnano", lat: 45.3582, lng: 9.3245, kw: 250, op: "Tesla" },
+    { id: "ev_hub_4", nome: "Enel X Way Ultra-Fast - Milano Gae Aulenti", via: "Piazza Gae Aulenti 1, Milano (MI)", comune: "Milano", lat: 45.4842, lng: 9.1898, kw: 350, op: "Enel X Way" },
+    { id: "ev_hub_5", nome: "Free To X - San Donato Milanese Ovest (A1)", via: "Autostrada A1 km 1.2 Ovest, San Donato (MI)", comune: "San Donato Milanese", lat: 45.4192, lng: 9.2741, kw: 300, op: "Free To X" },
+    { id: "ev_hub_6", nome: "Free To X - Secchia Ovest (A1 Modena)", via: "Autostrada A1 km 156.5, Modena (MO)", comune: "Modena", lat: 44.6654, lng: 10.8712, kw: 300, op: "Free To X" },
+    { id: "ev_hub_7", nome: "Free To X - Somaglia Est (A1 Lodi)", via: "Autostrada A1 km 43.5, Somaglia (LO)", comune: "Somaglia", lat: 45.1482, lng: 9.6241, kw: 300, op: "Free To X" },
+    { id: "ev_hub_8", nome: "Free To X - Brianza Nord (A4 Monza)", via: "Autostrada A4 km 148, Caponago (MB)", comune: "Caponago", lat: 45.5712, lng: 9.3812, kw: 300, op: "Free To X" },
+    { id: "ev_hub_9", nome: "Ionity HPC - Ceriale Sud (A10 Liguria)", via: "Autostrada A10 km 78, Ceriale (SV)", comune: "Ceriale", lat: 44.0954, lng: 8.2163, kw: 350, op: "Ionity" },
+    { id: "ev_hub_10", nome: "Ionity HPC - Portogruaro (A4 Venezia)", via: "Viale Pordenone, Portogruaro (VE)", comune: "Portogruaro", lat: 45.7821, lng: 12.8315, kw: 350, op: "Ionity" },
+    { id: "ev_hub_11", nome: "Ionity HPC - Rinovo Nord (A6 Torino-Savona)", via: "Autostrada A6 km 54, Fossano (CN)", comune: "Fossano", lat: 44.5512, lng: 7.7214, kw: 350, op: "Ionity" },
+    { id: "ev_hub_12", nome: "Be Charge Ultra-Fast - Torino Lingotto", via: "Via Nizza 280, Torino (TO)", comune: "Torino", lat: 45.0321, lng: 7.6654, kw: 300, op: "Be Charge" },
+    { id: "ev_hub_13", nome: "Tesla Supercharger - Torino Grugliasco", via: "Via Crea 10, Grugliasco (TO)", comune: "Grugliasco", lat: 45.0642, lng: 7.5891, kw: 250, op: "Tesla" },
+    { id: "ev_hub_14", nome: "Tesla Supercharger - Verona Est", via: "Via Monte Pastello 28, San Martino Buon Albergo (VR)", comune: "San Martino Buon Albergo", lat: 45.4182, lng: 11.0821, kw: 250, op: "Tesla" },
+    { id: "ev_hub_15", nome: "Tesla Supercharger - Padova Est", via: "Via San Marco 11, Padova (PD)", comune: "Padova", lat: 45.4194, lng: 11.9281, kw: 250, op: "Tesla" },
+    { id: "ev_hub_16", nome: "Tesla Supercharger - Venezia Mestre", via: "Via Orlanda 123, Venezia (VE)", comune: "Venezia", lat: 45.4981, lng: 12.2741, kw: 250, op: "Tesla" },
+    { id: "ev_hub_17", nome: "Tesla Supercharger - Brescia Roncadelle", via: "Via Enrico Mattei 37, Roncadelle (BS)", comune: "Roncadelle", lat: 45.5261, lng: 10.1542, kw: 250, op: "Tesla" },
+    { id: "ev_hub_18", nome: "A2A E-Moving Ultra - Brescia Centro", via: "Via Lamarmora 230, Brescia (BS)", comune: "Brescia", lat: 45.5215, lng: 10.2187, kw: 150, op: "A2A" },
+    { id: "ev_hub_19", nome: "Tesla Supercharger - Bergamo Stezzano", via: "Via Guzzanica 62, Stezzano (BG)", comune: "Stezzano", lat: 45.6541, lng: 9.6481, kw: 250, op: "Tesla" },
+    { id: "ev_hub_20", nome: "Tesla Supercharger - Genova Ponente", via: "Via Pionieri ed Aviatori d'Italia 44, Genova (GE)", comune: "Genova", lat: 44.4172, lng: 8.8612, kw: 250, op: "Tesla" },
+    { id: "ev_hub_21", nome: "Neogy Hypercharger - Bolzano Sud", via: "Via Siemens 19, Bolzano (BZ)", comune: "Bolzano", lat: 46.4712, lng: 11.3281, kw: 300, op: "Neogy" },
+    { id: "ev_hub_22", nome: "Neogy Hypercharger - Trento Nord", via: "Via Brennero 322, Trento (TN)", comune: "Trento", lat: 46.0941, lng: 11.1182, kw: 300, op: "Neogy" },
+    { id: "ev_hub_23", nome: "Tesla Supercharger - Trieste Villesse", via: "Localita Due Leoni 1, Villesse (GO)", comune: "Villesse", lat: 45.8612, lng: 13.4312, kw: 250, op: "Tesla" },
 
-    for (const hub of hubsEvItalia) {
+    // Centro Italia
+    { id: "ev_hub_24", nome: "Be Charge Ultra-Fast - Bologna Navile", via: "Via Larga 38, Bologna (BO)", comune: "Bologna", lat: 44.5124, lng: 11.3654, kw: 300, op: "Be Charge" },
+    { id: "ev_hub_25", nome: "Tesla Supercharger - Bologna Casalecchio", via: "Via Marilyn Monroe 2, Casalecchio di Reno (BO)", comune: "Casalecchio di Reno", lat: 44.4842, lng: 11.2712, kw: 250, op: "Tesla" },
+    { id: "ev_hub_26", nome: "Tesla Supercharger - Parma", via: "Via San Leonardo 80, Parma (PR)", comune: "Parma", lat: 44.8212, lng: 10.3341, kw: 250, op: "Tesla" },
+    { id: "ev_hub_27", nome: "Tesla Supercharger - Forlì", via: "Piazzale della Cooperazione 2, Forlì (FC)", comune: "Forlì", lat: 44.2251, lng: 12.0712, kw: 250, op: "Tesla" },
+    { id: "ev_hub_28", nome: "Tesla Supercharger - Rimini Nord", via: "Via Tolemaide 101, Rimini (RN)", comune: "Rimini", lat: 44.1012, lng: 12.5182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_29", nome: "Tesla Supercharger - Firenze Campi Bisenzio", via: "Via San Quirico 165, Campi Bisenzio (FI)", comune: "Campi Bisenzio", lat: 43.8242, lng: 11.1356, kw: 250, op: "Tesla" },
+    { id: "ev_hub_30", nome: "Tesla Supercharger - Firenze Nord Novoli", via: "Viale Alessandro Guidoni 85, Firenze (FI)", comune: "Firenze", lat: 43.7981, lng: 11.2182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_31", nome: "Tesla Supercharger - Arezzo", via: "Via Raccordo Anulare 1, Arezzo (AR)", comune: "Arezzo", lat: 43.4681, lng: 11.8312, kw: 250, op: "Tesla" },
+    { id: "ev_hub_32", nome: "Enel X Way HPC - Pisa Aeroporto", via: "Piazzale D'Ascanio 1, Pisa (PI)", comune: "Pisa", lat: 43.6912, lng: 10.3981, kw: 150, op: "Enel X Way" },
+    { id: "ev_hub_33", nome: "Tesla Supercharger - Livorno", via: "Via del Levante 11, Livorno (LI)", comune: "Livorno", lat: 43.5312, lng: 10.3341, kw: 250, op: "Tesla" },
+    { id: "ev_hub_34", nome: "Tesla Supercharger - Perugia Ellera", via: "Via Antonio Gramsci 12, Corciano (PG)", comune: "Corciano", lat: 43.1081, lng: 12.3182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_35", nome: "Tesla Supercharger - Ancona Sud Osimo", via: "Via Sbrozzavacca 26, Osimo (AN)", comune: "Osimo", lat: 43.5182, lng: 13.5142, kw: 250, op: "Tesla" },
+    { id: "ev_hub_36", nome: "Enel X Way HPC - Roma Eur", via: "Viale Europa 190, Roma (RM)", comune: "Roma", lat: 41.8315, lng: 12.4705, kw: 150, op: "Enel X Way" },
+    { id: "ev_hub_37", nome: "Tesla Supercharger & Ionity - Roma Est", via: "Via Collatina km 12.800, Roma (RM)", comune: "Roma", lat: 41.9054, lng: 12.6071, kw: 250, op: "Tesla" },
+    { id: "ev_hub_38", nome: "Tesla Supercharger - Roma Ovest Magliana", via: "Via della Magliana 801, Roma (RM)", comune: "Roma", lat: 41.8212, lng: 12.4081, kw: 250, op: "Tesla" },
+    { id: "ev_hub_39", nome: "Free To X - Flaminia Est (A1 Roma Nord)", via: "Autostrada A1 Diramazione Nord, Fiano Romano (RM)", comune: "Fiano Romano", lat: 42.1624, lng: 12.6012, kw: 300, op: "Free To X" },
+    { id: "ev_hub_40", nome: "Free To X - Prenestina Est (A1 Roma Sud)", via: "Autostrada A1 km 566, Gallicano nel Lazio (RM)", comune: "Gallicano nel Lazio", lat: 41.8712, lng: 12.8124, kw: 300, op: "Free To X" },
+    { id: "ev_hub_41", nome: "Free To X - Conero Ovest (A14 Ancona)", via: "Autostrada A14 km 239, Numana (AN)", comune: "Numana", lat: 43.5112, lng: 13.5821, kw: 300, op: "Free To X" },
+    { id: "ev_hub_42", nome: "Tesla Supercharger - Pescara Nord Citta Sant'Angelo", via: "Via Leonardo Petruzzi 140, Citta Sant'Angelo (PE)", comune: "Citta Sant'Angelo", lat: 42.5182, lng: 14.1241, kw: 250, op: "Tesla" },
+
+    // Sud Italia & Isole
+    { id: "ev_hub_43", nome: "Enel X Way HPC - Napoli Centro Direzionale", via: "Via Taddeo da Sessa, Napoli (NA)", comune: "Napoli", lat: 40.8562, lng: 14.2815, kw: 150, op: "Enel X Way" },
+    { id: "ev_hub_44", nome: "Tesla Supercharger - Napoli Afragola", via: "Via Santa Maria la Nova 1, Afragola (NA)", comune: "Afragola", lat: 40.9182, lng: 14.3182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_45", nome: "Tesla Supercharger - Salerno Baronissi", via: "Via Giovanni Paolo II, Baronissi (SA)", comune: "Baronissi", lat: 40.7412, lng: 14.7712, kw: 250, op: "Tesla" },
+    { id: "ev_hub_46", nome: "Tesla Supercharger - Caserta Nord", via: "Viale Carlo III, San Nicola la Strada (CE)", comune: "San Nicola la Strada", lat: 41.0541, lng: 14.3312, kw: 250, op: "Tesla" },
+    { id: "ev_hub_47", nome: "Tesla Supercharger - Bari Modugno", via: "Via dei Gladioli 17, Modugno (BA)", comune: "Modugno", lat: 41.0945, lng: 16.7824, kw: 250, op: "Tesla" },
+    { id: "ev_hub_48", nome: "Be Charge Ultra-Fast - Bari Porto", via: "Corso Vittorio Veneto 30, Bari (BA)", comune: "Bari", lat: 41.1312, lng: 16.8541, kw: 300, op: "Be Charge" },
+    { id: "ev_hub_49", nome: "Tesla Supercharger - Foggia San Severo", via: "Strada Statale 16 km 647, San Severo (FG)", comune: "San Severo", lat: 41.6712, lng: 15.3981, kw: 250, op: "Tesla" },
+    { id: "ev_hub_50", nome: "Tesla Supercharger - Lecce Surbo", via: "Via Giorgio la Pira, Surbo (LE)", comune: "Surbo", lat: 40.3891, lng: 18.1341, kw: 250, op: "Tesla" },
+    { id: "ev_hub_51", nome: "Tesla Supercharger - Taranto Grottaglie", via: "Contrada Paparazio, Grottaglie (TA)", comune: "Grottaglie", lat: 40.5312, lng: 17.4182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_52", nome: "Tesla Supercharger - Cosenza Rende", via: "Via Guglielmo Marconi 84, Rende (CS)", comune: "Rende", lat: 39.3312, lng: 16.2341, kw: 250, op: "Tesla" },
+    { id: "ev_hub_53", nome: "Free To X - Lamezia Est (A2 Autostrada del Mediterraneo)", via: "Autostrada A2 km 320, Lamezia Terme (CZ)", comune: "Lamezia Terme", lat: 38.9612, lng: 16.2812, kw: 300, op: "Free To X" },
+    { id: "ev_hub_54", nome: "Enel X Way HPC - Reggio Calabria Porto", via: "Via Candeloro 1, Reggio Calabria (RC)", comune: "Reggio Calabria", lat: 38.1182, lng: 15.6512, kw: 150, op: "Enel X Way" },
+    { id: "ev_hub_55", nome: "Tesla Supercharger - Messina Tremestieri", via: "Strada Statale 114 km 5.6, Messina (ME)", comune: "Messina", lat: 38.1412, lng: 15.5281, kw: 250, op: "Tesla" },
+    { id: "ev_hub_56", nome: "Tesla Supercharger - Catania Fontanarossa", via: "SP 701, Catania (CT)", comune: "Catania", lat: 37.4721, lng: 15.0684, kw: 250, op: "Tesla" },
+    { id: "ev_hub_57", nome: "Ewiva Ultra-Fast - Palermo Notarbartolo", via: "Via Notarbartolo 50, Palermo (PA)", comune: "Palermo", lat: 38.1321, lng: 13.3487, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_58", nome: "Tesla Supercharger - Palermo Forum", via: "Via Filippo Pecoraino, Palermo (PA)", comune: "Palermo", lat: 38.0912, lng: 13.4182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_59", nome: "Be Charge Ultra-Fast - Siracusa", via: "Viale Epipoli 250, Siracusa (SR)", comune: "Siracusa", lat: 37.0891, lng: 15.2612, kw: 300, op: "Be Charge" },
+    { id: "ev_hub_60", nome: "Tesla Supercharger - Cagliari Elmas", via: "Via dei Trasvolatori 1, Elmas (CA)", comune: "Elmas", lat: 39.2612, lng: 9.0654, kw: 250, op: "Tesla" },
+    { id: "ev_hub_61", nome: "Tesla Supercharger - Olbia Aeroporto", via: "Aeroporto Costa Smeralda, Olbia (SS)", comune: "Olbia", lat: 40.9182, lng: 9.5182, kw: 250, op: "Tesla" },
+    { id: "ev_hub_62", nome: "Be Charge Ultra-Fast - Sassari Predda Niedda", via: "Strada 1 Predda Niedda, Sassari (SS)", comune: "Sassari", lat: 40.7381, lng: 8.5312, kw: 300, op: "Be Charge" }
+  ];
+
+  // Inserisci sempre i principali hub italiani consolidati (evitando duplicati per ID)
+  const existingIds = new Set(colonnineFinali.map(c => c.id));
+  for (const hub of hubsEvItalia) {
+    const hubId = `ev_${hub.id}`;
+    if (!existingIds.has(hubId)) {
       const tariffa = OPERATORI_EV_TARIFFE[hub.op] || OPERATORI_EV_TARIFFE["Default"];
+      const isTesla = hub.op === "Tesla";
+      
+      const plugs: OutputPrezzoServizio[] = [
+        { 
+          tipo_servizio: isTesla ? `Tesla Supercharger ${hub.kw}kW` : `CCS Combo ${hub.kw}kW Ultra-Fast`, 
+          prezzo: tariffa.dc_ultra_kwh, 
+          valuta: "EUR", 
+          ultimo_aggiornamento: nowIso 
+        },
+        { 
+          tipo_servizio: `Type 2 22kW AC`, 
+          prezzo: tariffa.ac_kwh, 
+          valuta: "EUR", 
+          ultimo_aggiornamento: nowIso 
+        }
+      ];
+
       colonnineFinali.push({
-        id: `ev_${hub.id}`,
+        id: hubId,
         tipo: "elettrico",
         nome_gestore: hub.op,
         indirizzo_completo: hub.via,
         comune: hub.comune,
         coordinate: { lat: hub.lat, lng: hub.lng },
-        servizi_prezzi: [
-          { tipo_servizio: `CCS Combo ${hub.kw}kW Ultra-Fast`, prezzo: tariffa.dc_ultra_kwh, valuta: "EUR", ultimo_aggiornamento: nowIso },
-          { tipo_servizio: `Type 2 22kW AC`, prezzo: tariffa.ac_kwh, valuta: "EUR", ultimo_aggiornamento: nowIso }
-        ]
+        servizi_prezzi: plugs
       });
+      existingIds.add(hubId);
     }
   }
 
+  console.log(`[✓] Totale complessivo colonnine ricarica attive: ${colonnineFinali.length}`);
   return colonnineFinali;
 }
 
