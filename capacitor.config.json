@@ -1,0 +1,11 @@
+{
+  "appId": "com.garage.manager",
+  "appName": "Garage Manager",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
