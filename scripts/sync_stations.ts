@@ -558,8 +558,10 @@ export async function sincronizzaMappaStazioni(): Promise<{ totale: number; carb
     fs.mkdirSync(targetDir, { recursive: true });
   }
 
-  // 4. Salva il file JSON formattato
-  fs.writeFileSync(OUTPUT_FILE_PATH, JSON.stringify(outputCompleto, null, 2), 'utf-8');
+  // 4. Salva il file JSON in modo atomico (scrive prima su file temporaneo .tmp e poi rinomina)
+  const tempFilePath = `${OUTPUT_FILE_PATH}.tmp`;
+  fs.writeFileSync(tempFilePath, JSON.stringify(outputCompleto), 'utf-8');
+  fs.renameSync(tempFilePath, OUTPUT_FILE_PATH);
 
   console.log(`\n=======================================================`);
   console.log(`SINCRONIZZAZIONE COMPLETATA CON SUCCESSO!`);

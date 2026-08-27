@@ -242,13 +242,19 @@ async function startServer() {
       const mtime = stats.mtime.toISOString();
       if (!stationsMemoryCache || stationsLastModified !== mtime) {
         const raw = fs.readFileSync(liveFilePath, 'utf-8');
-        stationsMemoryCache = JSON.parse(raw);
-        stationsLastModified = mtime;
-        console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache?.length} stazioni MIMIT ed EV`);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          stationsMemoryCache = parsed;
+          stationsLastModified = mtime;
+          console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache.length} stazioni MIMIT ed EV`);
+        }
       }
-      return stationsMemoryCache || [];
-    } catch (e) {
-      console.error("[STATIONS CACHE] Errore caricamento:", e);
+      return stationsMemoryCache || convertSeedStationsToBackend(SEED_STATIONS);
+    } catch (e: any) {
+      console.warn("[STATIONS CACHE] File cache temporaneamente non disponibile o in fase di scrittura, uso fallback:", e?.message);
+      if (stationsMemoryCache && stationsMemoryCache.length > 0) {
+        return stationsMemoryCache;
+      }
       return convertSeedStationsToBackend(SEED_STATIONS);
     }
   }
