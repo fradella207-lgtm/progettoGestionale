@@ -63,9 +63,10 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const brandContainerRef = useRef<HTMLDivElement | null>(null);
   const modelContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // 1. Marca, 2. Modello, 3. Anno, 4. Targa (in the exact order requested by the user)
+  // 1. Marca, 2. Modello, 3. Allestimento (Opzionale), 4. Anno, 5. Targa (in the exact order requested by the user)
   const [brand, setBrand] = useState(vehicleToEdit?.brand || '');
   const [model, setModel] = useState(vehicleToEdit?.model || '');
+  const [trimLevel, setTrimLevel] = useState(vehicleToEdit?.trimLevel || vehicleToEdit?.technicalSpecs?.trimLevel || '');
   const [inputYear, setInputYear] = useState<string>(
     vehicleToEdit?.registrationDate 
       ? vehicleToEdit.registrationDate.split('-')[0] 
@@ -140,6 +141,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 
       setBrand(initialBrand);
       setModel(initialModel);
+      setTrimLevel(vehicleToEdit?.trimLevel || vehicleToEdit?.technicalSpecs?.trimLevel || '');
       setPlate(initialPlate);
       setInputYear(initialYr);
       setRegDate(initialRegDate);
@@ -301,13 +303,13 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     }
 
     const yrStr = String(targetYearNum);
-    const query = `${brand} ${model} anno ${yrStr}`.trim();
+    const query = `${brand} ${model} ${trimLevel ? trimLevel + ' ' : ''}anno ${yrStr}`.trim();
 
     try {
       setIsAiLoading(true);
-      setAiLoadingPhase(`Consultazione Quattroruote per ${brand} ${model} (${yrStr})...`);
+      setAiLoadingPhase(`Consultazione Quattroruote per ${brand} ${model} ${trimLevel || ''} (${yrStr})...`);
 
-      const res = await lookupVehicleWithAI(query, brand, model, yrStr, plate);
+      const res = await lookupVehicleWithAI(query, brand, model, yrStr, plate, trimLevel);
 
       if (res.availableMotorizations && res.availableMotorizations.length > 0) {
         setAiMotorizations(res.availableMotorizations);
@@ -531,17 +533,19 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     // Final consolidated technical specs
     const finalSpecs: VehicleTechnicalSpecs = {
       ...technicalSpecs,
+      trimLevel: trimLevel.trim() || technicalSpecs.trimLevel,
       powerCv: Number(powerCv) || technicalSpecs.powerCv,
       powerKw: Number(powerKw) || technicalSpecs.powerKw,
       fuelCapacityLiters: isBEV ? 0 : (Number(tankCapacity) || technicalSpecs.fuelCapacityLiters || 50),
       batteryCapacityKwh: (isPHEV || isBEV) ? (Number(batteryCapacity) || technicalSpecs.batteryCapacityKwh) : undefined,
       euroClass: technicalSpecs.euroClass || (targetYearNum < 2001 ? 'Euro 2' : targetYearNum < 2006 ? 'Euro 3' : targetYearNum < 2011 ? 'Euro 4' : targetYearNum < 2016 ? 'Euro 5' : 'Euro 6'),
-      summaryQuattroruote: technicalSpecs.summaryQuattroruote || `Specifiche tecniche Quattroruote per ${brand} ${model} ${motorization || ''} (${targetYearNum})`
+      summaryQuattroruote: technicalSpecs.summaryQuattroruote || `Specifiche tecniche Quattroruote per ${brand} ${model} ${trimLevel ? trimLevel + ' ' : ''}${motorization || ''} (${targetYearNum})`
     };
 
     onSave({
       brand: brand.trim(),
       model: model.trim(),
+      trimLevel: trimLevel.trim() || undefined,
       plate: cleanPlate,
       fuelType,
       motorization: motorization.trim() || undefined,
@@ -629,7 +633,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
               
               {/* 1. MARCA */}
               <div ref={brandContainerRef} className="relative flex flex-col gap-1">
@@ -640,7 +644,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   <input 
                     type="text"
                     required
-                    placeholder="Es. Fiat, Audi, BMW, Alfa Romeo..."
+                    placeholder="Es. Fiat, Audi, BMW..."
                     value={brand}
                     onFocus={() => setShowBrandDropdown(true)}
                     onChange={(e) => {
@@ -689,7 +693,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   <input 
                     type="text"
                     required
-                    placeholder="Es. Punto, Golf, Panda, Serie 3, 147..."
+                    placeholder="Es. Punto, Golf, Panda..."
                     value={model}
                     onFocus={() => setShowModelDropdown(true)}
                     onChange={(e) => {
@@ -727,7 +731,24 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 )}
               </div>
 
-              {/* 3. ANNO (CHIAVE FONDAMENTALE PER LE MOTORIZZAZIONI COERENTI) */}
+              {/* 3. ALLESTIMENTO / VERSIONE (OPZIONALE, PER MASSIMA PRECISIONE GENERAZIONE) */}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#0f172a]">
+                    Allestimento
+                  </label>
+                  <span className="text-[9px] text-slate-400 font-semibold">Opzionale</span>
+                </div>
+                <input 
+                  type="text"
+                  placeholder="Es. Lounge, S line, GT..."
+                  value={trimLevel}
+                  onChange={(e) => setTrimLevel(e.target.value)}
+                  className="w-full bg-white border border-[#cbd5e1] text-xs font-semibold px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 outline-hidden transition-all"
+                />
+              </div>
+
+              {/* 4. ANNO (CHIAVE FONDAMENTALE PER LE MOTORIZZAZIONI COERENTI) */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#0f172a] flex items-center gap-1">
@@ -743,18 +764,18 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   required
                   min={1970}
                   max={2030}
-                  placeholder="Es. 2000, 2008, 2015..."
+                  placeholder="Es. 2000, 2008..."
                   value={inputYear}
                   onChange={(e) => handleYearChange(e.target.value)}
                   className="w-full bg-white border border-blue-300 ring-1 ring-blue-100 text-xs font-black px-3 py-2.5 rounded-xl focus:border-[#2563eb] focus:ring-2 focus:ring-blue-200 outline-hidden transition-all"
                 />
               </div>
 
-              {/* 4. DATA DI IMMATRICOLAZIONE ESATTA (NON SOSTITUISCE L'ANNO CON DATE ARBITRARIE) */}
+              {/* 5. DATA DI IMMATRICOLAZIONE ESATTA (NON SOSTITUISCE L'ANNO CON DATE ARBITRARIE) */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#0f172a]">
-                    Data Immatricolazione
+                    Immatricolazione
                   </label>
                 </div>
                 <input 
@@ -765,7 +786,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                 />
               </div>
 
-              {/* 5. TARGA */}
+              {/* 6. TARGA */}
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-[#0f172a]">

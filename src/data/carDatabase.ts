@@ -1540,7 +1540,8 @@ export async function lookupVehicleWithAI(
   brand?: string, 
   model?: string, 
   yearOrDate?: string,
-  plate?: string
+  plate?: string,
+  trim?: string
 ): Promise<VehicleLookupResult> {
   const cleanQuery = query.trim();
   const yearInfo = extractRegistrationYear(yearOrDate, plate, cleanQuery);
@@ -1555,7 +1556,8 @@ export async function lookupVehicleWithAI(
         brand, 
         model, 
         year: yearInfo.year ? String(yearInfo.year) : yearOrDate,
-        plate 
+        plate,
+        trim
       })
     });
 

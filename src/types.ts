@@ -85,6 +85,16 @@ export interface VehicleTechnicalSpecs {
   };
   vin?: string;
   engineCode?: string;
+  generation?: string;
+  trimLevel?: string; // Allestimento / Variante di serie
+  wheelTorqueNm?: number; // Coppia serraggio bulloni ruote (Nm)
+  coolantType?: string; // Liquido refrigerante (es. G12, G13, Paraflu UP)
+  brakeFluidType?: string; // Liquido freni (es. DOT 4, DOT 4 Plus, DOT 5.1)
+  fuseBoxLocation?: string; // Posizione scatola fusibili abitacolo e vano motore
+  timingBeltIntervalKm?: string; // Intervallo sostituzione cinghia/catena distribuzione
+  infotainmentSystem?: string; // Sistema infotainment (es. MBUX, iDrive, Uconnect, MMI, Sync)
+  obdPortLocation?: string; // Posizione presa diagnosi OBD2
+  batteryType?: string; // Batteria avviamento (es. 12V 70Ah 760A AGM / EFB)
   ownersManualUrl?: string;
   ownersManualSource?: string;
   summaryQuattroruote?: string;
@@ -104,6 +114,8 @@ export interface Vehicle {
   id: string;
   brand: string;
   model: string;
+  trimLevel?: string; // Allestimento es. S-line, Lounge, Pop, GT Line, Titanium, M Sport
+  generation?: string; // Generazione es. "Golf VII (2012-2020)"
   plate: string;
   fuelType: FuelType;
   tankCapacity: number; // Liters for combustion/PHEV, or battery kWh for BEV

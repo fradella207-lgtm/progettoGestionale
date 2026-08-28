@@ -191,18 +191,133 @@ async function startServer() {
     if (q.includes('tpms') || q.includes('pressione') || q.includes('gomm') || q.includes('pneumatic')) {
       return `### Procedura Azzeramento Spia Pressione Pneumatici (TPMS) per **${brand} ${model}**
 
-1. **Controllo a freddo**: Con un manometro affidabile o presso un gommista, gonfia tutti e 4 i pneumatici ai valori raccomandati:
+1. **Controllo e gonfiaggio a freddo**: Con un manometro affidabile, gonfia tutti e 4 i pneumatici ai valori raccomandati dal costruttore:
    - **Asse Anteriore**: **${car?.technicalSpecs?.tirePressureFrontBar || 2.3} bar** (${((car?.technicalSpecs?.tirePressureFrontBar || 2.3) * 14.5).toFixed(0)} PSI)
    - **Asse Posteriore**: **${car?.technicalSpecs?.tirePressureRearBar || 2.2} bar** (${((car?.technicalSpecs?.tirePressureRearBar || 2.2) * 14.5).toFixed(0)} PSI)
    - *(A pieno carico o in autostrada impostare a ${car?.technicalSpecs?.tirePressureLoadedBar || 2.6} bar)*.
 2. **Procedura di Reset da fermo**:
-   - Accendi il quadro strumenti con motore spento (o avvia il quadro senza premere frizione/freno).
-   - Accedi al menu di bordo del display centrale o dell'infotainment (sezione *Menu Veicolo* o *Stato Veicolo* > *Pressione Pneumatici / TPMS*).
-   - Seleziona **"Reset Pressione"** o **"Memorizza Pressioni"** e tieni premuto il pulsante di conferma finché il display non emette un segnale acustico o conferma l'avvenuta calibrazione.
-3. **Calibrazione dinamica**: Guida il veicolo per circa 5–10 minuti a velocità superiore a 40 km/h per completare la memorizzazione dei sensori ABS/TPMS.`;
+   - Accendi il quadro strumenti con motore spento (o premi il pulsante START senza toccare il pedale del freno/frizione).
+   - Accedi al menu di bordo del display centrale o dell'infotainment (sezione *Menu Veicolo* o *Stato Veicolo* > *Pressione Pneumatici / TPMS / Set*).
+   - Seleziona **"Reset Pressione"** o **"Memorizza Pressioni"** e tieni premuto il pulsante di conferma finché il display non emette un segnale acustico o conferma l'avvenuta calibrazione (*"Pressione pneumatici memorizzata"*).
+3. **Calibrazione dinamica**: Guida il veicolo per circa 5–10 minuti a velocità superiore a 40 km/h per completare l'autoapprendimento dei sensori ABS/TPMS.`;
     }
 
-    // 2. Olio Motore e Lubrificanti
+    // 2. Disattivazione Controlli di Trazione e Stabilità (ESP / ESC / ASR / TCS / Launch Control)
+    if (q.includes('controll') || q.includes('esp') || q.includes('esc') || q.includes('asr') || q.includes('tcs') || q.includes('dsc') || q.includes('vdc') || q.includes('launch')) {
+      return `### Guida Completa Disattivazione Controlli (ESP/ESC/TCS) per **${brand} ${model}**
+
+Sui veicoli moderni la gestione della dinamica è suddivisa su due livelli di intervento:
+
+1. **Disattivazione Parziale (Controllo di Trazione / ASR / TCS OFF)**:
+   - **Tasto Fisico ESP**: Premi brevemente una volta il tasto con il simbolo dell'auto sbandata (*OFF*).
+   - **Tramite Schermo Touch**: Vai su *Impostazioni Veicolo > Assistenza alla Guida / Dinamica > ESC > Modalità Sport / Disattivato*.
+   - **Effetto**: Disattiva il taglio di potenza dell'acceleratore sullo slittamento delle ruote motrici (utile per partire su neve, fango, sabbia o con catene montate). L'ESP per la stabilità in curva rimane comunque vigile.
+
+2. **Disattivazione Completa (ESP / ESC TOTALMENTE OFF)**:
+   - **Procedura Tasto Fisico**: A veicolo fermo, tieni premuto il tasto ESP per **5-10 secondi consecutivi**.
+   - Sul quadro strumenti apparirà il messaggio *"ESC Disattivato"* o la spia gialla fissa con segnale acustico.
+   - Su alcuni modelli sportivi (es. Gruppo VW, BMW M, Mercedes-AMG, Alfa Romeo DNA Race, Audi S/RS), la disattivazione totale si attiva selezionando la modalità di guida **Sport+ / Race / Track / ESC OFF** dal selettore modalità di guida.
+
+3. **Procedura Launch Control (ove equipaggiato con cambio automatico/doppia frizione)**:
+   - Motore a temperatura d'esercizio (olio > 80°C).
+   - Disattiva l'ESP (o imposta in *ESC Sport*).
+   - Cambio in modalità **S** o **Manuale**.
+   - Premi con forza il pedale del freno con il **piede sinistro**.
+   - Premi a fondo l'acceleratore col **piede destro** (oltre il punto di resistenza kick-down) finché il contagiri non si stabilizza (circa 3.000-4.000 giri) e sul display compare *"Launch Control Attivo"*.
+   - Rilascia rapidamente il pedale del freno mantenendo il gas a tavoletta.
+
+*Nota di Sicurezza*: Su strada aperta mantieni sempre attivi i controlli di stabilità per prevenire perdite di aderenza improvvise.`;
+    }
+
+    // 3. Disattivazione Suono / Cicalino Limite di Velocità (ISA - GSR II)
+    if (q.includes('suono') || q.includes('cicalin') || q.includes('velocit') || q.includes('isa') || q.includes('limite') || q.includes('beep') || q.includes('bip') || q.includes('gsr')) {
+      return `### Come Disattivare il Suono Superamento Limite di Velocità (ISA / GSR II) per **${brand} ${model}**
+
+Sui veicoli immatricolati in Europa (in particolare con la normativa europea **GSR II** in vigore da luglio 2024), l'avviso acustico di superamento limite di velocità (**ISA - Intelligent Speed Assistance**) si riattiva per legge a ogni riavvio dell'auto.
+
+Ecco tutte le modalità rapide per silenziarlo o disattivarlo:
+
+1. **Scorciatoia con Tasto Fisico Rapido (se presente)**:
+   - **Tasto My Safety / ADAS**: Molti costruttori (es. Renault, Dacia, Ford, Nissan, Hyundai) hanno un tasto a sinistra del volante con l'icona dell'auto o dei sistemi ADAS. Premendolo **due volte rapidamente** si caricano le impostazioni personalizzate disattivando i beep.
+   - **Pulsante Mute sul Volante (Hyundai / Kia / Genesis)**: Tieni premuto il bilanciere **Mute sul volante per 3 secondi**. L'avviso acustico passerà istantaneamente da sonoro a *solo visivo*.
+   - **Tasto Stella / Scorciatoia Personalizzabile sul Volante ('*' o 'Fav')**: Puoi associare al tasto stella la schermata rapida di disattivazione ADAS (Audi, VW, BMW, Mercedes, Cupra).
+
+2. **Scorciatoia Rapida tramite Schermo Infotainment**:
+   - **Menu Swipe dall'alto**: Fai scorrere il dito dall'alto verso il basso sul display touch per aprire la tendina dei collegamenti rapidi (Centro di Controllo).
+   - Tocca l'icona **"Assistenza Limiti / TSR"** per disattivare l'allarme sonoro e lasciare solo l'indicazione grafica nel tachimetro.
+
+3. **Percorso Completo nei Menu di Bordo**:
+   - Entra in: *Impostazioni / Veicolo > Sistemi di Assistenza alla Guida (ADAS) > Riconoscimento Segnali Stradali (Traffic Sign Assist)*.
+   - Seleziona: **Tipo di Avviso > Solo Visivo** oppure **Tolleranza Allarme > +5 km/h / Disattivato**.`;
+    }
+
+    // 4. Regolazione e Taratura Sistemi ADAS (Lane Assist, ACC, Front Assist, Blind Spot)
+    if (q.includes('adas') || q.includes('lane') || q.includes('corsia') || q.includes('cruise') || q.includes('acc') || q.includes('front assist') || q.includes('frenata') || q.includes('angolo cieco') || q.includes('blind spot')) {
+      return `### Regolazione, Taratura e Disattivazione ADAS per **${brand} ${model}**
+
+Tutti i sistemi avanzati di assistenza alla guida possono essere tarati secondo le tue preferenze:
+
+1. **Lane Keeping Assist (Mantenimento Corsia)**:
+   - **Disattivazione rapida**: Premi il pulsante sulla punta della leva degli indicatori di direzione o il tasto con le due linee parallele sul volante.
+   - **Regolazione Sensibilità**: Nel menu *Veicolo > ADAS > Lane Assist*, puoi impostare:
+     - *Momento di intervento*: **Tardivo** (interviene solo se calpesti la riga) o **Anticipato/Centraggio** (mantiene attivamente l'auto al centro della corsia).
+     - *Intensità avviso*: Vibrazione volante Bassa, Media o Alta.
+
+2. **Adaptive Cruise Control (ACC - Tempomat Adattivo)**:
+   - **Distanza dal veicolo che precede**: Regolabile tramite i tasti con le barre orizzontali sul volante (1 tacca = circa 1 secondo / 30m; 4 tacche = massima prudenza / oltre 60m).
+   - **Dinamica di guida ACC**: Nel menu puoi impostare la reattività in accelerazione quando l'auto davanti cambia corsia (*Eco, Comfort, Sport*).
+   - **Predictive Cruise Control**: Nelle impostazioni puoi attivare/disattivare l'adeguamento automatico della velocità alle curve, rotatorie e limiti stradali letti dalla telecamera.
+
+3. **Front Assist & Frenata Automatica d'Emergenza (AEB)**:
+   - **Preavviso collisione**: Puoi impostare l'avviso su *Precoce, Medio o Tardivo* per evitare falsi allarmi nel traffico urbano senza disattivare la frenata d'emergenza vera e propria.
+
+4. **Blind Spot Monitor (Sensore Angolo Cieco)**:
+   - Puoi regolare la luminosità dei LED integrati negli specchietti retrovisori e attivare/disattivare l'avviso sonoro che scatta se metti la freccia mentre sopraggiunge un veicolo.`;
+    }
+
+    // 5. Schermo, Infotainment, Reset e Connettività
+    if (q.includes('schermo') || q.includes('display') || q.includes('infotainment') || q.includes('carplay') || q.includes('android auto') || q.includes('bluetooth') || q.includes('quadro') || q.includes('cockpit') || q.includes('touch')) {
+      return `### Guida Schermo, Infotainment & Digital Cockpit per **${brand} ${model}**
+
+1. **Procedura di Riavvio Forzato (Hard Reset) Display**:
+   - In caso di schermo bloccato, schermata nera o freeze del sistema multimediale:
+   - Tieni premuto il pulsante **Power / Volume (manopola o tasto a sfioramento)** per **10-15 secondi continui**.
+   - Lo schermo si spegnerà e ripartirà mostrando il logo del costruttore, ripristinando tutte le connessioni senza cancellare i dati memorizzati.
+
+2. **Configurazione Apple CarPlay & Android Auto**:
+   - **Wireless**: Attiva Bluetooth e Wi-Fi sul tuo smartphone. Nel menu *Dispositivi / Telefono* seleziona *Aggiungi nuovo dispositivo*, abbina il codice PIN a 6 cifre e accetta l'autorizzazione per CarPlay/Android Auto.
+   - **Cavo USB**: Usa la porta USB con l'icona del telefono/display (solitamente USB 1 o porta USB-C anteriore principale) con un cavo originale di ricarica e dati.
+
+3. **Personalizzazione Quadro Strumenti Digitale (Digital Cockpit)**:
+   - Premi il tasto **VIEW** o le frecce sul lato destro del volante per alternare tra le diverse visualizzazioni:
+     - *Classica* (due quadranti analogici contagiri/tachimetro).
+     - *Sportiva* (contagiri centrale con indicatore di marcia e potenza).
+     - *Navigazione 3D* (mappa estesa a tutto schermo tra i due quadranti compatti).
+     - *Minimalista ADAS* (stato dei sensori di corsia, distanza e radar anteriore).`;
+    }
+
+    // 6. Trucchi di Bordo, Funzioni Comfort & Segrete
+    if (q.includes('trucch') || q.includes('chiave') || q.includes('finestrin') || q.includes('telecomando') || q.includes('specchiett') || q.includes('comfort') || q.includes('follow me') || q.includes('fusibil') || q.includes('obd')) {
+      return `### Funzioni Comfort, Trucchi Nascosti & Istruzioni di Bordo per **${brand} ${model}**
+
+1. **Apertura e Chiusura Comfort Finestrini da Telecomando**:
+   - *Per chiudere tutto*: Tieni premuto il tasto di **Chiusura (Lucchetto Chiuso)** per 3 secondi. Tutti i finestrini e il tettuccio si chiuderanno automaticamente.
+   - *Per arieggiare l'auto d'estate*: Tieni premuto il tasto di **Apertura (Lucchetto Aperto)** per 3 secondi per abbassare tutti i vetri contemporaneamente.
+
+2. **Abbassamento Automatico Specchietto in Retromarcia (Funzione Cordolo)**:
+   - Posiziona il selettore degli specchietti sulla posizione **R (Destra)**.
+   - Inserisci la retromarcia: lo specchietto passeggero si orienterà automaticamente verso il marciapiede per proteggere i cerchi in lega dai graffi.
+
+3. **Funzione Luci "Follow Me Home"**:
+   - A quadro spento e prima di aprire la portiera, dai un colpo di leva abbaglianti verso di te (lampeggio).
+   - I fari anabbaglianti rimarranno accesi per 30-60 secondi illuminando il vialetto o il garage prima di spegnersi da soli.
+
+4. **Posizione Scatola Fusibili e Presa OBD2**:
+   - **Presa Diagnosi OBD2**: Situata sotto il cruscotto a sinistra del piantone dello sterzo (lato guida, dietro un piccolo sportellino o a vista vicino alla leva apertura cofano).
+   - **Fusibili Principali**: Scatola 1 nel vano motore (lato batteria) per fari, ventola e iniezione; Scatola 2 nell'abitacolo (dietro il cassetto portaoggetti o nel vano piedi lato guida) per prese 12V/USB, clima e chiusura centralizzata.`;
+    }
+
+    // 7. Olio Motore e Lubrificanti
     if (q.includes('olio') || q.includes('lubrificant') || q.includes('rabbocc') || q.includes('coppa')) {
       const oilSpec = car?.technicalSpecs?.recommendedOil || (isDiesel ? '5W-30 ACEA C3 (Basso contenuto di ceneri per DPF/FAP)' : '0W-20 / 5W-30 ACEA C2/C3');
       const oilCap = car?.technicalSpecs?.oilCapacityLiters ? `${car.technicalSpecs.oilCapacityLiters} Litri` : '4.5 Litri';
@@ -217,7 +332,7 @@ async function startServer() {
   4. Rabbocca gradualmente (200-300 ml alla volta) per evitare il dannoso sovra-riempimento.`;
     }
 
-    // 3. Reset Service / Spia Tagliando
+    // 8. Reset Service / Spia Tagliando
     if (q.includes('tagliand') || q.includes('service') || q.includes('manutenzion') || q.includes('chiave ingles')) {
       return `### Procedura Reset Spia Manutenzione / Tagliando per **${brand} ${model}**
 
@@ -228,7 +343,7 @@ async function startServer() {
 5. Rilascia il pulsante e spegni il quadro per salvare la configurazione.`;
     }
 
-    // 4. Libretto di Circolazione (Voci DUC)
+    // 9. Libretto di Circolazione (Voci DUC)
     if (q.includes('libretto') || q.includes('duc') || q.includes('p.5') || q.includes('v.9') || q.includes('p.1') || q.includes('p.2') || q.includes('targa') || q.includes('telaio') || q.includes('vin')) {
       return `### Guida ai Codici del Libretto di Circolazione (DUC)
 
@@ -242,7 +357,7 @@ Ecco la decodifica dei campi ministeriali per **${brand} ${model}**:
 - **(Q)**: Rapporto potenza/tara (fondamentale per l'omologazione per neopatentati, max 75 kW/t).`;
     }
 
-    // 5. Consumi & Guida Efficiente
+    // 10. Consumi & Guida Efficiente
     if (q.includes('consum') || q.includes('guid') || q.includes('risparmi') || q.includes('autonomia')) {
       let advice = '';
       if (isDiesel) {
@@ -266,7 +381,7 @@ ${advice}
 - Un corretto intervallo di manutenzione (filtro aria e candele/iniettori puliti) può ridurre i consumi fino al 10%.`;
     }
 
-    // 6. Diagnosi Spie o Immagini
+    // 11. Diagnosi Spie o Immagini
     if (imageAttachment || q.includes('spia') || q.includes('cruscott') || q.includes('avaria') || q.includes('errore')) {
       return `### Diagnosi Assistenza di Bordo per **${brand} ${model}**
 
@@ -282,20 +397,22 @@ ${imageAttachment ? `Ho esaminato l'immagine allegata relativa alla strumentazio
     }
 
     // Risposta Generale
-    return `### Assistente Tecnico Ufficiale — **${brand} ${model}**
+    return `### Assistente Tecnico Ufficiale a 360° — **${brand} ${model}**
 
 Configurazione attiva: **${car?.motorization || car?.fuelType || 'Standard'}** (${car?.powerCv ? `${car.powerCv} CV` : ''} - ${car?.plate ? `Targa: ${car.plate}` : ''}).
 
-Posso fornirti supporto tecnico specializzato per:
-- **Pressione e misure pneumatici omologati** a libretto (Anteriore: ${car?.technicalSpecs?.tirePressureFrontBar || 2.3} bar / Posteriore: ${car?.technicalSpecs?.tirePressureRearBar || 2.2} bar).
-- **Specifiche Olio Motore**: ${car?.technicalSpecs?.recommendedOil || '0W-20 / 5W-30'}.
-- **Procedure pratiche**: Reset spia tagliando, azzeramento spia gomme TPMS, interpretazione codici del libretto DUC.
-- **Diagnosi visiva**: Puoi allegare in qualsiasi momento la foto di una spia o di un documento per una scansione immediata.
+Posso fornirti supporto tecnico specializzato e istruzioni per qualsiasi richiesta:
+- **Disattivazione controlli & dinamica**: ESP, ESC, ASR, TCS e Launch Control.
+- **Silenziamento cicalino velocità**: Disattivazione avviso sonoro limiti (ISA GSR II).
+- **Taratura ADAS**: Regolazione sensibilità Lane Assist, Adaptive Cruise Control (ACC) e frenata automatica.
+- **Schermo & Infotainment**: Hard reset display, Apple CarPlay / Android Auto, configurazione Digital Cockpit.
+- **Spie & Diagnosi**: Spiegazione dettagliata spie quadro, anomalie e codici guasto OBD2.
+- **Specifiche Ufficiali Costruttore**: Pressioni gomme (${car?.technicalSpecs?.tirePressureFrontBar || 2.3} / ${car?.technicalSpecs?.tirePressureRearBar || 2.2} bar), olio (${car?.technicalSpecs?.recommendedOil || '0W-20 / 5W-30'}), liquidi, coppie bulloni (${car?.technicalSpecs?.wheelTorqueNm || 120} Nm) e fusibili.
 
-*Fai una domanda specifica o seleziona una delle domande rapide in alto.*`;
+*Fai una domanda specifica o seleziona uno dei comandi rapidi in alto.*`;
   }
 
-  // 1. CHAT ASSISTANT: Risponde a domande tecniche, curiosità, istruzioni passo-passo e anomalie
+  // 1. CHAT ASSISTANT: Risponde a domande tecniche, manuale di istruzioni di bordo, spie e impostazioni
   app.post("/api/car-assistant/chat", async (req, res) => {
     const { car, message, history, imageAttachment } = req.body;
     if (!message && !imageAttachment) {
@@ -309,57 +426,95 @@ Posso fornirti supporto tecnico specializzato per:
         return res.json({ reply: fallbackReply });
       }
 
-      // Costruisci il contesto tecnico dettagliato del veicolo
-      let carContext = `Sei l'Assistente Tecnico Ufficiale e Ingegnere di Bordo per il veicolo dell'utente.
-Hai la competenza di una banca dati tecnica automobilistica di livello Quattroruote, manuale d'officina ufficiale e perito assicurativo/motoristico.
+      // Costruisci il contesto tecnico dettagliato del veicolo con manuale del costruttore integrato a 360 gradi
+      const ts = car?.technicalSpecs || {};
+      let carContext = `Sei l'Assistente Tecnico Ufficiale di Bordo, Ingegnere Master Automotive e Manuale d'Uso, Manutenzione e Officina a 360° per il veicolo dell'utente.
+Possiedi la conoscenza totale, precisa e ufficiale del costruttore per il modello esatto e per la sua specifica generazione tecnologica, incrociando i dati di Quattroruote, i manuali d'officina e le normative vigenti.
 
-DATI DEL VEICOLO ATTIVO:
+DATI IDENTIFICATIVI DEL VEICOLO ATTIVO:
 - Marca e Modello: ${car?.brand || 'Non specificato'} ${car?.model || ''}
+- Allestimento / Versione: ${car?.trimLevel || ts.trimLevel || car?.motorization || 'Standard'}
+- Generazione / Epoca: ${car?.generation || ts.generation || 'Serie di produzione'}
 - Targa: ${car?.plate || 'Non specificata'}
-- Motorizzazione & Allestimento: ${car?.motorization || 'Standard'}
+- Motorizzazione: ${car?.motorization || 'Standard'}
+- Codice Motore (P.5): ${ts.engineCode || 'Rilevato da scheda tecnica'}
 - Alimentazione: ${car?.fuelType || 'Standard'}
-- Potenza: ${car?.powerCv ? `${car.powerCv} CV (${car.powerKw || Math.round(car.powerCv * 0.735)} kW)` : 'N/D'}
-- Trazione & Trasmissione: ${car?.driveType || 'Standard'} ${car?.technicalSpecs?.transmission ? `- ${car.technicalSpecs.transmission}` : ''}
+- Potenza: ${car?.powerCv ? `${car.powerCv} CV (${car.powerKw || Math.round(car.powerCv * 0.735)} kW)` : (ts.powerCv ? `${ts.powerCv} CV` : 'N/D')}
+- Cilindrata: ${ts.engineDisplacementCc ? `${ts.engineDisplacementCc} cm³` : 'N/D'} | Coppia: ${ts.torqueNm ? `${ts.torqueNm} Nm` : 'N/D'}
+- Trazione & Cambio: ${car?.driveType || ts.drivetrain || 'Standard'} | ${ts.transmission || 'Manuale/Automatico'}
 - Anno Immatricolazione: ${car?.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/D'}
+- Sistema Infotainment: ${ts.infotainmentSystem || 'Sistema multimediale di serie con display/radio'}
+- Posizione Presa Diagnosi OBD: ${ts.obdPortLocation || 'Sotto il cruscotto a sinistra del volante (lato guida)'}
+- Posizione Scatola Fusibili: ${ts.fuseBoxLocation || 'Abitacolo (vano piedi lato guida o cassetto portaoggetti) + Vano motore lato batteria'}
+- Olio Motore Ufficiale: ${ts.recommendedOil || 'Specifica costruttore'} (Capacità coppa con filtro: ${ts.oilCapacityLiters ? `${ts.oilCapacityLiters} L` : 'N/D'})
+- Liquido Refrigerante: ${ts.coolantType || 'Antigelo organico specifica costruttore (G12/G13/Paraflu)'}
+- Liquido Freni: ${ts.brakeFluidType || 'DOT 4 / DOT 4 Low Viscosity'}
+- Coppia Serraggio Bulloni Ruote: ${ts.wheelTorqueNm ? `${ts.wheelTorqueNm} Nm` : '120 Nm'}
+- Pressione Pneumatici: Anteriore ${ts.tirePressureFrontBar || 2.3} bar / Posteriore ${ts.tirePressureRearBar || 2.3} bar (Pieno carico: ${ts.tirePressureLoadedBar || 2.6} bar)
+- Pneumatici Omologati: ${ts.allowedTireSizes ? ts.allowedTireSizes.join(', ') : 'Misure standard da libretto'}
+- Distribuzione: ${ts.timingBeltIntervalKm || 'Verifica a libretto manutenzione'}
+- Manuale Costruttore URL: ${ts.ownersManualUrl || 'Disponibile nella banca dati di bordo'}
 - Chilometraggio attuale stimato: ${car?.initialKm ? `${car.initialKm.toLocaleString('it-IT')} km` : 'N/D'}
 `;
 
-      if (car?.technicalSpecs) {
-        const ts = car.technicalSpecs;
-        carContext += `
-SCHEDA TECNICA QUATTRORUOTE:
-- Cilindrata: ${ts.engineDisplacementCc ? `${ts.engineDisplacementCc} cm³` : 'N/D'}
-- Coppia max: ${ts.torqueNm ? `${ts.torqueNm} Nm` : 'N/D'}
-- Olio consigliato: ${ts.recommendedOil || 'N/D'} (Capacità: ${ts.oilCapacityLiters ? `${ts.oilCapacityLiters} L` : 'N/D'})
-- Pressione gomme raccomandata: Anteriore ${ts.tirePressureFrontBar || 2.3} bar / Posteriore ${ts.tirePressureRearBar || 2.3} bar (Pieno carico: ${ts.tirePressureLoadedBar || 2.6} bar)
-- Pneumatici omologati a libretto: ${ts.allowedTireSizes ? ts.allowedTireSizes.join(', ') : 'N/D'}
-- Consumi WLTP: ${ts.wltpConsumption || 'N/D'}
-- Classe Ambientale: ${ts.euroClass || 'Euro 6'}
-- Codice Motore: ${ts.engineCode || 'N/D'} | Telaio/VIN: ${ts.vin || 'N/D'}
-`;
-      }
-
       if (car?.maintenances && car.maintenances.length > 0) {
         carContext += `
-ULTIMI INTERVENTI DI MANUTENZIONE REGISTRATI:
+STORIA INTERVENTI MANUTENZIONE REGISTRATI:
 ${car.maintenances.slice(-4).map((m: any) => `- ${m.date}: ${m.category} a ${m.km} km (${m.description || ''}) presso ${m.workshop || 'Officina'}`).join('\n')}
 `;
       }
 
       if (car?.documents && car.documents.length > 0) {
         carContext += `
-DOCUMENTI PRESENTI NEL GARAGE:
+DOCUMENTI NEL GARAGE DIGITALE:
 ${car.documents.map((d: any) => `- ${d.title} (${d.type}) [Scadenza: ${d.expiryDate || 'N/D'}]`).join('\n')}
 `;
       }
 
       carContext += `
-REGOLE DI RISPOSTA:
-1. Rispondi SEMPRE in italiano, con tono professionale, caloroso, chiaro ed estremamente accurato dal punto di vista meccanico ed elettronico.
-2. Fornisci procedure passo-passo numerate quando l'utente chiede come effettuare un'operazione (es. reset service, azzeramento pressione TPMS, controllo olio, sostituzione batteria chiave, ricarica EV).
-3. Se l'utente chiede chiarimenti sul libretto di circolazione italiano, spiega i codici ministeriali (es. P.1 Cilindrata, P.2 Potenza kW, P.5 Codice Motore, V.9 Classe Euro, ecc.).
-4. Se viene fornita un'immagine (spia, cruscotto, pagina del libretto o fattura), analizzala visivamente con precisione e descrivi l'anomalia o i dati estratti.
-5. Includi sempre avvertenze sulla sicurezza stradale o quando è opportuno rivolgersi ad un'officina autorizzata.
+LE TUE COMPETENZE A 360° COME MANUALE UFFICIALE:
+
+1. **DISATTIVAZIONE CONTROLLI DI TRAZIONE E STABILITÀ (ESP / ESC / ASR / TCS / DSC / VDC / LAUNCH CONTROL)**:
+   - Spiega con esattezza le differenze tra disattivazione parziale (ASR/Traction Control per ripartenza su neve o fondo scivoloso) e disattivazione totale (ESC OFF per uso in pista o guida sportiva).
+   - Fornisci sia la combinazione con tasto fisico (pressione breve vs pressione prolungata per 3-10 secondi a vettura ferma), sia i percorsi nei menu touch dello schermo dell'auto (es. *Veicolo > Sistemi di assistenza > ESC Sport/Off*), sia le modalità di guida (Sport+, Race, Dynamic, Track).
+   - Fornisci la procedura esatta per il Launch Control per le vetture con cambio automatico o doppia frizione.
+
+2. **DISATTIVAZIONE / SILENZIAMENTO DEL SUONO DI SUPERAMENTO LIMITE DI VELOCITÀ (ISA - GSR II)**:
+   - Spiega la normativa europea GSR II (obbligatoria da luglio 2024 per le auto immatricolate in UE, che richiede la riattivazione a ogni accensione).
+   - Fornisci tutti i metodi rapidi disponibili per quel marchio e modello:
+     * Tasto fisico o a bilanciere ADAS / "My Safety Switch" a sinistra del volante.
+     * Pressione prolungata del tasto Mute sul volante per 3 secondi (es. Hyundai/Kia/Genesis).
+     * Tasto personalizzabile stella '*' o 'Fav' sul volante o sulla console centrale.
+     * Menu a tendina/swipe verso il basso sul display touch centrale.
+     * Percorso completo nei menu: *Impostazioni Veicolo > Sistemi di Assistenza ADAS > Riconoscimento Segnali Stradali > Tipo di Avviso > Solo Visivo / Silenzioso*.
+
+3. **IMPOSTAZIONI, TARATURA E DISATTIVAZIONE SISTEMI ADAS**:
+   - *Lane Departure Warning & Lane Keeping Assist (Mantenimento Corsia)*: Regolazione momento di intervento (Precoce/Anticipato o Tardivo), intensità vibrazione volante (Bassa/Media/Alta) e disattivazione rapida (tasto sulla leva frecce o sul volante).
+   - *Adaptive Cruise Control (ACC / Tempomat Adattivo)*: Regolazione distanza di sicurezza (tacche di distanza o secondi), modalità di risposta (Eco/Comfort/Sport), sorpasso a destra consentito/bloccato e adeguamento predittivo alla segnaletica e alle curve (Predictive ACC).
+   - *Front Assist & Frenata Automatica AEB*: Taratura distanza allarme (Precoce, Medio, Tardivo) e disattivazione temporanea per autolavaggio, trasporto su carro attrezzi o pista.
+   - *Blind Spot Monitor & Sensori Angolo Cieco*: Regolazione intensità LED specchietti e allarme sonoro.
+   - *Driver Attention Warning (Rilevamento Stanchezza)*: Impostazioni di sensibilità e disattivazione.
+
+4. **SCHERMO, INFOTAINMENT & DIGITAL COCKPIT**:
+   - Procedura di Hard Reset / Riavvio Forzato in caso di blocco o freeze dello schermo (tenere premuto il tasto Power/Volume per 10-15 secondi).
+   - Apple CarPlay & Android Auto (pairing wireless e cablato, autorizzazioni e risoluzione disconnessioni).
+   - Personalizzazione del quadro strumenti digitale (tasto VIEW, cambio grafiche Sport/Classic/Map/Minimal).
+   - Configurazione widget e collegamenti rapidi.
+
+5. **SPIE DEL CRUSCOTTO (Warning Lights & Errori OBD)**:
+   - Identifica esattamente colore e significato: ROSSA (arresto immediato), GIALLA (anomalia/controllo officina), VERDE/BLU/BIANCA (sistema attivo).
+   - Codici guasto OBD2 associati (P0xxx) e diagnosi visiva da fotografie allegate dall'utente.
+
+6. **FUNZIONI COMFORT, TRUCCHI NASCOSTI & NUMERI DEL COSTRUTTORE**:
+   - Apertura/chiusura vetri da telecomando, specchietto orientabile in retromarcia, luci Follow Me Home.
+   - Fornisci con precisione numerica: litri olio, gradazione specifica costruttore, liquido freni DOT4, antigelo, coppie di serraggio bulloni ruote in Nm, scatola fusibili e posizione presa OBD2.
+   - Se l'utente ti chiede di "completare i dati tecnici con i numeri del costruttore", esponi una tabella pulita con tutti i parametri ufficiali mancanti o da aggiornare.
+
+REGOLE DI FORMATTAZIONE:
+- Rispondi SEMPRE in italiano con tono autorevole, chiaro, professionale ed elegante.
+- Utilizza formattazione Markdown con titoli, elenchi puntati o numerati per guidare l'utente passo-passo nelle procedure.
+- Se l'utente allega una foto, analizzala visivamente con massima precisione (simboli spie, cruscotto, libretto, motore).
+- Includi sempre note di sicurezza stradale quando opportuno.
 `;
 
       const contents: any[] = [];
@@ -504,7 +659,7 @@ REGOLE DI RISPOSTA:
 
   // 2. AUTO-GENERAZIONE SCHEDA TECNICA QUATTRORUOTE TRAMITE GEMINI
   app.post("/api/car-assistant/specs", async (req, res) => {
-    const { brand, model, motorization, year, fuelType } = req.body;
+    const { brand, model, motorization, year, fuelType, trim } = req.body;
     if (!brand || !model) {
       return res.status(400).json({ error: "Marca e modello sono obbligatori" });
     }
@@ -516,10 +671,11 @@ REGOLE DI RISPOSTA:
         return res.json({ specs: fallbackSpecs });
       }
 
-      const prompt = `Fornisci la scheda tecnica automobilistica ufficiale e dettagliata stile "Quattroruote / Scheda Tecnica Costruttore" per questo specifico veicolo:
+      const prompt = `Fornisci la scheda tecnica automobilistica ufficiale e dettagliata stile "Quattroruote / Scheda Tecnica & Manuale di Officina Costruttore" per questo specifico veicolo:
 Marca: ${brand}
 Modello: ${model}
-Allestimento/Motorizzazione: ${motorization || 'Versione più comune'}
+Allestimento/Variante: ${trim || 'Versione standard'}
+Motorizzazione: ${motorization || 'Versione più comune'}
 Anno di produzione indicativo: ${year || 2022}
 Alimentazione: ${fuelType || 'Benzina/Diesel/EV'}
 
@@ -539,6 +695,14 @@ Restituisci ESCLUSIVAMENTE un oggetto JSON valido (senza blocchi markdown extra)
   "wltpRangeKm": 980,
   "recommendedOil": "0W-20 VW 508.00 / 509.00 LongLife IV",
   "oilCapacityLiters": 4.7,
+  "coolantType": "G12evo / G13 Viola",
+  "brakeFluidType": "DOT 4 Low Viscosity",
+  "wheelTorqueNm": 120,
+  "fuseBoxLocation": "Abitacolo dietro cassetto portaoggetti e Vano Motore a sinistra",
+  "timingBeltIntervalKm": "Cinghia a 210.000 km o 6 anni",
+  "infotainmentSystem": "Display Touch 10\" con Apple CarPlay e Android Auto",
+  "obdPortLocation": "Sotto piantone volante a sinistra lato guida",
+  "batteryType": "12V 70Ah 760A AGM",
   "tirePressureFrontBar": 2.3,
   "tirePressureRearBar": 2.2,
   "tirePressureLoadedBar": 2.7,
@@ -900,7 +1064,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
 
   // 360° AI & External Registry Vehicle Lookup endpoint for ANY vehicle
   app.post("/api/vehicle-lookup", async (req, res) => {
-    const { query, brand, model, year, plate } = req.body;
+    const { query, brand, model, year, plate, trim } = req.body;
 
     // 1. Precise Italian License Plate Estimation (1994 to 2026+)
     let plateEstimatedYear: number | null = null;
@@ -966,7 +1130,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       if (!isNaN(parsed) && parsed > 1970) targetYear = parsed;
     }
 
-    const searchQuery = query || `${brand || ''} ${model || ''} ${targetYear ? 'anno ' + targetYear : ''}`.trim();
+    const searchQuery = query || `${brand || ''} ${model || ''} ${trim ? trim + ' ' : ''}${targetYear ? 'anno ' + targetYear : ''}`.trim();
 
     if (!searchQuery && !brand && !model) {
       return res.status(400).json({ error: "Specificare almeno Marca, Modello o Anno di ricerca" });
@@ -984,11 +1148,11 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         });
       }
 
-      const prompt = `Sei un sistema esperto di analisi dati automotive e identificazione veicoli. Il tuo compito è ricevere in input tre parametri: Anno, Marca e Modello di un veicolo, e restituire una struttura dati JSON rigorosa, accurata e completa.
+      const prompt = `Sei un sistema esperto di analisi dati automotive e identificazione veicoli con banca dati Quattroruote e Manuali Tecnici Costruttore. Il tuo compito è ricevere in input: Anno, Marca, Modello ed eventuale Allestimento/Versione, e restituire una struttura dati JSON rigorosa, accurata e completa.
 
-Dato l'input [Anno: ${targetYear || 2020}, Marca: "${brand || ''}", Modello: "${model || ''}"]:
+Dato l'input [Anno: ${targetYear || 2020}, Marca: "${brand || ''}", Modello: "${model || ''}", Allestimento: "${trim || 'Tutti'}"]:
 
-1. Identifica la generazione esatta del veicolo per l'anno specificato.
+1. Identifica la generazione esatta del veicolo per l'anno specificato evitando qualsiasi scambio di generazione con serie precedenti o successive.
 2. Elenca TUTTE le motorizzazioni e alimentazioni ufficiali e reali commercializzate per quel modello in quell'anno (inclusi benzina, diesel, mild-hybrid, full-hybrid, plug-in hybrid, elettrico, GPL, metano).
 3. Per ciascuna motorizzazione, fornisci le seguenti specifiche tecniche:
    - Sigla/Nome commerciale del motore (es. 1.6 TDI, 2.0 TFSI, 1.2 8V Fire, 1.9 JTD 80 CV)
@@ -1007,7 +1171,8 @@ REGOLE DI OUTPUT:
   "query_input": {
     "year": ${Number(targetYear) || 2020},
     "make": "${brand || ''}",
-    "model": "${model || ''}"
+    "model": "${model || ''}",
+    "trim": "${trim || ''}"
   },
   "vehicle_info": {
     "generation_name": "",
