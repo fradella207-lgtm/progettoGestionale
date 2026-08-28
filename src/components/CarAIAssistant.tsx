@@ -292,7 +292,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
       const fallbackMsg: AIChatMessage = {
         id: `msg_${Date.now()}_err`,
         role: 'assistant',
-        content: `### Assistente di Bordo per **${vehicle.brand} ${vehicle.model}**\n\nEcco le istruzioni operative per il tuo veicolo:\n\n- **Controlli ESP & Trazione**: Premi il tasto TCS/ESP sulla plancia per disattivare l'antislittamento su neve; per l'ESP totale, tieni premuto a vettura ferma per 5–10 secondi finché non compare il messaggio sul cruscotto.\n- **Suono Limite Velocità (ISA)**: Disattivabile tramite tasto rapido ADAS sul volante, tasto Preferiti '*' o nel menu *Impostazioni Veicolo > Assistenza Guida > Riconoscimento Segnali > Solo Visivo*.\n- **Reset Schermo Infotainment**: Tieni premuto il pulsante di accensione/volume della radio per 10-15 secondi finché il display non si riavvia.`,
+        content: `Non è stato possibile contattare il server per la tua domanda. Riprova tra poco oppure verifica la connessione.`,
         timestamp: new Date().toISOString(),
       };
       onUpdateVehicle({
