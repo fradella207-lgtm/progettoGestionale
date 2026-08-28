@@ -261,6 +261,16 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                       {vehicle.motorization}
                     </span>
                   )}
+                  {vehicle.technicalSpecs?.engineCode && (
+                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                      Cod. Motore: {vehicle.technicalSpecs.engineCode}
+                    </span>
+                  )}
+                  {vehicle.technicalSpecs?.euroClass && (
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                      {vehicle.technicalSpecs.euroClass}
+                    </span>
+                  )}
                 </div>
               </div>
               
@@ -868,7 +878,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-black text-slate-900">{maint.date}</span>
                             <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 truncate max-w-[120px]">
-                              {maint.category || maint.type || 'Manutenzione'}
+                              {maint.category || 'Manutenzione'}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5 truncate">
@@ -1012,8 +1022,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           setSelectedDetailData({ 
             type: 'refuel', 
             item: r, 
-            deltaKm: r.deltaKm, 
-            unitPrice: r.unitPrice 
+            deltaKm: (r as any).deltaKm, 
+            unitPrice: (r as any).unitPrice 
           });
         }}
       />

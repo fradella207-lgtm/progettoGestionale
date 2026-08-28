@@ -195,7 +195,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                     <div className="flex-1 bg-slate-100 h-6 rounded-lg overflow-hidden relative">
                       <div 
                         className={`h-full rounded-lg transition-all flex items-center px-2 text-[11px] font-black text-white ${
-                          trip.kmPerUnit >= metrics.kmPerUnit ? 'bg-emerald-500' : 'bg-blue-600'
+                          trip.kmPerUnit >= Number(metrics.kmPerUnit) ? 'bg-emerald-500' : 'bg-blue-600'
                         }`}
                         style={{ width: `${barWidthPercent}%` }}
                       >
@@ -272,7 +272,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                           </span>
                           <span className="text-slate-300">•</span>
                           <span>
-                            {trip.totalFuelConsumed.toFixed(2)} {unitLabel}
+                            {trip.totalQuantity.toFixed(2)} {unitLabel}
                           </span>
                         </div>
                       </div>
@@ -281,7 +281,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden xs:block">
                         <span className="text-base font-black text-slate-900 block">
-                          {settings.currency} {trip.totalTripCost.toFixed(2)}
+                          {settings.currency} {trip.totalSpent.toFixed(2)}
                         </span>
                         <span className="text-[11px] font-bold text-slate-400 block">
                           {trip.costPerKm} {settings.currency}/km
@@ -302,7 +302,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                       </h4>
 
                       <div className="space-y-2">
-                        {trip.associatedRefuels.map((r, rIdx) => (
+                        {trip.refuels.map((r, rIdx) => (
                           <div 
                             key={r.id || rIdx}
                             className="bg-white p-3 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs"

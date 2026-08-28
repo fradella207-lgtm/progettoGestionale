@@ -80,7 +80,6 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       list = list.filter(r => 
-        (r.station && r.station.toLowerCase().includes(q)) ||
         (r.notes && r.notes.toLowerCase().includes(q)) ||
         (r.date && r.date.includes(q)) ||
         (r.km && String(r.km).includes(q)) ||
@@ -428,11 +427,6 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                           </span>
                         </div>
 
-                        {refuel.station && (
-                          <p className="text-xs font-bold text-slate-700 mt-1">
-                            {refuel.station}
-                          </p>
-                        )}
                         {refuel.notes && (
                           <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 italic">
                             &ldquo;{refuel.notes}&rdquo;
@@ -456,10 +450,10 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                   {/* Calculated metrics strip for this refuel */}
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                     <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                      {refuel.kmPerUnit ? (
+                      {refuel.intervalConsumption ? (
                         <span className="font-bold text-emerald-600 flex items-center gap-1">
                           <Gauge className="w-3.5 h-3.5" />
-                          {refuel.kmPerUnit} km/{unit} ({refuel.unitPer100Km} {unit}/100km)
+                          {refuel.intervalConsumption.formattedKmPerUnit} km/{unit} ({refuel.intervalConsumption.formattedUnitPer100Km} {unit}/100km)
                         </span>
                       ) : (
                         <span className="text-slate-400 text-[11px]">

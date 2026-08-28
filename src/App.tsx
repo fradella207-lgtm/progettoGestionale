@@ -4,6 +4,7 @@ import { SEED_GARAGE } from './data/seedGarage';
 import { Header } from './components/Header';
 import { GarageHome } from './components/GarageHome';
 import { VehicleDetail } from './components/VehicleDetail';
+import { MyCarDashboard } from './components/MyCarDashboard';
 import { FuelAndChargingMap } from './components/FuelAndChargingMap';
 import { BottomNavigation } from './components/BottomNavigation';
 import { AuthGate } from './components/AuthGate';
@@ -91,8 +92,8 @@ export default function App() {
     return [];
   });
 
-  // 2. VIEW NAVIGATION STATE: 'garage' | 'detail' | 'stations'
-  const [currentView, setCurrentView] = useState<'garage' | 'detail' | 'stations'>('garage');
+  // 2. VIEW NAVIGATION STATE: 'garage' | 'my_car' | 'detail' | 'stations'
+  const [currentView, setCurrentView] = useState<'garage' | 'my_car' | 'detail' | 'stations'>('garage');
   const [selectedCarId, setSelectedCarId] = useState<string>(() => {
     return vehicles[0]?.id || '';
   });
@@ -284,16 +285,32 @@ export default function App() {
         plate: vehicleData.plate || 'AA 000 AA',
         fuelType: vehicleData.fuelType || 'Diesel',
         tankCapacity: Number(vehicleData.tankCapacity) || 50,
+        batteryCapacity: vehicleData.batteryCapacity ? Number(vehicleData.batteryCapacity) : undefined,
+        secondaryTankCapacity: vehicleData.secondaryTankCapacity ? Number(vehicleData.secondaryTankCapacity) : undefined,
+        motorization: vehicleData.motorization,
+        driveType: vehicleData.driveType,
+        differential: vehicleData.differential,
+        powerCv: vehicleData.powerCv ? Number(vehicleData.powerCv) : undefined,
+        powerKw: vehicleData.powerKw ? Number(vehicleData.powerKw) : undefined,
         registrationDate: vehicleData.registrationDate || new Date().toISOString().split('T')[0],
         initialKm: Number(vehicleData.initialKm) || 0,
         photoUrl: vehicleData.photoUrl || '',
         refuels: [],
-        maintenances: []
+        maintenances: [],
+        documents: vehicleData.documents || [],
+        technicalSpecs: vehicleData.technicalSpecs,
+        aiChatHistory: []
       };
       setVehicles([newCar, ...vehicles]);
       setSelectedCarId(newCar.id);
       showToast(`Nuovo veicolo aggiunto al garage: ${newCar.brand} ${newCar.model}`, 'success');
     }
+  };
+
+  // Handler: Direct Vehicle Update (For Quattroruote specs, documents vault, AI chat)
+  const handleDirectUpdateVehicle = (updatedCar: Vehicle) => {
+    const updatedList = vehicles.map(v => v.id === updatedCar.id ? updatedCar : v);
+    setVehicles(updatedList);
   };
 
   // Handler: Delete vehicle
@@ -538,6 +555,17 @@ export default function App() {
               onOpenRefuelWithStation={handleOpenRefuelWithStation}
             />
           </div>
+        ) : currentView === 'my_car' ? (
+          <MyCarDashboard 
+            vehicles={vehicles}
+            selectedVehicleId={selectedCarId}
+            onSelectVehicle={(id) => setSelectedCarId(id)}
+            onUpdateVehicle={handleDirectUpdateVehicle}
+            onOpenAddVehicleModal={() => {
+              setVehicleToEdit(null);
+              setIsAddCarModalOpen(true);
+            }}
+          />
         ) : currentView === 'garage' ? (
           <GarageHome 
             vehicles={vehicles}
@@ -600,7 +628,7 @@ export default function App() {
 
       {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}
       <BottomNavigation 
-        activeTab={currentView === 'stations' ? 'stations' : 'garage'}
+        activeTab={currentView === 'stations' ? 'stations' : (currentView === 'my_car' ? 'my_car' : 'garage')}
         onSelectTab={(tab) => {
           setCurrentView(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });

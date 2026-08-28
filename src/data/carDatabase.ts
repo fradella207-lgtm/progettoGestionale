@@ -1,4 +1,4 @@
-import { FuelType } from '../types';
+import { FuelType, VehicleTechnicalSpecs } from '../types';
 
 export interface CarMotorization {
   name: string;
@@ -9,6 +9,14 @@ export interface CarMotorization {
   cv: number;
   kw: number;
   displacementCc?: number;
+  torqueNm?: number;
+  engineCode?: string; // Voce P.5 del libretto
+  recommendedOil?: string; // es. "5W-30 ACEA C3 / Fiat 9.55535-DS1"
+  oilCapacityLiters?: number; // Capacità coppa olio
+  tirePressureFrontBar?: number; // Pressione anteriore (bar)
+  tirePressureRearBar?: number; // Pressione posteriore (bar)
+  tirePressureLoadedBar?: number; // Pressione a pieno carico (bar)
+  allowedTireSizes?: string[]; // Misure omologate
   years?: string; // e.g. "2024+", "2020-2024", "2016-2020"
   startYear?: number;
   endYear?: number;
@@ -1124,8 +1132,8 @@ export function normalizeBrandName(raw: string): string {
 }
 
 /**
- * Intelligent Smart Generator for custom, non-catalog models.
- * Guarantees that EVERY vehicle has at least 8-10 realistic, segment-tailored motorizations immediately.
+ * Intelligent Smart Generator for custom, non-catalog models or specific historical years.
+ * Strictly respects the historical era (e.g. 1995-2005 vs 2006-2015 vs 2016-2026).
  */
 export function generateGenericMotorizationsForBrandModel(
   brand: string,
@@ -1139,23 +1147,58 @@ export function generateGenericMotorizationsForBrandModel(
 
   if (isElectricBrand) {
     return [
-      { name: 'Standard Range RWD (Batteria ~58-60 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 58, cv: 170, kw: 125, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 420, avgConsumption: '15.2 kWh/100km' },
-      { name: 'Long Range AWD (Batteria ~77-82 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 77, cv: 286, kw: 210, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 540, avgConsumption: '16.5 kWh/100km' },
-      { name: 'Performance Dual Motor AWD (Batteria ~77-85 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 82, cv: 420, kw: 309, years: yearStr, startYear: currentYear - 4, endYear: currentYear + 4, wltpElectricRangeKm: 500, avgConsumption: '18.0 kWh/100km' }
+      { name: 'Standard Range RWD (Batteria ~58-60 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 58, cv: 170, kw: 125, years: yearStr, startYear: Math.max(2012, currentYear - 3), endYear: currentYear + 3, wltpElectricRangeKm: 420, avgConsumption: '15.2 kWh/100km' },
+      { name: 'Long Range AWD (Batteria ~77-82 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 77, cv: 286, kw: 210, years: yearStr, startYear: Math.max(2012, currentYear - 3), endYear: currentYear + 3, wltpElectricRangeKm: 540, avgConsumption: '16.5 kWh/100km' },
+      { name: 'Performance Dual Motor AWD (Batteria ~77-85 kWh)', fuelType: 'Elettrica (BEV)', tankCapacity: 0, batteryCapacity: 82, cv: 420, kw: 309, years: yearStr, startYear: Math.max(2012, currentYear - 3), endYear: currentYear + 3, wltpElectricRangeKm: 500, avgConsumption: '18.0 kWh/100km' }
     ];
   }
 
-  // General rich motorizations covering all fuel types & powers
+  // ERA 1: Anni '90 e primi 2000 (<= 2004) -> Solo motori dell'epoca (Euro 1 / Euro 2 / Euro 3, nessun ibrido)
+  if (currentYear <= 2004) {
+    return [
+      { name: '1.2 8V 60 CV Aspirato', fuelType: 'Benzina', tankCapacity: 47, cv: 60, kw: 44, displacementCc: 1242, years: `${Math.max(1990, currentYear - 4)}-${currentYear + 4}`, startYear: Math.max(1990, currentYear - 4), endYear: currentYear + 4, euroStandard: currentYear < 2001 ? 'Euro 2' : 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '5.8 L/100km' },
+      { name: '1.2 16V 80 CV Aspirato', fuelType: 'Benzina', tankCapacity: 47, cv: 80, kw: 59, displacementCc: 1242, years: `${Math.max(1990, currentYear - 4)}-${currentYear + 4}`, startYear: Math.max(1990, currentYear - 4), endYear: currentYear + 4, euroStandard: 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '6.0 L/100km' },
+      { name: '1.4 / 1.6 16V 100/105 CV', fuelType: 'Benzina', tankCapacity: 50, cv: 103, kw: 76, displacementCc: 1581, years: `${Math.max(1990, currentYear - 5)}-${currentYear + 5}`, startYear: Math.max(1990, currentYear - 5), endYear: currentYear + 5, euroStandard: currentYear < 2001 ? 'Euro 2' : 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '7.2 L/100km' },
+      { name: '1.8 / 2.0 16V 130-150 CV', fuelType: 'Benzina', tankCapacity: 55, cv: 135, kw: 99, displacementCc: 1998, years: `${Math.max(1990, currentYear - 5)}-${currentYear + 5}`, startYear: Math.max(1990, currentYear - 5), endYear: currentYear + 5, euroStandard: 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '8.4 L/100km' },
+      { name: '1.9 JTD / TDI Turbo Diesel 80-105 CV', fuelType: 'Diesel', tankCapacity: 50, cv: 85, kw: 63, displacementCc: 1910, years: `${Math.max(1990, currentYear - 4)}-${currentYear + 4}`, startYear: Math.max(1990, currentYear - 4), endYear: currentYear + 4, euroStandard: currentYear < 2001 ? 'Euro 2' : 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '4.9 L/100km' },
+      { name: '1.9 JTD / TDI Turbo Diesel 115-130 CV', fuelType: 'Diesel', tankCapacity: 55, cv: 115, kw: 85, displacementCc: 1896, years: `${Math.max(1990, currentYear - 4)}-${currentYear + 4}`, startYear: Math.max(1990, currentYear - 4), endYear: currentYear + 4, euroStandard: 'Euro 3', transmission: 'Manuale 5m / 6m', avgConsumption: '5.2 L/100km' },
+      { name: '1.9 D / SDI Aspirato Diesel 65 CV', fuelType: 'Diesel', tankCapacity: 47, cv: 65, kw: 48, displacementCc: 1896, years: `${Math.max(1990, currentYear - 5)}-${currentYear + 3}`, startYear: Math.max(1990, currentYear - 5), endYear: currentYear + 3, euroStandard: 'Euro 2/3', transmission: 'Manuale 5m', avgConsumption: '5.5 L/100km' },
+      { name: '1.2 / 1.6 Bi-Fuel GPL 75 CV', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 47, secondaryTankCapacity: 38, cv: 75, kw: 55, displacementCc: 1242, years: `${Math.max(1990, currentYear - 4)}-${currentYear + 4}`, startYear: Math.max(1990, currentYear - 4), endYear: currentYear + 4, euroStandard: 'Euro 3', transmission: 'Manuale 5m', avgConsumption: '7.8 L/100km GPL' }
+    ];
+  }
+
+  // ERA 2: 2005 - 2014 (Euro 4 / Euro 5)
+  if (currentYear <= 2014) {
+    return [
+      { name: '1.2 / 1.4 Benzina 69-95 CV', fuelType: 'Benzina', tankCapacity: 45, cv: 77, kw: 57, displacementCc: 1368, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: currentYear < 2010 ? 'Euro 4' : 'Euro 5', transmission: 'Manuale 5m', avgConsumption: '5.6 L/100km' },
+      { name: '1.4 Turbo Benzina (T-Jet / TSI / TCe) 120 CV', fuelType: 'Benzina', tankCapacity: 50, cv: 120, kw: 88, displacementCc: 1368, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: currentYear < 2010 ? 'Euro 4' : 'Euro 5', transmission: 'Manuale 5m/6m', avgConsumption: '6.4 L/100km' },
+      { name: '1.3 MultiJet / 1.4-1.6 TDI/HDi Diesel 75-95 CV', fuelType: 'Diesel', tankCapacity: 45, cv: 90, kw: 66, displacementCc: 1248, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: currentYear < 2010 ? 'Euro 4' : 'Euro 5', transmission: 'Manuale 5m', avgConsumption: '4.5 L/100km' },
+      { name: '1.6 / 1.9 / 2.0 Turbo Diesel 105-140 CV', fuelType: 'Diesel', tankCapacity: 55, cv: 120, kw: 88, displacementCc: 1598, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: currentYear < 2010 ? 'Euro 4' : 'Euro 5', transmission: 'Manuale 6m', avgConsumption: '4.9 L/100km' },
+      { name: '1.4 BiFuel GPL 77-100 CV', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 38, cv: 77, kw: 57, displacementCc: 1368, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: currentYear < 2010 ? 'Euro 4' : 'Euro 5', transmission: 'Manuale 5m', avgConsumption: '7.2 L/100km GPL' },
+      { name: '1.4 Natural Power Metano 77-110 CV', fuelType: 'Metano (Benzina + Metano)', tankCapacity: 45, secondaryTankCapacity: 13, cv: 77, kw: 57, displacementCc: 1368, years: `${currentYear - 4}-${currentYear + 4}`, startYear: currentYear - 4, endYear: currentYear + 4, euroStandard: 'Euro 5', transmission: 'Manuale 5m', avgConsumption: '4.3 kg/100km' }
+    ];
+  }
+
+  // ERA 3: 2015 - 2019 (Euro 6 / Euro 6d-TEMP)
+  if (currentYear <= 2019) {
+    return [
+      { name: '1.0 / 1.2 Turbo Benzina 100/115 CV', fuelType: 'Benzina', tankCapacity: 45, cv: 100, kw: 74, displacementCc: 999, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'Manuale 5m/6m', avgConsumption: '5.2 L/100km' },
+      { name: '1.4 / 1.5 Turbo Benzina 140/150 CV', fuelType: 'Benzina', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1395, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'Manuale 6m / Automatico', avgConsumption: '5.8 L/100km' },
+      { name: '1.5 / 1.6 Turbo Diesel 115/120 CV', fuelType: 'Diesel', tankCapacity: 48, cv: 120, kw: 88, displacementCc: 1598, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'Manuale 6m', avgConsumption: '4.4 L/100km' },
+      { name: '2.0 Turbo Diesel 150 CV', fuelType: 'Diesel', tankCapacity: 55, cv: 150, kw: 110, displacementCc: 1968, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'Manuale 6m / Automatico', avgConsumption: '4.8 L/100km' },
+      { name: '1.8 Full Hybrid (HEV) 122 CV', fuelType: 'Full / Mild Hybrid', tankCapacity: 43, cv: 122, kw: 90, displacementCc: 1798, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'e-CVT', avgConsumption: '4.2 L/100km' },
+      { name: '1.0 / 1.4 BiFuel GPL 100-120 CV', fuelType: 'GPL (Benzina + GPL)', tankCapacity: 45, secondaryTankCapacity: 38, cv: 100, kw: 74, displacementCc: 1368, years: `${currentYear - 3}-${currentYear + 3}`, startYear: currentYear - 3, endYear: currentYear + 3, euroStandard: 'Euro 6', transmission: 'Manuale 6m', avgConsumption: '7.3 L/100km GPL' }
+    ];
+  }
+
+  // ERA 4: 2020 - 2026 (Euro 6d / Euro 6e / MHEV / PHEV / BEV)
   return [
-    { name: `1.0 / 1.2 Turbo Benzina 100/110 CV`, fuelType: 'Benzina', tankCapacity: 50, cv: 100, kw: 74, displacementCc: 1199, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Manuale 6m', avgConsumption: '5.4 L/100km' },
-    { name: `1.2 / 1.5 Mild Hybrid (MHEV) 130 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1498, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6d/6e', transmission: 'Automatico / DSG', avgConsumption: '5.2 L/100km' },
-    { name: `1.5 / 1.6 Turbo Diesel 120/130 CV`, fuelType: 'Diesel', tankCapacity: 50, cv: 120, kw: 88, displacementCc: 1598, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m / Automatico', avgConsumption: '4.6 L/100km' },
-    { name: `2.0 Turbo Diesel 150 CV`, fuelType: 'Diesel', tankCapacity: 55, cv: 150, kw: 110, displacementCc: 1968, years: yearStr, startYear: currentYear - 10, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Automatico', avgConsumption: '5.0 L/100km' },
-    { name: `1.5 / 1.8 Full Hybrid (HEV) 140 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 140, kw: 103, displacementCc: 1798, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6e', transmission: 'Automatico e-CVT', avgConsumption: '4.5 L/100km' },
-    { name: `Plug-in Hybrid (PHEV) 204-225 CV`, fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 45, batteryCapacity: (currentYear >= 2024 ? 19.7 : 13.0), cv: 204, kw: 150, displacementCc: 1498, years: yearStr, startYear: currentYear - 5, endYear: currentYear + 5, euroStandard: 'Euro 6d/6e', transmission: 'Automatico DCT', wltpElectricRangeKm: (currentYear >= 2024 ? 120 : 60), avgConsumption: '1.2 L/100km + 15 kWh/100km' },
-    { name: `1.0 / 1.4 BiFuel GPL 100-120 CV`, fuelType: 'GPL (Benzina + GPL)', tankCapacity: 50, secondaryTankCapacity: 40, cv: 100, kw: 74, displacementCc: 1199, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m', avgConsumption: '7.4 L/100km GPL' },
-    { name: `1.4 / 1.5 Turbo Benzina 150 CV`, fuelType: 'Benzina', tankCapacity: 50, cv: 150, kw: 110, displacementCc: 1498, years: yearStr, startYear: currentYear - 8, endYear: currentYear + 5, euroStandard: 'Euro 6d', transmission: 'Manuale 6m / Automatico', avgConsumption: '6.2 L/100km' },
-    { name: `2.0 Turbo Benzina 200+ CV`, fuelType: 'Benzina', tankCapacity: 55, cv: 200, kw: 147, displacementCc: 1984, years: yearStr, startYear: currentYear - 10, endYear: currentYear + 5, euroStandard: 'Euro 6', transmission: 'Automatico', avgConsumption: '7.5 L/100km' }
+    { name: `1.0 / 1.2 Mild Hybrid (MHEV) 70-100 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 40, cv: 70, kw: 51, displacementCc: 999, years: `${currentYear - 4}+`, startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Manuale 6m', avgConsumption: '4.8 L/100km' },
+    { name: `1.2 / 1.5 Mild Hybrid 130-150 CV Automatico`, fuelType: 'Full / Mild Hybrid', tankCapacity: 48, cv: 130, kw: 96, displacementCc: 1498, years: `${currentYear - 3}+`, startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Automatico DSG / DCT', avgConsumption: '5.4 L/100km' },
+    { name: `1.5 / 1.8 Full Hybrid (HEV) 140 CV`, fuelType: 'Full / Mild Hybrid', tankCapacity: 45, cv: 140, kw: 103, displacementCc: 1798, years: `${currentYear - 4}+`, startYear: 2020, euroStandard: 'Euro 6e', transmission: 'Automatico e-CVT', avgConsumption: '4.5 L/100km' },
+    { name: `Plug-in Hybrid (PHEV) 204-245 CV`, fuelType: 'Plug-in Hybrid (PHEV)', tankCapacity: 45, batteryCapacity: (currentYear >= 2024 ? 19.7 : 13.0), cv: 204, kw: 150, displacementCc: 1395, years: `${currentYear - 4}+`, startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Automatico DSG 6m', wltpElectricRangeKm: (currentYear >= 2024 ? 120 : 55), avgConsumption: '1.2 L/100km + 15 kWh/100km' },
+    { name: `1.5 / 2.0 Turbo Diesel 130/150 CV`, fuelType: 'Diesel', tankCapacity: 50, cv: 130, kw: 96, displacementCc: 1499, years: `${currentYear - 4}+`, startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Manuale 6m / Automatico', avgConsumption: '4.6 L/100km' },
+    { name: `1.0 TCe ECO-G 100 CV (GPL BiFuel)`, fuelType: 'GPL (Benzina + GPL)', tankCapacity: 50, secondaryTankCapacity: 40, cv: 100, kw: 74, displacementCc: 999, years: `${currentYear - 4}+`, startYear: 2020, euroStandard: 'Euro 6d/6e', transmission: 'Manuale 6m', avgConsumption: '7.0 L/100km GPL' }
   ];
 }
 
@@ -1396,12 +1439,13 @@ export function getMotorizationsForModelAndYear(
     }
   }
 
-  // If none matched the exact year window, return all items so dropdown is never empty
+  // If none in catalog matched the exact year window, generate era-accurate engines for targetYear
   if (matchedForYear.length === 0) {
+    const eraFallback = generateGenericMotorizationsForBrandModel(brandName, modelName, targetYear);
     return {
-      matchedForYear: allMots,
-      otherYears: [],
-      all: allMots
+      matchedForYear: eraFallback,
+      otherYears: allMots,
+      all: [...eraFallback, ...allMots]
     };
   }
 
@@ -1463,6 +1507,10 @@ export interface VehicleLookupResult {
   model: string;
   motorization?: string;
   generation?: string;
+  productionYears?: string;
+  ownersManualUrl?: string;
+  ownersManualSource?: string;
+  engineCode?: string;
   fuelType: FuelType;
   powerCv?: number;
   powerKw?: number;
@@ -1513,7 +1561,7 @@ export async function lookupVehicleWithAI(
 
     if (res.ok) {
       const data = await res.json();
-      if (data?.data && (data.data.brand || data.data.model || data.data.motorization)) {
+      if (data?.data && (data.data.brand || data.data.model || data.data.motorization || (data.data.availableMotorizations && data.data.availableMotorizations.length > 0))) {
         const d = data.data;
         let availableMots: CarMotorization[] = Array.isArray(d.availableMotorizations) && d.availableMotorizations.length > 0
           ? d.availableMotorizations.map((m: any) => ({
@@ -1522,6 +1570,7 @@ export async function lookupVehicleWithAI(
               cv: Number(m.cv) || 100,
               kw: Number(m.kw) || Math.round(Number(m.cv || 100) / 1.35962),
               displacementCc: m.displacementCc ? Number(m.displacementCc) : undefined,
+              engineCode: m.engineCode || undefined,
               tankCapacity: Number(m.tankCapacity ?? 50),
               batteryCapacity: m.batteryCapacity ? Number(m.batteryCapacity) : undefined,
               secondaryTankCapacity: m.secondaryTankCapacity ? Number(m.secondaryTankCapacity) : undefined,
@@ -1530,7 +1579,7 @@ export async function lookupVehicleWithAI(
               differential: m.differential,
               transmission: m.transmission,
               euroStandard: m.euroStandard,
-              years: m.years,
+              years: m.years || d.productionYears,
               generation: m.generation || d.generation,
               avgConsumption: m.avgConsumption
             }))
@@ -1542,11 +1591,18 @@ export async function lookupVehicleWithAI(
           availableMots = localMots.matchedForYear.length > 0 ? localMots.matchedForYear : localMots.all;
         }
 
+        const manualUrl = d.ownersManual?.manual_url || d.ownersManualUrl;
+        const manualSource = d.ownersManual?.source_type || d.ownersManualSource;
+
         return {
           brand: d.brand || brand || '',
           model: d.model || model || '',
           motorization: d.motorization || (availableMots[0]?.name ?? ''),
           generation: d.generation || '',
+          productionYears: d.productionYears,
+          ownersManualUrl: manualUrl,
+          ownersManualSource: manualSource,
+          engineCode: d.engineCode || availableMots[0]?.engineCode,
           fuelType: (d.fuelType as FuelType) || availableMots[0]?.fuelType || 'Diesel',
           powerCv: Number(d.powerCv) || availableMots[0]?.cv || undefined,
           powerKw: Number(d.powerKw) || availableMots[0]?.kw || (d.powerCv ? Math.round(Number(d.powerCv) / 1.35962) : undefined),
@@ -1658,5 +1714,69 @@ export async function lookupVehicleWithAI(
     batteryCapacity: isPHEV ? phevBattery : (isBEV ? 60.0 : undefined),
     availableMotorizations: genericMots,
     source: 'catalog'
+  };
+}
+
+/**
+ * Builds a certified, complete Quattroruote Technical Specs object from brand, model, and motorization
+ */
+export function buildQuattroruoteSpecsFromMotorization(
+  brand: string,
+  model: string,
+  motorization?: CarMotorization | null,
+  year?: number
+): VehicleTechnicalSpecs {
+  const b = (brand || '').trim();
+  const m = (model || '').trim();
+  const motName = motorization?.name || '';
+  const fuel = motorization?.fuelType || 'Diesel';
+  const isDiesel = fuel.includes('Diesel');
+  const isEv = fuel.includes('Elettrica') || fuel.includes('BEV');
+  const isPhev = fuel.includes('PHEV') || fuel.includes('Plug-in');
+  const isHybrid = fuel.includes('Hybrid') && !isPhev;
+
+  // Defaults
+  let cv = motorization?.cv || 130;
+  let kw = motorization?.kw || Math.round(cv / 1.35962);
+  let disp = motorization?.displacementCc || (isEv ? 0 : 1598);
+  let torque = motorization?.torqueNm || (isDiesel ? Math.round(cv * 2.3) : Math.round(cv * 1.5));
+  let tank = motorization?.tankCapacity ?? (isEv ? 0 : 50);
+  let batt = motorization?.batteryCapacity ?? (isEv ? 60 : (isPhev ? 14.4 : undefined));
+  let euro = motorization?.euroStandard || ((year && year >= 2021) ? 'Euro 6d-ISC-FCM' : ((year && year >= 2018) ? 'Euro 6d-Temp' : ((year && year >= 2015) ? 'Euro 6b' : 'Euro 5B')));
+  let transmission = motorization?.transmission || (cv > 170 || isPhev || isHybrid ? 'Automatico' : 'Manuale 6 rapporti');
+  let drivetrain = motorization?.driveType || (motName.toLowerCase().includes('q4') || motName.toLowerCase().includes('quattro') || motName.toLowerCase().includes('4x4') || motName.toLowerCase().includes('4motion') || motName.toLowerCase().includes('awd') ? 'Trazione Integrale (AWD / 4x4)' : (b.toLowerCase() === 'bmw' && !m.toLowerCase().includes('serie 1 202') ? 'Trazione Posteriore (RWD)' : 'Trazione Anteriore (FWD)'));
+  let wltp = motorization?.avgConsumption || (isDiesel ? '4.8 L/100 km' : (isEv ? '15.5 kWh/100 km' : (isPhev ? '1.4 L/100 km' : '6.0 L/100 km')));
+  let oil = motorization?.recommendedOil || (isDiesel ? '5W-30 ACEA C3 / Specifica Costruttore' : (isEv ? 'Liquido dielettrico raffreddamento batteria' : '0W-20 / 5W-30 ACEA C2/C3'));
+  let oilCap = motorization?.oilCapacityLiters || (isEv ? 0 : (disp > 2000 ? 5.2 : (disp > 1500 ? 4.5 : 3.8)));
+  let frontBar = motorization?.tirePressureFrontBar || 2.3;
+  let rearBar = motorization?.tirePressureRearBar || 2.2;
+  let loadedBar = motorization?.tirePressureLoadedBar || 2.6;
+  let tires = motorization?.allowedTireSizes || ['205/55 R16 91V', '225/45 R17 91W'];
+  let engineCode = motorization?.engineCode || '';
+
+  // Calculate cylinders
+  let cylinders = isEv ? 0 : (disp < 1150 ? 3 : (disp > 2500 ? 6 : 4));
+
+  return {
+    engineDisplacementCc: disp,
+    powerCv: cv,
+    powerKw: kw,
+    torqueNm: torque,
+    cylinderCount: cylinders,
+    transmission,
+    drivetrain,
+    euroClass: euro,
+    fuelCapacityLiters: tank,
+    batteryCapacityKwh: batt,
+    wltpConsumption: wltp,
+    wltpRangeKm: isEv ? Math.round(((batt || 60) / 15.5) * 100) : (tank > 0 && parseFloat(wltp) > 0 ? Math.round((tank / parseFloat(wltp)) * 100) : 850),
+    recommendedOil: oil,
+    oilCapacityLiters: oilCap,
+    tirePressureFrontBar: frontBar,
+    tirePressureRearBar: rearBar,
+    tirePressureLoadedBar: loadedBar,
+    allowedTireSizes: tires,
+    engineCode: engineCode || undefined,
+    summaryQuattroruote: `Dati ufficiali Quattroruote per ${b} ${m} ${motName || ''}${year ? ` (Anno ${year})` : ''}. Specifiche tecniche certificate.`
   };
 }

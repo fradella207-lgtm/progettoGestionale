@@ -186,7 +186,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (activeType) {
         params.append('type', activeType);
       }
-      params.append('limit', '350');
+      params.append('limit', '1200');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
       if (!res.ok) throw new Error('API error');
@@ -201,10 +201,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
       if (json.data && Array.isArray(json.data) && json.data.length > 0) {
         const mapped = parseBackendStations(json.data);
-        setLiveStations(mapped);
+        setLiveStations(prev => {
+          const map = new Map<string, Station>();
+          // Mantieni stazioni precedentemente scoperte
+          prev.forEach(st => map.set(st.id, st));
+          // Aggiungi o aggiorna con le nuove
+          mapped.forEach(st => map.set(st.id, st));
+          return Array.from(map.values());
+        });
         try {
           // Cache in localStorage for instantaneous offline and mobile startup
-          localStorage.setItem('garage_cached_stations_v1', JSON.stringify(mapped.slice(0, 150)));
+          localStorage.setItem('garage_cached_stations_v1', JSON.stringify(mapped.slice(0, 200)));
         } catch {
           // localStorage safe ignore
         }

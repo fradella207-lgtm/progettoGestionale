@@ -34,6 +34,72 @@ export interface MaintenanceRecord {
   cost: number;
 }
 
+export interface VehicleDocument {
+  id: string;
+  title: string;
+  type: 'libretto' | 'assicurazione' | 'bollo' | 'tagliando' | 'altro';
+  fileName: string;
+  fileType: string;
+  fileData: string; // Base64 data URI
+  uploadDate: string;
+  expiryDate?: string;
+  notes?: string;
+  extractedInfo?: {
+    plate?: string;
+    vin?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    euroClass?: string;
+    approvedTires?: string[];
+    engineCode?: string;
+    taxAmount?: number;
+  };
+}
+
+export interface VehicleTechnicalSpecs {
+  engineDisplacementCc?: number; // Cilindrata (cm³)
+  powerCv?: number; // Cavalli vapore
+  powerKw?: number; // Kilowatt
+  torqueNm?: number; // Coppia max (Nm)
+  cylinderCount?: number; // Numero cilindri / architettura
+  transmission?: string; // Cambio e marce
+  drivetrain?: string; // Trazione (FWD, RWD, AWD)
+  euroClass?: string; // Norma antinquinamento (es. Euro 6D-Final)
+  fuelCapacityLiters?: number; // Capacità serbatoio carburante
+  batteryCapacityKwh?: number; // Capacità nominale/netta batteria
+  wltpConsumption?: string; // Consumo medio omologato
+  wltpRangeKm?: number; // Autonomia stimata
+  recommendedOil?: string; // Specifica e gradazione olio motore
+  oilCapacityLiters?: number; // Capacità coppa olio
+  tirePressureFrontBar?: number; // Pressione anteriore (bar)
+  tirePressureRearBar?: number; // Pressione posteriore (bar)
+  tirePressureLoadedBar?: number; // Pressione a pieno carico (bar)
+  allowedTireSizes?: string[]; // Misure pneumatici da libretto
+  dimensions?: {
+    lengthMm?: number;
+    widthMm?: number;
+    heightMm?: number;
+    trunkLiters?: number;
+    curbWeightKg?: number;
+    towingCapacityKg?: number;
+  };
+  vin?: string;
+  engineCode?: string;
+  ownersManualUrl?: string;
+  ownersManualSource?: string;
+  summaryQuattroruote?: string;
+}
+
+export interface AIChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  attachmentName?: string;
+  attachmentType?: string;
+  attachmentData?: string;
+}
+
 export interface Vehicle {
   id: string;
   brand: string;
@@ -53,6 +119,9 @@ export interface Vehicle {
   photoUrl?: string;
   refuels: RefuelRecord[];
   maintenances: MaintenanceRecord[];
+  documents?: VehicleDocument[];
+  technicalSpecs?: VehicleTechnicalSpecs;
+  aiChatHistory?: AIChatMessage[];
 }
 
 export interface AIAdvice {

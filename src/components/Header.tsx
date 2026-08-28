@@ -9,7 +9,7 @@ import { Vehicle, AppNotification, AppSettings, UserAccount } from '../types';
 import { TopRightMenu } from './TopRightMenu';
 
 interface HeaderProps {
-  currentView: 'garage' | 'detail' | 'stations';
+  currentView: 'garage' | 'detail' | 'stations' | 'my_car';
   selectedVehicle?: Vehicle;
   notifications: AppNotification[];
   settings: AppSettings;
