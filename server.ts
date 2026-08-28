@@ -519,19 +519,33 @@ REGOLE DI FORMATTAZIONE:
 
       const contents: any[] = [];
 
-      // Aggiungi cronologia messaggi precedenti se presente
+      // Aggiungi cronologia messaggi precedenti garantendo alternanza stretta user -> model e inizio obbligatorio con 'user'
       if (Array.isArray(history) && history.length > 0) {
-        history.slice(-8).forEach((h: any) => {
-          if (h.role === 'user' || h.role === 'assistant') {
-            contents.push({
-              role: h.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: h.content || h.text || '' }]
-            });
+        let lastRole: 'user' | 'model' | null = null;
+        for (const h of history) {
+          const role: 'user' | 'model' = h.role === 'user' ? 'user' : 'model';
+          const text = (h.content || h.text || '').trim();
+          if (!text) continue;
+
+          // Non possiamo iniziare una conversazione con un messaggio del modello (es. messaggio di benvenuto)
+          if (contents.length === 0 && role === 'model') {
+            continue;
           }
-        });
+
+          if (role === lastRole) {
+            // Unisci i testi consecutivi con lo stesso ruolo invece di creare turni duplicati
+            contents[contents.length - 1].parts[0].text += `\n\n${text}`;
+          } else {
+            contents.push({
+              role: role,
+              parts: [{ text: text }]
+            });
+            lastRole = role;
+          }
+        }
       }
 
-      // Messaggio corrente + allegato
+      // Prepara il messaggio corrente dell'utente con eventuale allegato
       const currentParts: any[] = [];
       if (imageAttachment && imageAttachment.base64 && imageAttachment.mimeType) {
         const cleanBase64 = imageAttachment.base64.replace(/^data:[^;]+;base64,/, '');
@@ -544,21 +558,49 @@ REGOLE DI FORMATTAZIONE:
       }
       currentParts.push({ text: message || "Analizza questo documento o immagine del veicolo e forniscimi tutti i dettagli utili." });
 
-      contents.push({
-        role: 'user',
-        parts: currentParts
-      });
+      // Se l'ultimo turno era già 'user', unisci i contenuti; altrimenti aggiungi un nuovo turno 'user'
+      if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+        contents[contents.length - 1].parts.push(...currentParts);
+      } else {
+        contents.push({
+          role: 'user',
+          parts: currentParts
+        });
+      }
 
-      const response = await client.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents: contents,
-        config: {
-          systemInstruction: carContext,
-          temperature: 0.3,
+      let replyText = '';
+      try {
+        const response = await client.models.generateContent({
+          model: 'gemini-3.7-flash',
+          contents: contents,
+          config: {
+            systemInstruction: carContext,
+            temperature: 0.3,
+          }
+        });
+        replyText = response.text || '';
+      } catch (geminiErr: any) {
+        console.warn("Riprovo con gemini-flash-latest:", geminiErr?.message || geminiErr);
+        try {
+          const retryResponse = await client.models.generateContent({
+            model: 'gemini-flash-latest',
+            contents: contents,
+            config: {
+              systemInstruction: carContext,
+              temperature: 0.3,
+            }
+          });
+          replyText = retryResponse.text || '';
+        } catch (retryErr) {
+          console.warn("Attivazione motore di conoscenza esperto offline automotive:", retryErr);
+          replyText = generateExpertCarReply(car, message, imageAttachment);
         }
-      });
+      }
 
-      const replyText = response.text || generateExpertCarReply(car, message, imageAttachment);
+      if (!replyText) {
+        replyText = generateExpertCarReply(car, message, imageAttachment);
+      }
+
       return res.json({ reply: replyText });
     } catch (err: any) {
       console.warn("Attivazione motore di conoscenza esperto offline per:", err?.message || err);

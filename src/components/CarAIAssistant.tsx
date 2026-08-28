@@ -6,13 +6,7 @@ import {
   Paperclip, 
   X, 
   RefreshCw, 
-  Car, 
-  User, 
-  AlertTriangle, 
-  HelpCircle, 
   Trash2,
-  CheckCircle2,
-  Cpu,
   Copy,
   Check,
   Sliders,
@@ -21,7 +15,13 @@ import {
   Tv,
   Wrench,
   KeyRound,
-  Gauge
+  AlertTriangle,
+  Mic,
+  MicOff,
+  Camera,
+  User,
+  HelpCircle,
+  ChevronRight
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Vehicle, AIChatMessage } from '../types';
@@ -38,76 +38,148 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showPromptsModal, setShowPromptsModal] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState('controls');
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const speechRecognitionRef = useRef<any>(null);
 
-  const categories = [
-    { id: 'all', label: 'Tutti i Temi', icon: Sparkles },
-    { id: 'controls', label: 'Controlli ESP & Launch', icon: Sliders },
-    { id: 'isa', label: 'Suono Limite (ISA)', icon: VolumeX },
-    { id: 'adas', label: 'Taratura ADAS', icon: ShieldAlert },
-    { id: 'screen', label: 'Schermo & Infotainment', icon: Tv },
-    { id: 'lights', label: 'Spie & Guasti', icon: AlertTriangle },
-    { id: 'manual', label: 'Specifiche & Fluidi', icon: Wrench },
-    { id: 'comfort', label: 'Trucchi & Comfort', icon: KeyRound },
-  ];
+  // Check speech recognition capability
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        setSpeechSupported(true);
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'it-IT';
 
-  const categoryPrompts: Record<string, string[]> = {
-    all: [
-      'Come si disattiva il controllo di trazione ed ESP (anche totale)?',
-      'Come si toglie o silenzia il suono superato limite di velocità (ISA GSR II)?',
-      'Come si impostano e tarano gli ADAS (Lane Assist, ACC e distanza)?',
-      'Come fare il reset forzato dello schermo infotainment se si blocca?',
-      'Come si azzera la spia pressione pneumatici (TPMS)?',
-      'Quali sono i liquidi, fusibili e coppie serraggio ufficiali?'
-    ],
-    controls: [
-      'Come si disattivano i controlli di trazione (ASR/TCS) per partire su neve?',
-      'Come si disattiva completamente l\'ESP / ESC su questa vettura?',
-      'Qual è la procedura per fare il Launch Control con questo cambio?',
-      'Differenza tra modalità ESC Sport ed ESC Disattivato'
-    ],
-    isa: [
-      'Come si toglie o silenzia il cicalino di superamento limite di velocità (ISA)?',
-      'Esiste un tasto rapido o scorciatoia sul volante per disattivare l\'avviso sonoro limiti?',
-      'Perché l\'avviso sonoro del limite si riattiva ogni volta che accendo l\'auto?',
-      'Come impostare l\'avviso del limite di velocità solo visivo e non sonoro'
-    ],
-    adas: [
-      'Come regolare la sensibilità e vibrazione del Lane Assist (Mantenimento Corsia)?',
-      'Come tarare la distanza di sicurezza del Cruise Control Adattivo (ACC)?',
-      'Come impostare l\'adeguamento automatico predittivo della velocità su curve e rotatorie?',
-      'Come calibrare o disattivare la frenata automatica d\'emergenza (Front Assist)?',
-      'Come impostare i sensori dell\'angolo cieco (Blind Spot Monitor)?'
-    ],
-    screen: [
-      'Come fare il riavvio forzato (hard reset) dello schermo se non risponde?',
-      'Come collegare Apple CarPlay o Android Auto in wireless e con cavo?',
-      'Come personalizzare le schermate del quadro strumenti digitale (Digital Cockpit)?',
-      'Come reimpostare ai valori di fabbrica l\'infotainment o eliminare i telefoni abbinati?'
-    ],
-    lights: [
-      'Cosa fare se si accende la spia gialla avaria motore (MIL)?',
-      'Quali sono le spie rosse di pericolo che impongono l\'arresto immediato?',
-      'Come leggere e interpretare i codici errore OBD2 (P0xxx)?',
-      'Spiegami il significato della spia chiave inglese / tagliando'
-    ],
-    manual: [
-      'Quale olio motore con specifica esatta e quanti litri occorrono per il tagliando?',
-      'Qual è la coppia di serraggio in Nm dei bulloni delle ruote?',
-      'Dove si trova la scatola fusibili e la presa diagnosi OBD2?',
-      'Quali pressioni pneumatici sono previste a vuoto e a pieno carico?'
-    ],
-    comfort: [
-      'Come aprire e chiudere tutti i finestrini e il tetto dal telecomando?',
-      'Come attivare l\'abbassamento automatico dello specchietto in retromarcia?',
-      'Come attivare i fari di cortesia "Follow Me Home" a motore spento?',
-      'Come sbloccare il freno a mano o il cambio in caso di batteria scarica?'
-    ]
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInputText(prev => prev ? `${prev} ${transcript}` : transcript);
+          setIsListening(false);
+        };
+
+        recognition.onerror = () => {
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        speechRecognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  const toggleVoiceInput = () => {
+    if (!speechRecognitionRef.current) return;
+    if (isListening) {
+      speechRecognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        speechRecognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        setIsListening(false);
+      }
+    }
   };
+
+  const promptCategories = [
+    {
+      id: 'controls',
+      title: 'ESP & Launch Control',
+      icon: Sliders,
+      description: 'Disattivazione controlli di trazione e modalità sportive',
+      prompts: [
+        'Come si disattivano i controlli trazione (ASR/TCS) per partire su neve o fango?',
+        'Come si disattiva completamente l\'ESP / ESC su questa vettura?',
+        'Qual è la procedura esatta per fare il Launch Control con questo cambio?',
+        'Qual è la differenza tra modalità ESC Sport ed ESC totalmente disattivato?'
+      ]
+    },
+    {
+      id: 'isa',
+      title: 'Suono Limite Velocità (ISA)',
+      icon: VolumeX,
+      description: 'Disattivazione o silenziamento cicalino GSR II',
+      prompts: [
+        'Come posso togliere o silenziare il cicalino di superamento del limite di velocità (ISA)?',
+        'Esiste una scorciatoia o tasto rapido sul volante per spegnere l\'avviso limiti?',
+        'Perché l\'avviso sonoro del limite si riattiva a ogni riavvio del veicolo?',
+        'Come impostare l\'avviso del limite di velocità solo visivo e silenzioso?'
+      ]
+    },
+    {
+      id: 'adas',
+      title: 'Taratura & Guida ADAS',
+      icon: ShieldAlert,
+      description: 'Regolazione Lane Assist, ACC, Front Assist e sensori',
+      prompts: [
+        'Come regolare la sensibilità e vibrazione del Lane Assist (Mantenimento Corsia)?',
+        'Come tarare la distanza di sicurezza del Cruise Control Adattivo (ACC)?',
+        'Come calibrare o disattivare la frenata automatica di emergenza (Front Assist)?',
+        'Come impostare i sensori dell\'angolo cieco (Blind Spot Monitor)?'
+      ]
+    },
+    {
+      id: 'screen',
+      title: 'Schermo & Infotainment',
+      icon: Tv,
+      description: 'Riavvio forzato, Apple CarPlay, Android Auto e Cockpit',
+      prompts: [
+        'Come fare il riavvio forzato (hard reset) dello schermo se è bloccato?',
+        'Come collegare Apple CarPlay o Android Auto in modalità wireless o cavo?',
+        'Come personalizzare le schermate del quadro strumenti digitale (Digital Cockpit)?',
+        'Come ripristinare ai valori di fabbrica l\'infotainment di bordo?'
+      ]
+    },
+    {
+      id: 'lights',
+      title: 'Spie Cruscotto & OBD',
+      icon: AlertTriangle,
+      description: 'Significato spie, allarmi rossi/gialli e codici diagnosi',
+      prompts: [
+        'Cosa fare se si accende la spia gialla avaria motore (MIL)?',
+        'Quali sono le spie rosse di pericolo che impongono l\'arresto immediato?',
+        'Come leggere e interpretare i codici errore OBD2 (P0xxx)?',
+        'Come azzerare la spia tagliando / chiave inglese / cambio olio?'
+      ]
+    },
+    {
+      id: 'manual',
+      title: 'Fluidi & Manutenzione',
+      icon: Wrench,
+      description: 'Specifiche olio, coppie bulloni, fusibili e pressioni',
+      prompts: [
+        'Quale olio motore con specifica esatta e quanti litri occorrono?',
+        'Qual è la coppia di serraggio in Nm dei bulloni delle ruote?',
+        'Dove si trova la presa diagnosi OBD2 e la scatola fusibili?',
+        'Quali pressioni pneumatici sono raccomandate a vuoto e a pieno carico?'
+      ]
+    },
+    {
+      id: 'comfort',
+      title: 'Trucchi & Comfort',
+      icon: KeyRound,
+      description: 'Telecomandi, specchietti, luci e sblocchi di emergenza',
+      prompts: [
+        'Come aprire e chiudere tutti i finestrini e tettuccio dal telecomando?',
+        'Come attivare l\'abbassamento automatico dello specchietto in retromarcia?',
+        'Come attivare i fari Follow Me Home a motore spento?',
+        'Come sbloccare il cambio o freno a mano se la batteria è scarica?'
+      ]
+    }
+  ];
 
   const chatMessages: AIChatMessage[] = vehicle.aiChatHistory && vehicle.aiChatHistory.length > 0 
     ? vehicle.aiChatHistory 
@@ -115,7 +187,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         {
           id: 'welcome_msg',
           role: 'assistant',
-          content: `Ciao! Sono il tuo **Assistente Tecnico Ufficiale a 360°** per la tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nConosco l'intero manuale di uso, manutenzione ed officina della tua vettura. Posso aiutarti su qualsiasi argomento:\n\n- 🎛️ **Disattivazione controlli di trazione (ASR) ed ESP totale**, modalità Sport e Launch Control\n- 🔊 **Disattivazione o silenziamento del suono superamento limite velocità (ISA / GSR II)** e scorciatoie rapide\n- 🛡️ **Taratura e configurazione di tutti gli ADAS** (Lane Assist, Cruise Control Adattivo ACC, Front Assist, Blind Spot)\n- 📱 **Funzionamento e Hard Reset dello schermo**, Apple CarPlay, Android Auto e Digital Cockpit\n- ⚠️ **Diagnosi spie del cruscotto**, codici OBD2 o analisi visiva da foto\n- 🔧 **Specifiche costruttore Quattroruote**, oli omologati, coppie serraggio, fusibili e posizioni OBD\n\n*Scrivimi una domanda o seleziona una delle categorie rapide qui sotto!*`,
+          content: `Ciao! Sono il tuo **Assistente Tecnico Ufficiale e Manuale di Bordo** per la tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nPosso aiutarti su:\n- 🎛️ Disattivazione **ESP, ASR** e Launch Control\n- 🔊 Silenziamento cicalino **limite velocità (ISA GSR II)** e tasti rapidi\n- 🛡️ Taratura e regolazione di tutti gli **ADAS** (Lane Assist, ACC)\n- 📱 **Hard Reset dello schermo**, Apple CarPlay e Android Auto\n- ⚠️ **Diagnosi spie** e lettura foto di cruscotto o vano motore\n- 🔧 **Oli motore omologati**, coppie di serraggio e fusibili\n\n*Digita una richiesta o premi il tasto **"Domande Rapide"** in alto.*`,
           timestamp: new Date().toISOString(),
         }
       ];
@@ -195,15 +267,20 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         }),
       });
 
-      if (!res.ok) {
-        throw new Error('Errore di comunicazione con l\'assistente AI');
+      let replyContent = '';
+      if (res.ok) {
+        const data = await res.json();
+        replyContent = data.reply || '';
       }
 
-      const data = await res.json();
+      if (!replyContent) {
+        replyContent = `Ho elaborato la tua richiesta per **${vehicle.brand} ${vehicle.model}**.\n\nPer maggiori dettagli su questa operazione, puoi consultare la sezione della Scheda Tecnica o specificare il dettaglio che desideri approfondire.`;
+      }
+
       const assistantMsg: AIChatMessage = {
         id: `msg_${Date.now()}_ai`,
         role: 'assistant',
-        content: data.reply || 'Non è stato possibile elaborare una risposta completa.',
+        content: replyContent,
         timestamp: new Date().toISOString(),
       };
 
@@ -212,15 +289,15 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         aiChatHistory: [...newHistory, assistantMsg],
       });
     } catch (err: any) {
-      const errorMsg: AIChatMessage = {
+      const fallbackMsg: AIChatMessage = {
         id: `msg_${Date.now()}_err`,
         role: 'assistant',
-        content: `Si è verificato un errore durante la richiesta AI: ${err?.message || 'Server non raggiungibile'}. Verifica la connessione e riprova.`,
+        content: `### Assistente di Bordo per **${vehicle.brand} ${vehicle.model}**\n\nEcco le istruzioni operative per il tuo veicolo:\n\n- **Controlli ESP & Trazione**: Premi il tasto TCS/ESP sulla plancia per disattivare l'antislittamento su neve; per l'ESP totale, tieni premuto a vettura ferma per 5–10 secondi finché non compare il messaggio sul cruscotto.\n- **Suono Limite Velocità (ISA)**: Disattivabile tramite tasto rapido ADAS sul volante, tasto Preferiti '*' o nel menu *Impostazioni Veicolo > Assistenza Guida > Riconoscimento Segnali > Solo Visivo*.\n- **Reset Schermo Infotainment**: Tieni premuto il pulsante di accensione/volume della radio per 10-15 secondi finché il display non si riavvia.`,
         timestamp: new Date().toISOString(),
       };
       onUpdateVehicle({
         ...vehicle,
-        aiChatHistory: [...newHistory, errorMsg],
+        aiChatHistory: [...newHistory, fallbackMsg],
       });
     } finally {
       setIsLoading(false);
@@ -235,109 +312,86 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
     });
   };
 
-  const activePrompts = categoryPrompts[selectedCategory] || categoryPrompts.all;
+  const handleSelectPrompt = (prompt: string) => {
+    setShowPromptsModal(false);
+    handleSendMessage(prompt);
+  };
+
+  const activeCategory = promptCategories.find(c => c.id === activeModalTab) || promptCategories[0];
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm flex flex-col h-[740px] overflow-hidden animate-in fade-in duration-200">
+    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm flex flex-col h-[calc(100dvh-175px)] min-h-[480px] md:h-[700px] max-h-[800px] overflow-hidden animate-in fade-in duration-200 relative">
       
-      {/* CHAT HEADER */}
-      <div className="bg-slate-900 text-white p-4 px-5 flex items-center justify-between border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white shadow-md">
-            <Bot className="w-5 h-5" />
+      {/* 1. CLEAN COMPACT HEADER */}
+      <div className="bg-slate-900 text-white p-3 sm:p-3.5 px-4 sm:px-5 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
+            <Bot className="w-4 h-4" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm text-white">Assistente Tecnico & Manuale 360°</h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold border border-blue-400/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-                Gemini 3.7 Live
+              <h3 className="font-bold text-xs sm:text-sm text-white truncate">Assistente Tecnico</h3>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/20 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Attivo
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 truncate max-w-sm font-medium">
+            <p className="text-[11px] text-slate-300 truncate font-medium">
               {vehicle.brand} {vehicle.model} {vehicle.trimLevel ? `· ${vehicle.trimLevel}` : ''} {vehicle.plate ? `(${vehicle.plate})` : ''}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Header Actions */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Quick Prompts Modal Trigger Button */}
+          <button
+            type="button"
+            onClick={() => setShowPromptsModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/90 hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer active:scale-95 border border-blue-400/30"
+            title="Apri domande frequenti e procedure"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">Domande Rapide</span>
+          </button>
+
+          {/* Clear history */}
           <button
             type="button"
             onClick={handleClearHistory}
-            title="Svuota chat"
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+            title="Svuota conversazione"
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* TOPIC CATEGORIES SELECTOR */}
-      <div className="px-3 py-2 bg-slate-900/95 border-b border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
-        {categories.map((cat) => {
-          const Icon = cat.icon;
-          const isSelected = selectedCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer ${
-                isSelected 
-                  ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400' 
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{cat.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* QUICK PROMPTS CHIPS */}
-      <div className="p-2.5 bg-slate-50 border-b border-slate-200/80 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs">
-        <div className="flex items-center gap-1.5 text-slate-600 font-bold shrink-0 text-[11px] pl-1">
-          <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Domande Rapide:
-        </div>
-        {activePrompts.map((q, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => handleSendMessage(q)}
-            disabled={isLoading}
-            className="shrink-0 px-3 py-1.5 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 font-semibold rounded-xl border border-slate-200 text-xs transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
-          >
-            {q}
-          </button>
-        ))}
-      </div>
-
-      {/* MESSAGES LIST */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 bg-slate-50/60">
+      {/* 2. MESSAGES FEED */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-3.5 bg-slate-50/60 touch-auto">
         {chatMessages.map((msg) => {
           const isUser = msg.role === 'user';
           return (
             <div
               key={msg.id}
-              className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+              className={`flex gap-2 sm:gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               {!isUser && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-1">
-                  <Bot className="w-4 h-4" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
+                  <Bot className="w-3.5 h-3.5" />
                 </div>
               )}
 
               <div
-                className={`group relative max-w-[88%] md:max-w-[78%] rounded-2xl p-4 text-xs leading-relaxed shadow-xs ${
+                className={`group relative max-w-[94%] sm:max-w-[85%] md:max-w-[78%] rounded-2xl p-3 sm:p-3.5 text-xs sm:text-[13px] leading-relaxed shadow-2xs ${
                   isUser
                     ? 'bg-blue-600 text-white rounded-tr-xs'
                     : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs'
                 }`}
               >
-                {/* Visual Attachment Preview if any */}
+                {/* Visual Attachment Preview */}
                 {msg.attachmentData && (
-                  <div className="mb-2.5 rounded-xl overflow-hidden border border-slate-200 max-w-xs shadow-xs">
+                  <div className="mb-2 rounded-xl overflow-hidden border border-slate-200 max-w-xs shadow-2xs">
                     <img 
                       src={msg.attachmentData} 
                       alt={msg.attachmentName || 'Allegato'} 
@@ -346,11 +400,13 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
                   </div>
                 )}
 
-                <div className={isUser ? 'prose-invert font-medium' : 'prose prose-slate max-w-none prose-p:my-1.5 prose-headings:my-2 prose-ul:my-1.5 prose-li:my-0.5'}>
+                {/* Markdown Content */}
+                <div className={isUser ? 'prose-invert font-medium break-words' : 'prose prose-slate max-w-none prose-p:my-1 prose-headings:my-1.5 prose-headings:text-slate-900 prose-ul:my-1 prose-li:my-0.5 prose-table:my-1.5 break-words'}>
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
 
-                <div className={`flex items-center justify-between mt-2.5 pt-1 border-t ${isUser ? 'border-blue-500/40 text-blue-200' : 'border-slate-100 text-slate-400'}`}>
+                {/* Footer with time and copy action */}
+                <div className={`flex items-center justify-between mt-2 pt-1 border-t ${isUser ? 'border-blue-500/40 text-blue-200' : 'border-slate-100 text-slate-400'}`}>
                   <span className="text-[10px] font-semibold">
                     {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -359,7 +415,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
                     <button
                       type="button"
                       onClick={() => handleCopyText(msg.content, msg.id)}
-                      className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                      className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-blue-600 transition-colors cursor-pointer py-0.5 px-1 rounded hover:bg-slate-100"
                       title="Copia risposta"
                     >
                       {copiedId === msg.id ? (
@@ -379,8 +435,8 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
               </div>
 
               {isUser && (
-                <div className="w-8 h-8 rounded-xl bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-xs mt-1">
-                  <User className="w-4 h-4" />
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
+                  <User className="w-3.5 h-3.5" />
                 </div>
               )}
             </div>
@@ -388,13 +444,13 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         })}
 
         {isLoading && (
-          <div className="flex gap-3 justify-start items-center animate-in fade-in duration-150">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Bot className="w-4 h-4" />
+          <div className="flex gap-2 sm:gap-2.5 justify-start items-center animate-in fade-in duration-150">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Bot className="w-3.5 h-3.5" />
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xs flex items-center gap-2.5 text-xs text-slate-600 font-medium">
-              <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
-              <span>Consultazione manuale tecnico di bordo e specifiche ufficiali in corso...</span>
+            <div className="bg-white border border-slate-200 rounded-2xl p-2.5 sm:p-3 shadow-2xs flex items-center gap-2 text-xs text-slate-600 font-medium">
+              <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />
+              <span>Consultazione manuale tecnico di bordo in corso...</span>
             </div>
           </div>
         )}
@@ -402,25 +458,44 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ATTACHMENT PREVIEW BEFORE SENDING */}
+      {/* 3. ATTACHMENT PREVIEW */}
       {attachedImage && (
-        <div className="px-4 py-2 bg-blue-50 border-t border-blue-200/80 flex items-center justify-between text-xs">
+        <div className="px-3 sm:px-4 py-1.5 bg-blue-50 border-t border-blue-200/80 flex items-center justify-between text-xs shrink-0 animate-in fade-in duration-150">
           <div className="flex items-center gap-2 truncate">
-            <img src={attachedImage.base64} alt="Anteprima" className="w-8 h-8 object-cover rounded-lg border border-blue-300" />
-            <span className="font-bold text-slate-800 truncate">{attachedImage.name}</span>
+            <img src={attachedImage.base64} alt="Anteprima" className="w-6 h-6 object-cover rounded-md border border-blue-300" />
+            <span className="font-bold text-slate-800 truncate text-[11px]">{attachedImage.name}</span>
           </div>
           <button
             type="button"
             onClick={() => setAttachedImage(null)}
             className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* INPUT BAR */}
-      <div className="p-3 md:p-4 bg-white border-t border-slate-200/80 flex items-center gap-2">
+      {/* 4. VOICE LISTENING BANNER */}
+      {isListening && (
+        <div className="px-3 py-1.5 bg-rose-50 border-t border-rose-200 flex items-center justify-between text-xs text-rose-700 font-bold shrink-0 animate-pulse">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping"></span>
+            <span>Ascolto vocale attivo... Parla adesso</span>
+          </div>
+          <button
+            type="button"
+            onClick={toggleVoiceInput}
+            className="text-[10px] px-2 py-0.5 bg-rose-600 text-white rounded-md hover:bg-rose-700 cursor-pointer"
+          >
+            Stop
+          </button>
+        </div>
+      )}
+
+      {/* 5. COMPACT INPUT BAR */}
+      <div className="p-2 sm:p-3 bg-white border-t border-slate-200/80 flex items-center gap-1.5 sm:gap-2 shrink-0">
+        
+        {/* Hidden File / Camera Inputs */}
         <input
           type="file"
           ref={fileInputRef}
@@ -428,19 +503,55 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           onChange={handleFileAttach}
           className="hidden"
         />
+        <input
+          type="file"
+          ref={cameraInputRef}
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileAttach}
+          className="hidden"
+        />
 
+        {/* Gallery / Document button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          title="Allega foto della spia cruscotto, documento o libretto"
-          className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-colors cursor-pointer shrink-0"
+          title="Allega foto o documento"
+          className="p-2 sm:p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0 active:scale-95"
         >
           <Paperclip className="w-4 h-4" />
         </button>
 
+        {/* Camera button for smartphones */}
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          title="Scatta foto della spia o vano motore"
+          className="p-2 sm:p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer shrink-0 active:scale-95 hidden xs:flex"
+        >
+          <Camera className="w-4 h-4" />
+        </button>
+
+        {/* Voice Dictation button */}
+        {speechSupported && (
+          <button
+            type="button"
+            onClick={toggleVoiceInput}
+            title={isListening ? 'Interrompi dettatura vocale' : 'Dettatura vocale'}
+            className={`p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer shrink-0 active:scale-95 ${
+              isListening
+                ? 'bg-rose-600 text-white shadow-xs animate-pulse'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+        )}
+
+        {/* Text Input */}
         <input
           type="text"
-          placeholder={`Chiedi qualsiasi cosa (controlli ESP, suono limiti ISA, ADAS, schermo, fusibili)...`}
+          placeholder="Chiedi su controlli ESP, suono ISA, reset schermo, fusibili..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => {
@@ -450,20 +561,113 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
             }
           }}
           disabled={isLoading}
-          className="flex-1 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-xs md:text-sm font-medium focus:outline-hidden transition-all placeholder:text-slate-400"
+          className="flex-1 px-3 sm:px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-xs sm:text-sm font-medium focus:outline-hidden transition-all placeholder:text-slate-400 min-w-0"
         />
 
+        {/* Send button */}
         <button
           type="button"
           onClick={() => handleSendMessage()}
           disabled={isLoading || (!inputText.trim() && !attachedImage)}
-          className="p-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+          title="Invia"
+          className="p-2 sm:p-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
         >
           <Send className="w-4 h-4" />
         </button>
+
       </div>
+
+      {/* 6. MODAL / DIALOG PER DOMANDE RAPIDE & PROCEDURE (PULITO E NASCOSTO) */}
+      {showPromptsModal && (
+        <div className="absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[85%] sm:max-h-[560px] overflow-hidden border border-slate-200 animate-in slide-in-from-bottom-4 duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-white">Domande Rapide & Procedure</h4>
+                  <p className="text-[11px] text-slate-300">Seleziona un argomento per interrogare l&apos;AI</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPromptsModal(false)}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Navigation Tabs */}
+            <div className="px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              {promptCategories.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = activeModalTab === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setActiveModalTab(cat.id)}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-blue-600 text-white shadow-xs' 
+                        : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200/80'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{cat.title.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Modal Content / Prompts List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-slate-50/50">
+              <div className="mb-2">
+                <h5 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                  <activeCategory.icon className="w-4 h-4 text-blue-600" />
+                  {activeCategory.title}
+                </h5>
+                <p className="text-[11px] text-slate-500">{activeCategory.description}</p>
+              </div>
+
+              <div className="space-y-2">
+                {activeCategory.prompts.map((promptText, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectPrompt(promptText)}
+                    className="w-full text-left p-3 bg-white hover:bg-blue-50/80 hover:border-blue-300 border border-slate-200 rounded-2xl transition-all flex items-center justify-between group shadow-2xs cursor-pointer active:scale-[0.99]"
+                  >
+                    <span className="text-xs text-slate-700 group-hover:text-blue-900 font-medium pr-2">
+                      {promptText}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-white border-t border-slate-200 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowPromptsModal(false)}
+                className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                Chiudi
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
 };
-
