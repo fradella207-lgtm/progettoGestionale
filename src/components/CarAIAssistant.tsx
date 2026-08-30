@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Bot, 
   Send, 
@@ -10,7 +10,6 @@ import {
   Copy,
   Check,
   Sliders,
-  VolumeX,
   ShieldAlert,
   Tv,
   Wrench,
@@ -20,18 +19,20 @@ import {
   MicOff,
   Camera,
   User,
-  HelpCircle,
   ChevronRight,
   BookOpen,
   ExternalLink,
-  FileCheck,
   CheckCircle2,
   Upload,
-  Plus
+  Lock,
+  Search,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Vehicle, AIChatMessage } from '../types';
 import { ManualManagerModal } from './modals/ManualManagerModal';
+import { searchAndRetrieveCarManual } from '../utils/carManualService';
 
 interface CarAIAssistantProps {
   vehicle: Vehicle;
@@ -47,15 +48,35 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPromptsModal, setShowPromptsModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
-  const [activeModalTab, setActiveModalTab] = useState('controls');
+  const [activeModalTab, setActiveModalTab] = useState('maintenance');
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null);
+  
+  // Gate screen fast-search state
+  const [isGateSearching, setIsGateSearching] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const gateFileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const speechRecognitionRef = useRef<any>(null);
+
+  // Check if manual is attached / available
+  const hasManual = useMemo(() => {
+    const info = vehicle.manualInfo || vehicle.technicalSpecs?.manualInfo;
+    const directUrl = vehicle.technicalSpecs?.ownersManualUrl;
+    if (info && (info.url || info.rawText || info.uploadedFileName || info.chapters?.length)) {
+      return true;
+    }
+    if (directUrl && directUrl.trim().length > 0) {
+      return true;
+    }
+    return false;
+  }, [vehicle]);
+
+  const manualData = vehicle.manualInfo || vehicle.technicalSpecs?.manualInfo;
 
   // Check speech recognition capability
   useEffect(() => {
@@ -180,10 +201,10 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const quickSuggestionChips = [
     'Quale olio motore e quanti litri?',
     'Come azzerare la spia tagliando?',
-    'Pressione pneumatici corretta e reset TPMS',
+    'Pressione pneumatici e reset TPMS',
     'Hard reset dello schermo bloccato',
-    'Batteria scarica: come collegare i cavi?',
-    'Come disattivare l\'antislittamento ESP su neve?',
+    'Batteria scarica: cavi emergenza',
+    'Disattivare antislittamento ESP su neve',
     'Collegamento Apple CarPlay / Android Auto'
   ];
 
@@ -193,14 +214,12 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         {
           id: 'welcome_msg',
           role: 'assistant',
-          content: `Ciao! Sono il tuo **Assistente Tecnico & Manuale di Bordo** dedicato alla tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nPuoi chiedermi **qualsiasi cosa** in merito alla tua auto:
-- 🔧 **Manutenzione**: specifiche olio motore, quantità, filtri, cinghie e coppie di serraggio
-- 🔄 **Reset e procedure**: azzeramento spia tagliando, reset pressione TPMS, riavvio forzato schermo
-- 🎛️ **Guida e controlli**: disattivazione ESP/ASR per neve o fango, Launch Control, avvisi sonori
-- ⚡ **Batteria ed emergenza**: avviamento con cavi, anomalie Start & Stop, fusibili
-- ⚠️ **Diagnosi spie**: inviami una domanda o scatta una **foto del cruscotto / spia** con il pulsante della fotocamera
-
-*Scrivi la tua domanda nel campo in basso oppure tocca uno dei suggerimenti rapidi.*`,
+          content: `Ciao! Sono il tuo **Assistente Tecnico & Manuale di Bordo** dedicato alla tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nIl manuale di bordo è collegato ed attivo. Puoi pormi qualsiasi domanda tecnica con risposte dirette e operative:
+- 🔧 **Specifiche fluidi**: tipologia esatta olio motore, litri, viscosità e specifiche costruttore
+- 🔄 **Procedure reset**: azzeramento spia tagliando, inizializzazione pressione TPMS, riavvio schermo infotainment
+- 🎛️ **Comandi & controlli**: disattivazione ESP/ASR per neve o fango, Launch Control, avvisi sonori
+- ⚡ **Batteria ed emergenza**: posizioni morsetti per cavi di avviamento, sblocco cambio e freno a mano
+- ⚠️ **Diagnosi spie**: descrivi l'anomalia o allega una **foto del quadro strumenti** con il pulsante della fotocamera`,
           timestamp: new Date().toISOString(),
         }
       ];
@@ -236,6 +255,57 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         mimeType: file.type || 'image/jpeg',
         name: file.name
       });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Quick 1-click search & attach from Mandatory Gate screen
+  const handleGateAutoSearch = async () => {
+    setIsGateSearching(true);
+    setGateError(null);
+    try {
+      const manualInfo = await searchAndRetrieveCarManual(vehicle);
+      if (manualInfo) {
+        const updated: Vehicle = {
+          ...vehicle,
+          manualInfo: manualInfo,
+          technicalSpecs: {
+            ...vehicle.technicalSpecs,
+            manualInfo: manualInfo,
+            ownersManualUrl: manualInfo.url
+          }
+        };
+        onUpdateVehicle(updated);
+      } else {
+        setGateError(`Nessun manuale pre-indicizzato trovato per ${vehicle.brand} ${vehicle.model}. Puoi caricare il tuo file PDF o aprirlo nel gestore.`);
+      }
+    } catch (e: any) {
+      setGateError('Impossibile completare la ricerca automatica. Usa il caricamento file o il gestore manuale.');
+    } finally {
+      setIsGateSearching(false);
+    }
+  };
+
+  // Direct manual file upload from Gate screen
+  const handleGateFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      const updated: Vehicle = {
+        ...vehicle,
+        manualInfo: {
+          title: `Manuale — ${file.name.replace(/\.[^/.]+$/, '')}`,
+          source: `File caricato: ${file.name}`,
+          uploadedFileName: file.name,
+          uploadedFileType: file.type || 'application/pdf',
+          uploadedFileData: base64,
+          lastUpdated: new Date().toISOString()
+        }
+      };
+      onUpdateVehicle(updated);
     };
     reader.readAsDataURL(file);
   };
@@ -331,20 +401,180 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   };
 
   const activeCategory = promptCategories.find(c => c.id === activeModalTab) || promptCategories[0];
-  const manualData = vehicle.manualInfo || vehicle.technicalSpecs?.manualInfo;
 
+  // =========================================================================
+  // IF MANUAL IS NOT ATTACHED: DISPLAY MANDATORY MANUAL ONBOARDING GATE
+  // =========================================================================
+  if (!hasManual) {
+    return (
+      <div className="w-full max-w-full min-w-0 bg-white border border-slate-200/90 rounded-3xl shadow-xs overflow-hidden flex flex-col">
+        
+        {/* Gate Header */}
+        <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-sm sm:text-base text-white truncate">
+                Assistente AI & Manuale di Bordo
+              </h3>
+              <p className="text-xs text-slate-300 truncate">
+                {vehicle.brand} {vehicle.model} {vehicle.trimLevel ? `· ${vehicle.trimLevel}` : ''}
+              </p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-400/30 shrink-0 flex items-center gap-1">
+            <AlertCircle className="w-3.5 h-3.5" /> Manuale Richiesto
+          </span>
+        </div>
+
+        {/* Gate Body Content */}
+        <div className="p-4 sm:p-6 md:p-8 space-y-6 max-w-3xl mx-auto w-full">
+          
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl mb-1">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <h4 className="text-lg sm:text-xl font-bold text-slate-900">
+              Collega il Manuale d&apos;Uso per Sbloccare l&apos;AI
+            </h4>
+            <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
+              Per garantirti <strong>procedure operative certificate</strong>, specifiche esatte di viscosità dei fluidi, schemi di reset del quadro e posizioni dei comandi della tua <strong>{vehicle.brand} {vehicle.model}</strong>, è obbligatorio collegare il manuale d&apos;uso.
+            </p>
+          </div>
+
+          {gateError && (
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+              <span>{gateError}</span>
+            </div>
+          )}
+
+          {/* 3 Interactive Methods to attach Manual */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            
+            {/* Option 1: Automatic 1-Click Search */}
+            <div className="p-4 bg-gradient-to-b from-blue-50/80 to-white border border-blue-200 rounded-2xl flex flex-col justify-between space-y-3">
+              <div className="space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h5 className="font-bold text-slate-900 text-xs sm:text-sm">Ricerca 1-Click Online</h5>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Cerca automaticamente nell&apos;archivio costruttori e collega il PDF ufficiale.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleGateAutoSearch}
+                disabled={isGateSearching}
+                className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                {isGateSearching ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Ricerca in corso...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Cerca & Sblocca</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Option 2: Upload File */}
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between space-y-3 shadow-2xs">
+              <div className="space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <h5 className="font-bold text-slate-900 text-xs sm:text-sm">Carica File PDF / Foto</h5>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Carica il libretto d&apos;uso in PDF o le foto delle pagine che ti interessano.
+                </p>
+              </div>
+              <input
+                type="file"
+                ref={gateFileInputRef}
+                accept="application/pdf,image/*"
+                onChange={handleGateFileUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => gateFileInputRef.current?.click()}
+                className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Carica Documento</span>
+              </button>
+            </div>
+
+            {/* Option 3: Advanced Manual Manager Modal */}
+            <div className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between space-y-3 shadow-2xs">
+              <div className="space-y-1.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                </div>
+                <h5 className="font-bold text-slate-900 text-xs sm:text-sm">Gestore Avanzato</h5>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Inserisci link web personalizzato, note d&apos;officina o configura i dettagli.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowManualModal(true)}
+                className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <span>Apri Gestore Completo</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* Quick FAQ info box */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <span>
+              Una volta collegato il manuale, l&apos;Assistente AI memorizzerà per sempre le specifiche per <strong>{vehicle.brand} {vehicle.model}</strong> e risponderà istantaneamente ad ogni quesito.
+            </span>
+          </div>
+
+        </div>
+
+        {/* Modal for manual manager */}
+        <ManualManagerModal
+          isOpen={showManualModal}
+          vehicle={vehicle}
+          onClose={() => setShowManualModal(false)}
+          onSaveManual={(updatedVehicle) => {
+            onUpdateVehicle(updatedVehicle);
+            setShowManualModal(false);
+          }}
+        />
+
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // UNLOCKED AI ASSISTANT CHAT INTERFACE
+  // =========================================================================
   return (
-    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm flex flex-col h-[calc(100dvh-175px)] min-h-[480px] md:h-[700px] max-h-[800px] overflow-hidden animate-in fade-in duration-200 relative">
+    <div className="w-full max-w-full min-w-0 bg-white border border-slate-200/90 rounded-3xl shadow-xs flex flex-col h-[580px] sm:h-[650px] md:h-[700px] overflow-hidden relative">
       
-      {/* 1. CLEAN COMPACT HEADER */}
-      <div className="bg-slate-900 text-white p-3 sm:p-3.5 px-4 sm:px-5 flex items-center justify-between border-b border-slate-800 shrink-0">
+      {/* 1. HEADER (MOBILE-ADAPTED & CLEAN) */}
+      <div className="bg-slate-900 text-white p-3 sm:p-3.5 px-3.5 sm:px-5 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
             <Bot className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-xs sm:text-sm text-white truncate">Assistente Tecnico & Manuale di Bordo</h3>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h3 className="font-bold text-xs sm:text-sm text-white truncate">Assistente & Manuale AI</h3>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/20 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 Manuale Attivo
@@ -358,22 +588,20 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
 
         {/* Header Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Quick Prompts Modal Trigger Button */}
           <button
             type="button"
             onClick={() => setShowPromptsModal(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600/90 hover:bg-blue-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer active:scale-95 border border-blue-400/30"
-            title="Apri domande frequenti e procedure"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer active:scale-95 border border-blue-400/30"
+            title="Apri domande rapide e procedure"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span className="hidden xs:inline">Domande Rapide</span>
           </button>
 
-          {/* Clear history */}
           <button
             type="button"
             onClick={handleClearHistory}
-            title="Svuota conversazione"
+            title="Svuota cronologia chat"
             className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
@@ -382,7 +610,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
       </div>
 
       {/* 1.1 DEDICATED OFFICIAL OWNER MANUAL STATUS BAR */}
-      <div className="bg-slate-800 border-b border-slate-700/80 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+      <div className="bg-slate-800 border-b border-slate-700/80 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
             <BookOpen className="w-3.5 h-3.5" />
@@ -390,14 +618,14 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-white text-xs truncate">
-                {manualData?.title || `Manuale di Uso e Manutenzione Ufficiale — ${vehicle.brand} ${vehicle.model}`}
+                {manualData?.title || `Manuale di Uso e Manutenzione — ${vehicle.brand} ${vehicle.model}`}
               </span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30 shrink-0 inline-flex items-center gap-0.5">
-                <CheckCircle2 className="w-2.5 h-2.5" /> Scaricato & Indicizzato
+              <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30 shrink-0">
+                <CheckCircle2 className="w-2.5 h-2.5" /> Indicizzato
               </span>
             </div>
             <p className="text-[10px] text-slate-300 truncate">
-              Fonte: {manualData?.source || 'manuals.startmycar.com / Archivio Costruttore'} · Risposte dirette basate su configurazione e allestimento
+              Fonte: {manualData?.source || 'Manuale Originale Costruttore'}
             </p>
           </div>
         </div>
@@ -407,10 +635,10 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
             type="button"
             onClick={() => setShowManualModal(true)}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95 border border-slate-600"
-            title="Cerca, allega o carica il tuo manuale PDF / cartaceo"
+            title="Gestisci o cambia il manuale associato"
           >
             <Upload className="w-3.5 h-3.5 text-blue-400" />
-            <span>Gestisci / Allega Manuale</span>
+            <span className="hidden xs:inline">Gestisci</span>
           </button>
 
           {manualData?.url && (
@@ -418,24 +646,24 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
               href={manualData.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
-              title="Apri o scarica il manuale originale in formato PDF"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+              title="Apri PDF del manuale in nuova scheda"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Apri PDF</span>
+              <span className="hidden xs:inline">PDF</span>
             </a>
           )}
         </div>
       </div>
 
       {/* 2. MESSAGES FEED */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-3.5 bg-slate-50/60 touch-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 bg-slate-50/70 min-w-0">
         {chatMessages.map((msg) => {
           const isUser = msg.role === 'user';
           return (
             <div
               key={msg.id}
-              className={`flex gap-2 sm:gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
+              className={`flex gap-2 sm:gap-2.5 ${isUser ? 'justify-end' : 'justify-start'} min-w-0`}
             >
               {!isUser && (
                 <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-1">
@@ -444,7 +672,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
               )}
 
               <div
-                className={`group relative max-w-[94%] sm:max-w-[85%] md:max-w-[78%] rounded-2xl p-3 sm:p-3.5 text-xs sm:text-[13px] leading-relaxed shadow-2xs ${
+                className={`group relative max-w-[88%] sm:max-w-[82%] md:max-w-[78%] min-w-0 rounded-2xl p-3 sm:p-3.5 text-xs sm:text-[13px] leading-relaxed shadow-2xs overflow-hidden ${
                   isUser
                     ? 'bg-blue-600 text-white rounded-tr-xs'
                     : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs'
@@ -461,9 +689,31 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
                   </div>
                 )}
 
-                {/* Markdown Content */}
-                <div className={isUser ? 'prose-invert font-medium break-words' : 'prose prose-slate max-w-none prose-p:my-1 prose-headings:my-1.5 prose-headings:text-slate-900 prose-ul:my-1 prose-li:my-0.5 prose-table:my-1.5 break-words'}>
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                {/* Markdown Content formatted strictly with responsive styling */}
+                <div className={isUser ? 'prose-invert font-medium break-words overflow-hidden text-xs sm:text-[13px]' : 'prose prose-slate max-w-none text-slate-850 break-words overflow-hidden text-xs sm:text-[13px]'}>
+                  <ReactMarkdown
+                    components={{
+                      p: ({ node, ...props }) => <p className="my-1 leading-relaxed" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="my-1.5 pl-4 list-disc space-y-0.5" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="my-1.5 pl-4 list-decimal space-y-1" {...props} />,
+                      li: ({ node, ...props }) => <li className="leading-relaxed" {...props} />,
+                      strong: ({ node, ...props }) => <strong className={isUser ? "font-extrabold text-white" : "font-extrabold text-slate-900"} {...props} />,
+                      code: ({ node, inline, ...props }: any) => inline ? (
+                        <code className={isUser ? "bg-blue-700/80 text-blue-100 px-1 py-0.5 rounded text-[11px] font-mono" : "bg-slate-100 text-blue-700 px-1 py-0.5 rounded text-[11px] font-mono border border-slate-200"} {...props} />
+                      ) : (
+                        <pre className="bg-slate-900 text-slate-100 p-2.5 rounded-xl text-[11px] font-mono overflow-x-auto my-2 border border-slate-800">
+                          <code {...props} />
+                        </pre>
+                      ),
+                      table: ({ node, ...props }) => (
+                        <div className="overflow-x-auto my-2 rounded-xl border border-slate-200">
+                          <table className="min-w-full text-xs text-left divide-y divide-slate-200" {...props} />
+                        </div>
+                      )
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
 
                 {/* Footer with time and copy action */}
@@ -521,9 +771,9 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
 
       {/* 3. ATTACHMENT PREVIEW */}
       {attachedImage && (
-        <div className="px-3 sm:px-4 py-1.5 bg-blue-50 border-t border-blue-200/80 flex items-center justify-between text-xs shrink-0 animate-in fade-in duration-150">
+        <div className="px-3 sm:px-4 py-1.5 bg-blue-50 border-t border-blue-200/80 flex items-center justify-between text-xs shrink-0">
           <div className="flex items-center gap-2 truncate">
-            <img src={attachedImage.base64} alt="Anteprima" className="w-6 h-6 object-cover rounded-md border border-blue-300" />
+            <img src={attachedImage.base64} alt="Anteprima" className="w-6 h-6 object-cover rounded-md border border-blue-300 shrink-0" />
             <span className="font-bold text-slate-800 truncate text-[11px]">{attachedImage.name}</span>
           </div>
           <button
@@ -571,7 +821,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         ))}
       </div>
 
-      {/* 5. COMPACT INPUT BAR */}
+      {/* 5. COMPACT INPUT BAR (NO HORIZONTAL OVERFLOW) */}
       <div className="p-2 sm:p-3 bg-white border-t border-slate-200/80 flex items-center gap-1.5 sm:gap-2 shrink-0">
         
         {/* Hidden File / Camera Inputs */}
@@ -656,7 +906,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
 
       </div>
 
-      {/* 6. MODAL / DIALOG PER DOMANDE RAPIDE & PROCEDURE (PULITO E NASCOSTO) */}
+      {/* 6. MODAL / DIALOG PER DOMANDE RAPIDE & PROCEDURE */}
       {showPromptsModal && (
         <div className="absolute inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
           <div className="bg-white w-full sm:max-w-xl rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[85%] sm:max-h-[560px] overflow-hidden border border-slate-200 animate-in slide-in-from-bottom-4 duration-200">

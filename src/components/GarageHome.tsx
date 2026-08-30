@@ -366,22 +366,22 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                     </div>
 
                     {/* Key Minimal Metrics Grid */}
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-50 p-2.5 sm:p-3 rounded-2xl border border-slate-100 text-center">
-                      <div>
-                        <span className="text-[8.5px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-bold block">Chilometri</span>
-                        <span className="text-xs sm:text-sm font-black text-slate-900">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-50 p-2 sm:p-2.5 rounded-2xl border border-slate-100 text-center">
+                      <div className="min-w-0">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-extrabold block truncate">Km Totali</span>
+                        <span className="text-[11px] sm:text-xs md:text-sm font-black text-slate-900 truncate block mt-0.5">
                           {currentKm.toLocaleString('it-IT')} km
                         </span>
                       </div>
-                      <div>
-                        <span className="text-[8.5px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-bold block">Serbatoio</span>
-                        <span className="text-xs sm:text-sm font-black text-slate-900">
+                      <div className="min-w-0">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-extrabold block truncate">Serbatoio</span>
+                        <span className="text-[11px] sm:text-xs md:text-sm font-black text-slate-900 truncate block mt-0.5">
                           {car.tankCapacity > 0 ? `${car.tankCapacity} ${fuelUnit}` : '-'}
                         </span>
                       </div>
-                      <div>
-                        <span className="text-[8.5px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-bold block">Spesa Totale</span>
-                        <span className="text-xs sm:text-sm font-black text-emerald-700">
+                      <div className="min-w-0">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-slate-400 font-extrabold block truncate">Spesa Tot.</span>
+                        <span className="text-[11px] sm:text-xs md:text-sm font-black text-emerald-700 truncate block mt-0.5">
                           {settings.currency} {carTotalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                       </div>

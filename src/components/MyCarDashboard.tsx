@@ -115,7 +115,7 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-center">
           
           {/* Car Photo */}
-          <div className="md:col-span-4 relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-16/10 bg-slate-900 border border-slate-200 shadow-inner group">
+          <div className="md:col-span-4 relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-video sm:aspect-[16/10] bg-slate-900 border border-slate-200 shadow-inner group">
             <img
               src={currentVehicle.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&auto=format&fit=crop&q=80'}
               alt={`${currentVehicle.brand} ${currentVehicle.model}`}
@@ -131,17 +131,17 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
           </div>
 
           {/* Car Meta and Quick Stats */}
-          <div className="md:col-span-8 space-y-3.5">
-            <div>
-              <div className="flex items-center gap-2">
+          <div className="md:col-span-8 space-y-3.5 min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600">Scheda Tecnica & AI</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                 <span className="text-[11px] text-slate-500 font-semibold truncate">
                   Immatr.: {currentVehicle.registrationDate ? new Date(currentVehicle.registrationDate).toLocaleDateString('it-IT') : 'N/D'}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight mt-0.5">
-                {currentVehicle.brand} {currentVehicle.model}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight mt-0.5 break-words">
+                {currentVehicle.brand} <span className="text-indigo-600">{currentVehicle.model}</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                 {currentVehicle.motorization || currentVehicle.fuelType} 
@@ -151,32 +151,32 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 
             {/* Micro badges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block">Chilometri</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block">{currentKm.toLocaleString('it-IT')} km</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Chilometri</span>
+                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentKm.toLocaleString('it-IT')} km</span>
               </div>
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block">Documenti</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block">{currentVehicle.documents?.length || 0} file</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Documenti</span>
+                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.documents?.length || 0} file</span>
               </div>
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block">Tagliandi</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block">{currentVehicle.maintenances?.length || 0}</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Tagliandi</span>
+                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.maintenances?.length || 0}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(true)}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-left cursor-pointer transition-all hover:scale-[1.02] active:scale-95 ${
+                className={`p-2.5 sm:p-3 rounded-2xl border text-left cursor-pointer transition-all hover:scale-[1.02] active:scale-95 min-w-0 ${
                   hasManual 
                     ? 'bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 shadow-2xs' 
                     : 'bg-indigo-50 hover:bg-indigo-100/80 border-indigo-200 shadow-2xs'
                 }`}
                 title="Visualizza, allega o cerca il manuale ufficiale di bordo"
               >
-                <span className={`text-[9px] font-extrabold uppercase block ${hasManual ? 'text-emerald-700' : 'text-indigo-700'}`}>Manuale</span>
-                <span className={`text-xs font-black mt-0.5 block flex items-center gap-1 ${hasManual ? 'text-emerald-900' : 'text-indigo-900'}`}>
-                  {hasManual ? <BookOpen className="w-3.5 h-3.5 text-emerald-600" /> : <Upload className="w-3.5 h-3.5 text-indigo-600" />}
-                  {hasManual ? 'Indicizzato' : 'Allega PDF'}
+                <span className={`text-[9px] font-extrabold uppercase block truncate ${hasManual ? 'text-emerald-700' : 'text-indigo-700'}`}>Manuale</span>
+                <span className={`text-xs font-black mt-0.5 flex items-center gap-1 truncate ${hasManual ? 'text-emerald-900' : 'text-indigo-900'}`}>
+                  {hasManual ? <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <Upload className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                  <span className="truncate">{hasManual ? 'Indicizzato' : 'Allega PDF'}</span>
                 </span>
               </button>
             </div>
@@ -187,32 +187,32 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
       </div>
 
       {/* SECTION TABS (Scheda Tecnica / Documenti / Assistente AI) */}
-      <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-2xl max-w-lg shadow-inner">
+      <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-2xl w-full max-w-lg shadow-inner">
         
         <button
           type="button"
           onClick={() => setActiveTab('specs')}
-          className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
             activeTab === 'specs'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="truncate">Scheda Tecnica</span>
+          <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+          <span className="truncate">Scheda</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('documents')}
-          className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer relative active:scale-95 ${
+          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer relative active:scale-95 ${
             activeTab === 'documents'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <FileText className="w-3.5 h-3.5 text-slate-700" />
-          <span className="truncate">Libretto & DUC</span>
+          <FileText className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+          <span className="truncate">Libretto</span>
           {currentVehicle.documents && currentVehicle.documents.length > 0 && (
             <span className="w-4 h-4 rounded-full bg-slate-900 text-white text-[8.5px] font-black flex items-center justify-center shrink-0">
               {currentVehicle.documents.length}
@@ -223,13 +223,13 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('assistant')}
-          className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
             activeTab === 'assistant'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <Bot className="w-3.5 h-3.5 text-emerald-600" />
+          <Bot className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           <span className="truncate">Assistente AI</span>
         </button>
 

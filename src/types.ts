@@ -57,14 +57,20 @@ export interface VehicleDocument {
 }
 
 export interface VehicleManualInfo {
-  url: string; // URL diretto al manuale PDF o portale ufficiale costruttore
+  url?: string; // URL diretto al manuale PDF o portale ufficiale costruttore
   title: string; // es. "Manuale di Uso e Manutenzione BMW Serie 3 (2007)"
   source: string; // es. "manuals.startmycar.com", "BMW Driver's Guide", "eLum Fiat"
-  pdfAvailable: boolean;
+  pdfAvailable?: boolean;
   pages?: number;
   downloadDate?: string;
   language?: string;
   indexedChapters?: string[];
+  chapters?: string[];
+  rawText?: string;
+  uploadedFileName?: string;
+  uploadedFileType?: string;
+  uploadedFileData?: string;
+  lastUpdated?: string;
   keyProcedures?: {
     espAndControls?: string;
     tpmsReset?: string;

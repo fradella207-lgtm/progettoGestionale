@@ -557,10 +557,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   <Fuel className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight truncate">
+                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                     + Aggiungi Rifornimento Benzina
                   </span>
-                  <span className="block text-[11px] text-blue-100 font-medium truncate">
+                  <span className="block text-[11px] text-blue-100 font-medium leading-tight">
                     Registra litri erogati, pieno e spesa carburante
                   </span>
                 </div>
@@ -581,10 +581,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight truncate">
+                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                     + Aggiungi Ricarica Elettrica
                   </span>
-                  <span className="block text-[11px] text-amber-100 font-medium truncate">
+                  <span className="block text-[11px] text-amber-100 font-medium leading-tight">
                     Registra kWh batteria, colonnina o wallbox
                   </span>
                 </div>
@@ -607,10 +607,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   <Fuel className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight truncate">
+                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                     + Aggiungi Rifornimento Benzina
                   </span>
-                  <span className="block text-[11px] text-blue-100 font-medium truncate">
+                  <span className="block text-[11px] text-blue-100 font-medium leading-tight">
                     Registra litri erogati serbatoio benzina
                   </span>
                 </div>
@@ -631,10 +631,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   <Fuel className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight truncate">
+                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                     + Aggiungi Rifornimento {isLPG ? 'GPL' : 'Metano'}
                   </span>
-                  <span className="block text-[11px] text-sky-100 font-medium truncate">
+                  <span className="block text-[11px] text-sky-100 font-medium leading-tight">
                     Registra erogazione {isLPG ? 'litri GPL' : 'Kg Metano'}
                   </span>
                 </div>
@@ -648,17 +648,17 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <button
             id="btn-main-add-refuel"
             onClick={() => onOpenAddRefuel()}
-            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer h-full min-h-[96px]"
+            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer h-full min-h-[90px]"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                {isBEV ? <Zap className="w-6 h-6 text-white" /> : <Fuel className="w-6 h-6 text-white" />}
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                {isBEV ? <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> : <Fuel className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
               </div>
               <div className="text-left min-w-0">
-                <span className="block text-base font-extrabold tracking-tight truncate">
+                <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                   + Aggiungi {isBEV ? 'Ricarica' : 'Rifornimento'}
                 </span>
-                <span className="block text-xs text-blue-100 font-medium mt-0.5 truncate">
+                <span className="block text-[11px] sm:text-xs text-blue-100 font-medium mt-0.5 leading-tight">
                   {isBEV ? 'Registra kWh erogati e spesa' : 'Registra litri erogati, pieno e spesa'}
                 </span>
               </div>
@@ -674,18 +674,18 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           id="btn-main-add-maint"
           onClick={onOpenAddMaintenance}
           className={`bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer ${
-            isPHEV || isLPG || isCNG ? 'h-full min-h-[110px]' : 'h-full min-h-[96px]'
+            isPHEV || isLPG || isCNG ? 'h-full min-h-[100px]' : 'h-full min-h-[90px]'
           }`}
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <Wrench className="w-6 h-6 text-white" />
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="text-left min-w-0">
-              <span className="block text-base font-extrabold tracking-tight truncate">
+              <span className="block text-sm sm:text-base font-extrabold tracking-tight">
                 + Aggiungi Manutenzione
               </span>
-              <span className="block text-xs text-emerald-100 font-medium mt-0.5 truncate">
+              <span className="block text-[11px] sm:text-xs text-emerald-100 font-medium mt-0.5 leading-tight">
                 Registra tagliando, ricambi o officina
               </span>
             </div>

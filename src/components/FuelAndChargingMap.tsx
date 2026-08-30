@@ -225,6 +225,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
   // Initial load: Attempt automatic GPS position on mobile & desktop, with graceful fallback
   useEffect(() => {
+    // Fetch all nationwide stations so map and list are fully populated everywhere
+    fetchAreaStations({ type: 'all' });
+
     if (navigator.geolocation && !localStorage.getItem('garage_location_dismissed')) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -233,19 +236,15 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             lng: pos.coords.longitude
           };
           setUserLocation(coords);
-          fetchAreaStations({ lat: coords.lat, lng: coords.lng, radius: 35, type: 'all' });
           if (mapInstanceRef.current) {
             mapInstanceRef.current.setView([coords.lat, coords.lng], 12);
           }
         },
         () => {
-          // Default fallback Milan
-          fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
+          // GPS refused or timed out - stations are already loaded nationwide
         },
         { enableHighAccuracy: false, timeout: 6000 }
       );
-    } else {
-      fetchAreaStations({ lat: 45.4642, lng: 9.1900, radius: 45, type: 'all' });
     }
   }, []);
 

@@ -125,28 +125,28 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
 
       {/* OFFICIAL OWNER'S MANUAL CARD */}
       {(vehicle.manualInfo || specs.manualInfo) && (
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 md:p-6 shadow-xs space-y-3">
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm md:text-base font-black text-slate-900">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-sm md:text-base font-black text-slate-900 truncate">
                     {(vehicle.manualInfo || specs.manualInfo)?.title || `Manuale di Uso e Manutenzione Ufficiale`}
                   </h3>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Scaricato & Indicizzato
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shrink-0">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Indicizzato
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Fonte: {(vehicle.manualInfo || specs.manualInfo)?.source || 'manuals.startmycar.com'} · Documento originale per allestimento e anno di fabbricazione
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  Fonte: {(vehicle.manualInfo || specs.manualInfo)?.source || 'Manuale Costruttore'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(true)}
@@ -154,7 +154,7 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
                 title="Gestisci, cerca o allega manuale"
               >
                 <Upload className="w-3.5 h-3.5 text-blue-600" />
-                <span>Gestisci / Allega</span>
+                <span>Gestisci</span>
               </button>
 
               {(vehicle.manualInfo || specs.manualInfo)?.url && (
@@ -162,10 +162,10 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
                   href={(vehicle.manualInfo || specs.manualInfo)?.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>PDF Originale</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>PDF</span>
                 </a>
               )}
             </div>
@@ -187,29 +187,29 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
       )}
 
       {/* GRID SPECIFICHE CHIAVE */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
         
         {/* Potenza */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Potenza Max</span>
-            <Gauge className="w-4 h-4 text-blue-600" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Potenza Max</span>
+            <Gauge className="w-4 h-4 text-blue-600 shrink-0" />
           </div>
-          <div className="text-xl font-black text-slate-900">
+          <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
             {specs.powerCv || vehicle.powerCv ? `${specs.powerCv || vehicle.powerCv} CV` : '—'}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+          <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
             {specs.powerKw || vehicle.powerKw ? `${specs.powerKw || vehicle.powerKw} kW` : (vehicle.powerCv ? `${Math.round(vehicle.powerCv * 0.735)} kW` : '')}
           </div>
         </div>
 
         {/* Cilindrata & Motore */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Cilindrata / Tipo</span>
-            <Cpu className="w-4 h-4 text-indigo-600" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Cilindrata</span>
+            <Cpu className="w-4 h-4 text-indigo-600 shrink-0" />
           </div>
-          <div className="text-xl font-black text-slate-900">
+          <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
             {specs.engineDisplacementCc ? `${specs.engineDisplacementCc} cm³` : (vehicle.fuelType === 'Elettrica (BEV)' ? 'Full Electric' : '—')}
           </div>
           <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
@@ -218,71 +218,71 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
         </div>
 
         {/* Coppia */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Coppia Motrice</span>
-            <Zap className="w-4 h-4 text-amber-500" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Coppia Motrice</span>
+            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
           </div>
-          <div className="text-xl font-black text-slate-900">
+          <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
             {specs.torqueNm ? `${specs.torqueNm} Nm` : '—'}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+          <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
             Erogazione istantanea
           </div>
         </div>
 
         {/* Classe Ambientale */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Omologazione</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Omologazione</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-xl font-black text-slate-900">
+          <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
             {specs.euroClass || 'Euro 6'}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+          <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
             Voce V.9 Libretto
           </div>
         </div>
 
         {/* Serbatoio / Batteria */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Capacità Serbatoio</span>
-            <Fuel className="w-4 h-4 text-rose-500" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Serbatoio</span>
+            <Fuel className="w-4 h-4 text-rose-500 shrink-0" />
           </div>
-          <div className="text-xl font-black text-slate-900">
+          <div className="text-lg sm:text-xl font-black text-slate-900 truncate">
             {specs.fuelCapacityLiters || vehicle.tankCapacity ? `${specs.fuelCapacityLiters || vehicle.tankCapacity} Litri` : (specs.batteryCapacityKwh ? `${specs.batteryCapacityKwh} kWh` : '—')}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
-            {specs.wltpRangeKm ? `Autonomia ~${specs.wltpRangeKm} km` : 'Autonomia di serie'}
+          <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
+            {specs.wltpRangeKm ? `Autonomia ~${specs.wltpRangeKm} km` : 'Autonomia standard'}
           </div>
         </div>
 
         {/* Consumo Medio WLTP */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold">Consumi WLTP</span>
-            <FileSpreadsheet className="w-4 h-4 text-teal-600" />
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5">
+            <span className="text-[11px] sm:text-xs font-bold truncate">Consumi WLTP</span>
+            <FileSpreadsheet className="w-4 h-4 text-teal-600 shrink-0" />
           </div>
-          <div className="text-sm font-black text-slate-900 truncate">
+          <div className="text-sm sm:text-base font-black text-slate-900 truncate">
             {specs.wltpConsumption || '5.2 L / 100km'}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+          <div className="text-[11px] font-semibold text-slate-500 mt-0.5 truncate">
             Ciclo combinato
           </div>
         </div>
 
         {/* Trasmissione e Trazione */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:border-blue-300 transition-colors sm:col-span-2">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 sm:p-4 shadow-xs hover:border-blue-300 transition-colors col-span-2 min-w-0">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-semibold">Cambio & Trazione</span>
-            <Disc className="w-4 h-4 text-purple-600" />
+            <span className="text-[11px] sm:text-xs font-bold truncate">Cambio & Trazione</span>
+            <Disc className="w-4 h-4 text-purple-600 shrink-0" />
           </div>
-          <div className="text-sm font-bold text-slate-900">
+          <div className="text-xs sm:text-sm font-black text-slate-900 truncate">
             {specs.transmission || 'Automatico / Manuale'}
           </div>
-          <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+          <div className="text-[11px] text-slate-500 font-medium mt-0.5 truncate">
             {specs.drivetrain || vehicle.driveType || 'Trazione standard di serie'}
           </div>
         </div>
