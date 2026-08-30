@@ -11,7 +11,10 @@ import {
   RefreshCw, 
   AlertCircle,
   HelpCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BookOpen,
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
 import { Vehicle, VehicleTechnicalSpecs } from '../types';
 
@@ -115,6 +118,57 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
           </div>
         )}
       </div>
+
+      {/* OFFICIAL OWNER'S MANUAL CARD */}
+      {(vehicle.manualInfo || specs.manualInfo) && (
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-5 md:p-6 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm md:text-base font-black text-slate-900">
+                    {(vehicle.manualInfo || specs.manualInfo)?.title || `Manuale di Uso e Manutenzione Ufficiale`}
+                  </h3>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Scaricato & Indicizzato
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Fonte: {(vehicle.manualInfo || specs.manualInfo)?.source || 'manuals.startmycar.com'} · Documento originale per allestimento e anno di fabbricazione
+                </p>
+              </div>
+            </div>
+
+            {(vehicle.manualInfo || specs.manualInfo)?.url && (
+              <a
+                href={(vehicle.manualInfo || specs.manualInfo)?.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Consulta / Scarica PDF Originale</span>
+              </a>
+            )}
+          </div>
+
+          {(vehicle.manualInfo || specs.manualInfo)?.indexedChapters && (
+            <div className="pt-1">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Capitoli e Sezioni di Bordo Indicizzate:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {(vehicle.manualInfo || specs.manualInfo)?.indexedChapters?.map((chap, idx) => (
+                  <span key={idx} className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/70 font-medium">
+                    {chap}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* GRID SPECIFICHE CHIAVE */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">

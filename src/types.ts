@@ -56,6 +56,27 @@ export interface VehicleDocument {
   };
 }
 
+export interface VehicleManualInfo {
+  url: string; // URL diretto al manuale PDF o portale ufficiale costruttore
+  title: string; // es. "Manuale di Uso e Manutenzione BMW Serie 3 (2007)"
+  source: string; // es. "manuals.startmycar.com", "BMW Driver's Guide", "eLum Fiat"
+  pdfAvailable: boolean;
+  pages?: number;
+  downloadDate?: string;
+  language?: string;
+  indexedChapters?: string[];
+  keyProcedures?: {
+    espAndControls?: string;
+    tpmsReset?: string;
+    oilAndFluids?: string;
+    screenReset?: string;
+    batteryAndJumpStart?: string;
+    fusesAndObd?: string;
+    serviceReset?: string;
+  };
+  fullManualSummary?: string;
+}
+
 export interface VehicleTechnicalSpecs {
   engineDisplacementCc?: number; // Cilindrata (cm³)
   powerCv?: number; // Cavalli vapore
@@ -97,6 +118,7 @@ export interface VehicleTechnicalSpecs {
   batteryType?: string; // Batteria avviamento (es. 12V 70Ah 760A AGM / EFB)
   ownersManualUrl?: string;
   ownersManualSource?: string;
+  manualInfo?: VehicleManualInfo;
   summaryQuattroruote?: string;
 }
 
@@ -133,6 +155,7 @@ export interface Vehicle {
   maintenances: MaintenanceRecord[];
   documents?: VehicleDocument[];
   technicalSpecs?: VehicleTechnicalSpecs;
+  manualInfo?: VehicleManualInfo;
   aiChatHistory?: AIChatMessage[];
 }
 

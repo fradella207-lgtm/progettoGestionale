@@ -11,7 +11,8 @@ import {
   Fuel, 
   ShieldCheck, 
   Plus,
-  ArrowRightLeft
+  ArrowRightLeft,
+  BookOpen
 } from 'lucide-react';
 import { Vehicle } from '../types';
 import { CarTechnicalSpecs } from './CarTechnicalSpecs';
@@ -39,8 +40,8 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 
   if (!currentVehicle) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-10 text-center space-y-4">
-        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-sm">
+      <div className="max-w-6xl mx-auto px-4 py-12 text-center space-y-4">
+        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mx-auto shadow-xs">
           <Car className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-slate-900">Nessuna auto presente nel tuo Garage</h2>
@@ -51,7 +52,7 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
           <button
             type="button"
             onClick={onOpenAddVehicleModal}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl text-xs shadow-sm"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-2xl text-xs shadow-xs transition-all cursor-pointer"
           >
             Aggiungi Auto al Garage
           </button>
@@ -68,27 +69,28 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
     ? Math.max(...currentVehicle.maintenances.map(m => m.km)) 
     : 0;
   const currentKm = Math.max(currentVehicle.initialKm || 0, maxRefuelKm, maxMaintKm);
+  const hasManual = !!(currentVehicle.manualInfo || currentVehicle.technicalSpecs?.manualInfo);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-4 md:py-6 space-y-6 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* VEHICLE SELECTOR & HERO CARD */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-5 md:p-6 shadow-xs space-y-5">
+      <div className="bg-white border border-slate-200/80 rounded-3xl p-5 md:p-6 shadow-2xs space-y-5">
         
         {/* Top selector row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-slate-400">Veicolo Selezionato:</span>
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400 shrink-0">Seleziona Auto:</span>
+            <div className="flex items-center gap-2">
               {vehicles.map((v) => (
                 <button
                   key={v.id}
                   type="button"
                   onClick={() => onSelectVehicle(v.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
                     v.id === currentVehicle.id
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   <Car className="w-3.5 h-3.5" />
@@ -99,8 +101,8 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
           </div>
 
           {vehicles.length > 1 && (
-            <span className="text-xs text-slate-400 font-medium">
-              {vehicles.length} veicoli nel garage
+            <span className="text-xs text-slate-400 font-semibold shrink-0">
+              {vehicles.length} veicoli registrati
             </span>
           )}
         </div>
@@ -109,16 +111,17 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           
           {/* Car Photo */}
-          <div className="md:col-span-4 relative rounded-2xl overflow-hidden aspect-16/10 bg-slate-900 border border-slate-200 shadow-inner group">
+          <div className="md:col-span-4 relative rounded-3xl overflow-hidden aspect-16/10 bg-slate-900 border border-slate-200 shadow-inner group">
             <img
               src={currentVehicle.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&auto=format&fit=crop&q=80'}
               alt={`${currentVehicle.brand} ${currentVehicle.model}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-black/75 backdrop-blur-xs text-white rounded-lg font-mono font-bold text-xs tracking-wider border border-white/20">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+            <div className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-black/75 backdrop-blur-md text-white rounded-xl font-mono font-bold text-xs tracking-wider border border-white/20">
               {currentVehicle.plate || 'TARGA'}
             </div>
-            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 bg-blue-600/90 backdrop-blur-xs text-white rounded-md font-bold text-[10px]">
+            <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-blue-600/90 backdrop-blur-md text-white rounded-xl font-bold text-[10px]">
               {currentVehicle.fuelType}
             </div>
           </div>
@@ -145,21 +148,22 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
             {/* Micro badges */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Chilometri Attuali</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Chilometri Attuali</span>
                 <span className="text-sm font-black text-slate-900 mt-0.5 block">{currentKm.toLocaleString('it-IT')} km</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Documenti Salvati</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Documenti Salvati</span>
                 <span className="text-sm font-black text-slate-900 mt-0.5 block">{currentVehicle.documents?.length || 0} file</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Tagliandi Eseguiti</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Tagliandi Eseguiti</span>
                 <span className="text-sm font-black text-slate-900 mt-0.5 block">{currentVehicle.maintenances?.length || 0}</span>
               </div>
-              <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200/70">
-                <span className="text-[10px] font-bold text-blue-700 uppercase block">Assistente AI</span>
-                <span className="text-xs font-black text-blue-900 mt-0.5 block flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" /> Attivo & Pronto
+              <div className={`p-3 rounded-2xl border ${hasManual ? 'bg-emerald-50/70 border-emerald-200/70' : 'bg-blue-50/70 border-blue-200/70'}`}>
+                <span className={`text-[10px] font-bold uppercase block ${hasManual ? 'text-emerald-700' : 'text-blue-700'}`}>Manuale Tecnico</span>
+                <span className={`text-xs font-black mt-0.5 block flex items-center gap-1 ${hasManual ? 'text-emerald-900' : 'text-blue-900'}`}>
+                  {hasManual ? <BookOpen className="w-3.5 h-3.5 text-emerald-600" /> : <Sparkles className="w-3.5 h-3.5 text-blue-600" />}
+                  {hasManual ? 'Indicizzato' : 'Pronto'}
                 </span>
               </div>
             </div>
@@ -170,15 +174,15 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
       </div>
 
       {/* SECTION TABS (Scheda Tecnica / Documenti / Assistente AI) */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-200/80 rounded-2xl max-w-md">
+      <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/70 rounded-2xl max-w-lg shadow-inner">
         
         <button
           type="button"
           onClick={() => setActiveTab('specs')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
             activeTab === 'specs'
               ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
           }`}
         >
           <Layers className="w-4 h-4 text-blue-600" />
@@ -188,10 +192,10 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('documents')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer relative ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer relative active:scale-95 ${
             activeTab === 'documents'
               ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
           }`}
         >
           <FileText className="w-4 h-4 text-indigo-600" />
@@ -206,10 +210,10 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('assistant')}
-          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
             activeTab === 'assistant'
               ? 'bg-white text-slate-900 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
           }`}
         >
           <Bot className="w-4 h-4 text-emerald-600" />
@@ -243,3 +247,4 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
     </div>
   );
 };
+

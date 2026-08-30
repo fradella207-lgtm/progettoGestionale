@@ -44,6 +44,7 @@ import {
   searchMotorizationsFuzzy,
   buildQuattroruoteSpecsFromMotorization
 } from '../../data/carDatabase';
+import { searchAndRetrieveCarManual } from '../../utils/carManualService';
 
 interface AddVehicleModalProps {
   vehicleToEdit?: Vehicle | null;
@@ -519,7 +520,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   };
 
   // Submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!brand.trim() || !model.trim() || !plate.trim()) {
       alert('Compila i campi obbligatori: Marca, Modello e Targa.');
@@ -530,6 +531,23 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     const isBEV = fuelType === 'Elettrica (BEV)';
     const isPHEV = fuelType === 'Plug-in Hybrid (PHEV)';
 
+    // Retrieve or attach official Owner Manual
+    let carManual = vehicleToEdit?.manualInfo || technicalSpecs.manualInfo;
+    if (!carManual) {
+      try {
+        carManual = await searchAndRetrieveCarManual({
+          brand: brand.trim(),
+          model: model.trim(),
+          year: targetYearNum,
+          fuelType,
+          motorization: motorization.trim() || undefined,
+          trimLevel: trimLevel.trim() || undefined
+        });
+      } catch (err) {
+        console.warn('Recupero manuale in background:', err);
+      }
+    }
+
     // Final consolidated technical specs
     const finalSpecs: VehicleTechnicalSpecs = {
       ...technicalSpecs,
@@ -539,7 +557,8 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       fuelCapacityLiters: isBEV ? 0 : (Number(tankCapacity) || technicalSpecs.fuelCapacityLiters || 50),
       batteryCapacityKwh: (isPHEV || isBEV) ? (Number(batteryCapacity) || technicalSpecs.batteryCapacityKwh) : undefined,
       euroClass: technicalSpecs.euroClass || (targetYearNum < 2001 ? 'Euro 2' : targetYearNum < 2006 ? 'Euro 3' : targetYearNum < 2011 ? 'Euro 4' : targetYearNum < 2016 ? 'Euro 5' : 'Euro 6'),
-      summaryQuattroruote: technicalSpecs.summaryQuattroruote || `Specifiche tecniche Quattroruote per ${brand} ${model} ${trimLevel ? trimLevel + ' ' : ''}${motorization || ''} (${targetYearNum})`
+      summaryQuattroruote: technicalSpecs.summaryQuattroruote || `Specifiche tecniche Quattroruote per ${brand} ${model} ${trimLevel ? trimLevel + ' ' : ''}${motorization || ''} (${targetYearNum})`,
+      manualInfo: carManual || technicalSpecs.manualInfo
     };
 
     onSave({
@@ -557,6 +576,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       initialKm: Number(initialKm) || 0,
       registrationDate: regDate || `${targetYearNum}-06-15`,
       photoUrl,
+      manualInfo: carManual,
       technicalSpecs: finalSpecs
     });
 

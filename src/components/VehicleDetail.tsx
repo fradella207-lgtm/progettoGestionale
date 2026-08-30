@@ -206,13 +206,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   }, [vehicle, currentKm, isPHEV]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-5 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
       
       {/* 1. VEICOLO SHOWCASE CON FOTO IN EVIDENZA E DETTAGLI */}
-      <section className="bg-white rounded-3xl border border-[#e2e8f0] p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
+      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
         
         {/* Large Prominent Vehicle Photo Showcase */}
-        <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 md:h-40 rounded-2xl bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 border border-[#e2e8f0] overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group">
+        <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 md:h-40 rounded-2xl bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group">
           {vehicle.photoUrl ? (
             <>
               <img 
@@ -221,9 +221,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
               <button
                 onClick={onOpenEditCar}
-                className="absolute bottom-2.5 right-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 opacity-90 transition-all shadow-xs cursor-pointer"
+                className="absolute bottom-2.5 right-2.5 bg-black/70 hover:bg-black/90 active:scale-95 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 opacity-90 transition-all shadow-xs cursor-pointer"
                 title="Modifica foto veicolo"
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -232,12 +233,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </>
           ) : (
             <div className="flex flex-col items-center justify-center text-slate-400 gap-2 p-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-[#e2e8f0] flex items-center justify-center text-slate-400">
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-slate-200 flex items-center justify-center text-slate-400">
                 <Car className="w-8 h-8 stroke-[1.5] text-slate-500" />
               </div>
               <button
                 onClick={onOpenEditCar}
-                className="text-xs text-[#2563eb] hover:underline font-bold flex items-center gap-1"
+                className="text-xs text-blue-600 hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Aggiungi Foto
               </button>
@@ -252,22 +253,22 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0f172a] tracking-tight break-words">
-                  {vehicle.brand} <span className="text-[#2563eb]">{vehicle.model}</span>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight break-words">
+                  {vehicle.brand} <span className="text-blue-600">{vehicle.model}</span>
                 </h2>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
                   {vehicle.motorization && (
-                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg">
                       {vehicle.motorization}
                     </span>
                   )}
                   {vehicle.technicalSpecs?.engineCode && (
-                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                      Cod. Motore: {vehicle.technicalSpecs.engineCode}
+                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg">
+                      Cod: {vehicle.technicalSpecs.engineCode}
                     </span>
                   )}
                   {vehicle.technicalSpecs?.euroClass && (
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-lg">
                       {vehicle.technicalSpecs.euroClass}
                     </span>
                   )}
@@ -275,15 +276,15 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               </div>
               
               {/* Authentic European License Plate */}
-              <div className="bg-white border-[2px] border-[#94a3b8] rounded-[6px] px-2.5 py-0.5 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
-                <div className="bg-[#1d4ed8] text-white text-[9px] font-black px-1 py-0.2 rounded-[2px] flex items-center gap-0.5">
+              <div className="bg-white border-2 border-slate-400 rounded-lg px-2.5 py-0.5 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
+                <div className="bg-blue-700 text-white text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
                   <span className="text-[7px]">★</span>
                   <span>IT</span>
                 </div>
-                <span className="text-sm font-mono font-black tracking-[2px] text-[#0f172a] uppercase whitespace-nowrap">
+                <span className="text-sm font-mono font-black tracking-[2px] text-slate-900 uppercase whitespace-nowrap">
                   {vehicle.plate}
                 </span>
-                <div className="bg-[#1d4ed8] text-yellow-300 text-[8px] font-bold px-0.8 py-0.2 rounded-[2px] hidden sm:block">
+                <div className="bg-blue-700 text-yellow-300 text-[8px] font-bold px-1 py-0.2 rounded hidden sm:block">
                   ●
                 </div>
               </div>
@@ -293,9 +294,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <button 
               id="btn-edit-car-profile"
               onClick={onOpenEditCar}
-              className="bg-[#f8fafc] hover:bg-slate-100 text-[#0f172a] border border-[#e2e8f0] text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer self-start sm:self-auto"
+              className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-900 border border-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer self-start sm:self-auto"
             >
-              <Edit3 className="w-3.5 h-3.5 text-[#2563eb]" />
+              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
               <span>Modifica</span>
             </button>
           </div>
@@ -304,31 +305,31 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
             
             {/* Spec 1: Chilometri */}
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#64748b] flex items-center gap-1 truncate">
-                <Gauge className="w-3 h-3 text-[#2563eb] shrink-0" /> Odometro
+            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
+                <Gauge className="w-3 h-3 text-blue-600 shrink-0" /> Odometro
               </span>
-              <span className="text-xs sm:text-sm font-black text-[#0f172a] mt-0.5 truncate">
+              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
                 {currentKm.toLocaleString('it-IT')} km
               </span>
             </div>
 
             {/* Spec 2: Alimentazione */}
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#64748b] flex items-center gap-1 truncate">
+            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
                 {isPHEV || isBEV ? <Zap className="w-3 h-3 text-amber-500 shrink-0" /> : <Fuel className="w-3 h-3 text-blue-600 shrink-0" />} Alimentazione
               </span>
-              <span className="text-xs sm:text-sm font-black text-[#0f172a] mt-0.5 truncate" title={vehicle.fuelType}>
+              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={vehicle.fuelType}>
                 {vehicle.fuelType}
               </span>
             </div>
 
             {/* Spec 3: Serbatoio / Batteria */}
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#64748b] truncate">
+            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-bold text-slate-400 truncate">
                 {isPHEV ? 'Serbatoio + Batt.' : (isBEV ? 'Capacità Batteria' : 'Capienza Serb.')}
               </span>
-              <span className="text-xs sm:text-sm font-black text-[#0f172a] mt-0.5 truncate" title={
+              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={
                 isPHEV
                   ? `${vehicle.tankCapacity}L + ${vehicle.batteryCapacity || 13} kWh` 
                   : (isBEV 
@@ -344,11 +345,11 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </div>
 
             {/* Spec 4: Potenza / Anno */}
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#64748b] flex items-center gap-1 truncate">
+            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
                 <Calendar className="w-3 h-3 text-slate-400 shrink-0" /> {vehicle.powerCv ? 'Potenza' : 'Anno'}
               </span>
-              <span className="text-xs sm:text-sm font-black text-[#0f172a] mt-0.5 truncate">
+              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
                 {vehicle.powerCv ? `${vehicle.powerCv} CV (${vehicle.powerKw || Math.round(vehicle.powerCv/1.36)} kW)` : (vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D')}
               </span>
             </div>
@@ -359,40 +360,40 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       </section>
 
       {/* 2. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
-      <section className="bg-white rounded-3xl border border-[#e2e8f0] p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
+      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs flex flex-col gap-4 min-w-0">
         
         {/* Header Sezione Statistiche */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-[#f1f5f9] pb-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-slate-100 pb-3 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <Receipt className="w-4 h-4 text-[#2563eb] shrink-0" />
-            <span className="text-xs font-black uppercase text-[#0f172a] tracking-wider truncate">
+            <Receipt className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="text-xs font-black uppercase text-slate-900 tracking-wider truncate">
               Riepilogo Costi & Efficienza Energetica
             </span>
           </div>
-          <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md self-start sm:self-auto shrink-0">
+          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-lg self-start sm:self-auto shrink-0">
             Percorrenza: {metrics.totalDistance.toLocaleString('it-IT')} km
           </span>
         </div>
 
         {/* Griglia Metriche */}
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#f1f5f9] gap-4 md:gap-0 min-w-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 gap-4 md:gap-0 min-w-0">
           
           {/* Card 1: Spesa Totale di Gestione */}
           <div className="md:px-4 first:pl-0 flex flex-col justify-between min-w-0">
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider truncate">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
                 Spesa Totale
               </span>
-              <span className="font-bold text-[#0f172a] bg-[#f8fafc] px-2 py-0.5 rounded text-[11px] border border-[#e2e8f0] shrink-0">
+              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] border border-slate-200 shrink-0">
                 {metrics.costPerKm} {settings.currency}/km
               </span>
             </div>
             <div className="my-1.5">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#0f172a] truncate block">
+              <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 truncate block">
                 {settings.currency} {metrics.totalOverallSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <p className="text-[11px] text-[#64748b]">
+            <p className="text-[11px] text-slate-500">
               Costo complessivo (Carburante + Manutenzioni)
             </p>
           </div>
@@ -406,11 +407,11 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 setIsRefuelsRegistryOpen(true);
               }
             }}
-            className="pt-3 md:pt-0 md:px-4 flex flex-col justify-between min-w-0 hover:bg-blue-50/40 p-2 rounded-2xl transition-colors cursor-pointer group"
+            className="pt-3 md:pt-0 md:px-4 flex flex-col justify-between min-w-0 hover:bg-blue-50/50 p-2.5 rounded-2xl transition-colors cursor-pointer group"
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 min-w-0">
-              <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider flex items-center gap-1.5 shrink-0">
-                {isPHEV ? <Zap className="w-3.5 h-3.5 text-amber-500" /> : <Fuel className="w-3.5 h-3.5 text-[#2563eb]" />}
+              <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                {isPHEV ? <Zap className="w-3.5 h-3.5 text-amber-500" /> : <Fuel className="w-3.5 h-3.5 text-blue-600" />}
                 {isPHEV ? 'Carburante & Ricarica' : (isBEV ? 'Ricariche Elettriche' : 'Carburante')}
               </span>
               
@@ -429,14 +430,14 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   ⚡ {metrics.unitPer100Km !== '--' ? `${metrics.unitPer100Km} kWh/100km` : `${(vehicle.refuels || []).length} ricariche`}
                 </span>
               ) : (
-                <span className="font-bold text-[#2563eb] bg-blue-50 px-2 py-0.5 rounded text-[11px] shrink-0 whitespace-nowrap">
+                <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[11px] shrink-0 whitespace-nowrap">
                   ⛽ {metrics.unitPer100Km !== '--' ? `${metrics.unitPer100Km} ${fuelUnit}/100km` : `${(vehicle.refuels || []).length} rifornimenti`}
                 </span>
               )}
             </div>
 
             <div className="my-1.5 flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#2563eb] truncate block">
+              <span className="text-2xl sm:text-3xl font-black tracking-tight text-blue-600 truncate block">
                 {settings.currency} {metrics.totalFuelSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[11px] font-bold text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
@@ -549,7 +550,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <button
               id="btn-main-add-refuel-fuel"
               onClick={() => onOpenAddRefuel('fuel')}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.99] text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
+              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -564,7 +565,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
                 <Plus className="w-4 h-4" />
               </div>
             </button>
@@ -573,7 +574,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <button
               id="btn-main-add-refuel-electric"
               onClick={() => onOpenAddRefuel('electricity')}
-              className="bg-[#d97706] hover:bg-[#b45309] active:scale-[0.99] text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
+              className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -588,7 +589,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
                 <Plus className="w-4 h-4" />
               </div>
             </button>
@@ -599,7 +600,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <button
               id="btn-main-add-refuel-fuel"
               onClick={() => onOpenAddRefuel('fuel')}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.99] text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
+              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -614,7 +615,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
                 <Plus className="w-4 h-4" />
               </div>
             </button>
@@ -623,7 +624,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <button
               id="btn-main-add-refuel-gas"
               onClick={() => onOpenAddRefuel(isLPG ? 'lpg' : 'cng')}
-              className="bg-[#0284c7] hover:bg-[#0369a1] active:scale-[0.99] text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
+              className="bg-sky-600 hover:bg-sky-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -638,7 +639,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
                 <Plus className="w-4 h-4" />
               </div>
             </button>
@@ -647,10 +648,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <button
             id="btn-main-add-refuel"
             onClick={() => onOpenAddRefuel()}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-[0.99] text-white p-4 sm:p-5 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer h-full min-h-[96px]"
+            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer h-full min-h-[96px]"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 {isBEV ? <Zap className="w-6 h-6 text-white" /> : <Fuel className="w-6 h-6 text-white" />}
               </div>
               <div className="text-left min-w-0">
@@ -662,7 +663,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 </span>
               </div>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+            <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
               <Plus className="w-5 h-5" />
             </div>
           </button>
@@ -672,12 +673,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         <button
           id="btn-main-add-maint"
           onClick={onOpenAddMaintenance}
-          className={`bg-[#059669] hover:bg-emerald-700 active:scale-[0.99] text-white p-4 sm:p-5 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer ${
+          className={`bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer ${
             isPHEV || isLPG || isCNG ? 'h-full min-h-[110px]' : 'h-full min-h-[96px]'
           }`}
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <Wrench className="w-6 h-6 text-white" />
             </div>
             <div className="text-left min-w-0">
@@ -689,7 +690,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               </span>
             </div>
           </div>
-          <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
+          <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
             <Plus className="w-5 h-5" />
           </div>
         </button>
@@ -697,15 +698,15 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
       {/* AVVISO SERBATOIO SE MANCANTE */}
       {(!vehicle.tankCapacity || Number(vehicle.tankCapacity) <= 0) && (
-        <div className="bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-xs min-w-0">
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-xs min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-orange-500 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
             <span className="truncate">Capienza serbatoio non impostata. Configurala per il calcolo dei consumi medi.</span>
           </div>
           <button 
             id="btn-fix-tank"
             onClick={onOpenFixTank}
-            className="bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shrink-0 transition-colors cursor-pointer"
+            className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shrink-0 transition-colors cursor-pointer"
           >
             Configura Serbatoio
           </button>
@@ -716,20 +717,20 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4.5 min-w-0">
         
         {/* CARD A: REGISTRO RIFORNIMENTI & RICARICHE */}
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-2xs flex flex-col justify-between">
           
           <div>
             {/* Header Registro Rifornimenti */}
             <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0">
-                  <Fuel className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                  <Fuel className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900">
                     {isPHEV ? 'Registro Rifornimenti & Ricariche' : (isBEV ? 'Registro Ricariche Elettriche' : 'Registro Rifornimenti')}
                   </h3>
-                  <span className="text-[11px] font-bold text-slate-500">
+                  <span className="text-[11px] font-bold text-slate-400">
                     {(vehicle.refuels || []).length} registrazioni • {settings.currency} {metrics.totalFuelSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -738,7 +739,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               <button
                 type="button"
                 onClick={() => setIsRefuelsRegistryOpen(true)}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-black flex items-center gap-1 transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 border border-blue-200/80 rounded-xl text-xs font-black flex items-center gap-1 transition-all cursor-pointer"
               >
                 <span>Apri Registro</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -762,7 +763,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                     <div
                       key={refuel.id}
                       onClick={() => setSelectedDetailData({ type: 'refuel', item: refuel, deltaKm: refuel.deltaKm, unitPrice: refuel.unitPrice })}
-                      className="p-3 bg-slate-50/80 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group"
+                      className="p-3 bg-slate-50/70 hover:bg-blue-50/60 border border-slate-200/70 hover:border-blue-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group active:scale-[0.99]"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
@@ -773,7 +774,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-black text-slate-900">{refuel.date}</span>
-                            <span className={`text-[9.5px] font-extrabold px-1.5 py-0.2 rounded ${
+                            <span className={`text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md ${
                               refuel.type === 'full' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700'
                             }`}>
                               {refuel.type === 'full' ? 'Pieno' : 'Parziale'}
@@ -810,7 +811,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
           {/* Footer Card A */}
           <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500">
+            <span className="text-[11px] font-bold text-slate-400">
               Visualizzati gli ultimi {Math.min(3, (vehicle.refuels || []).length)} di {(vehicle.refuels || []).length}
             </span>
             <button
@@ -825,20 +826,20 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
 
         {/* CARD B: LIBRETTO MANUTENZIONI & OFFICINA */}
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-2xs flex flex-col justify-between">
           
           <div>
             {/* Header Manutenzioni */}
             <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                  <Wrench className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Wrench className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900">
                     Libretto Manutenzioni & Officina
                   </h3>
-                  <span className="text-[11px] font-bold text-slate-500">
+                  <span className="text-[11px] font-bold text-slate-400">
                     {(vehicle.maintenances || []).length} interventi • {settings.currency} {metrics.totalMaintSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -847,7 +848,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               <button
                 type="button"
                 onClick={() => setIsMaintenancesRegistryOpen(true)}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-black flex items-center gap-1 transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-black flex items-center gap-1 transition-all cursor-pointer"
               >
                 <span>Apri Libretto</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -868,7 +869,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                     <div
                       key={maint.id}
                       onClick={() => setSelectedDetailData({ type: 'maintenance', item: maint })}
-                      className="p-3 bg-slate-50/80 hover:bg-emerald-50/60 border border-slate-200/80 hover:border-emerald-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group"
+                      className="p-3 bg-slate-50/70 hover:bg-emerald-50/60 border border-slate-200/70 hover:border-emerald-200 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer group active:scale-[0.99]"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
@@ -877,7 +878,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-black text-slate-900">{maint.date}</span>
-                            <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 truncate max-w-[120px]">
+                            <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 truncate max-w-[120px]">
                               {maint.category || 'Manutenzione'}
                             </span>
                           </div>
@@ -908,7 +909,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
           {/* Footer Card B */}
           <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500">
+            <span className="text-[11px] font-bold text-slate-400">
               Visualizzati gli ultimi {Math.min(3, (vehicle.maintenances || []).length)} di {(vehicle.maintenances || []).length}
             </span>
             <button
@@ -925,23 +926,23 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       </section>
 
       {/* 5. SEZIONE DEDICATA: ASSISTENTE & CONSIGLI AI GARAGE */}
-      <section className="bg-white rounded-3xl border border-[#e2e8f0] p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
-        <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
+      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs flex flex-col gap-3.5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-[#0f172a] uppercase tracking-wide">
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">
                 Consigli Intelligenti & Diagnostica Preventiva AI
               </h3>
-              <p className="text-[11px] text-[#64748b]">
+              <p className="text-[11px] text-slate-500">
                 Analisi predittiva in tempo reale basata su chilometraggio, anzianità e alimentazione ({vehicle.fuelType})
               </p>
             </div>
           </div>
 
-          <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-lg shrink-0">
+          <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg shrink-0">
             {aiAdvices.length} {aiAdvices.length === 1 ? 'consiglio' : 'consigli attivi'}
           </span>
         </div>
@@ -951,12 +952,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <div 
               key={advice.id}
               onClick={() => setSelectedDetailData({ type: 'advice', item: advice })}
-              className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start justify-between gap-3 shadow-2xs hover:shadow-xs cursor-pointer select-none ${
+              className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start justify-between gap-3 shadow-2xs hover:shadow-xs cursor-pointer select-none active:scale-[0.99] ${
                 advice.urgency === 'high' 
-                  ? 'bg-[#fef2f2] border-[#fecaca] hover:border-red-300' 
+                  ? 'bg-red-50/70 border-red-200 hover:border-red-300' 
                   : advice.urgency === 'medium' 
-                    ? 'bg-[#fffbeb] border-[#fde68a] hover:border-amber-300' 
-                    : 'bg-[#f8fafc] border-[#e2e8f0] hover:border-slate-300'
+                    ? 'bg-amber-50/70 border-amber-200 hover:border-amber-300' 
+                    : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
               }`}
             >
               <div className="flex items-start gap-3 min-w-0">
@@ -965,24 +966,24 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                     ? 'bg-red-100 text-red-700' 
                     : advice.urgency === 'medium' 
                       ? 'bg-amber-100 text-amber-800' 
-                      : 'bg-blue-50 text-[#2563eb]'
+                      : 'bg-blue-50 text-blue-600'
                 }`}>
                   {advice.urgency === 'high' ? <AlertTriangle className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-xs sm:text-sm font-black text-[#0f172a]">
+                    <h4 className="text-xs sm:text-sm font-black text-slate-900">
                       {advice.title}
                     </h4>
                   </div>
-                  <p className="text-xs text-[#64748b] mt-1 leading-relaxed line-clamp-2">
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
                     {advice.desc}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0 self-center sm:self-start mt-0.5">
-                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border whitespace-nowrap ${
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg border whitespace-nowrap ${
                   advice.urgency === 'high' 
                     ? 'bg-red-100 text-red-800 border-red-200' 
                     : advice.urgency === 'medium' 

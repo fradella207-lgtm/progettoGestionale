@@ -16,6 +16,7 @@ import { NotificationsModal } from './components/modals/NotificationsModal';
 import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
+import { searchAndRetrieveCarManual } from './utils/carManualService';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
 function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
@@ -270,18 +271,48 @@ export default function App() {
   };
 
   // Handler: Save vehicle (Create or Update)
-  const handleSaveVehicle = (vehicleData: Partial<Vehicle>) => {
+  const handleSaveVehicle = async (vehicleData: Partial<Vehicle>) => {
+    let manualData = vehicleData.manualInfo || vehicleData.technicalSpecs?.manualInfo;
+    if (!manualData && vehicleData.brand && vehicleData.model) {
+      try {
+        manualData = await searchAndRetrieveCarManual({
+          brand: vehicleData.brand,
+          model: vehicleData.model,
+          year: vehicleData.registrationDate ? new Date(vehicleData.registrationDate).getFullYear() : 2018,
+          fuelType: vehicleData.fuelType,
+          motorization: vehicleData.motorization,
+          trimLevel: vehicleData.trimLevel
+        });
+      } catch (err) {
+        console.warn('Recupero manuale auto:', err);
+      }
+    }
+
     if (vehicleToEdit) {
       // Update
-      const updatedList = vehicles.map(v => v.id === vehicleToEdit.id ? { ...v, ...vehicleData } as Vehicle : v);
+      const updatedSpecs = {
+        ...(vehicleData.technicalSpecs || vehicleToEdit.technicalSpecs),
+        manualInfo: manualData || vehicleToEdit.manualInfo
+      };
+      const updatedList = vehicles.map(v => v.id === vehicleToEdit.id ? { 
+        ...v, 
+        ...vehicleData,
+        manualInfo: manualData || v.manualInfo,
+        technicalSpecs: updatedSpecs
+      } as Vehicle : v);
       setVehicles(updatedList);
-      showToast(`Veicolo ${vehicleData.brand} ${vehicleData.model} aggiornato con successo!`, 'success');
+      showToast(`Veicolo ${vehicleData.brand} ${vehicleData.model} aggiornato con manuale d'uso!`, 'success');
     } else {
       // Create new
+      const updatedSpecs = {
+        ...(vehicleData.technicalSpecs || {}),
+        manualInfo: manualData
+      };
       const newCar: Vehicle = {
         id: vehicleData.id || `car_${Date.now()}`,
         brand: vehicleData.brand || 'Nuova Marca',
         model: vehicleData.model || 'Nuovo Modello',
+        trimLevel: vehicleData.trimLevel,
         plate: vehicleData.plate || 'AA 000 AA',
         fuelType: vehicleData.fuelType || 'Diesel',
         tankCapacity: Number(vehicleData.tankCapacity) || 50,
@@ -295,17 +326,55 @@ export default function App() {
         registrationDate: vehicleData.registrationDate || new Date().toISOString().split('T')[0],
         initialKm: Number(vehicleData.initialKm) || 0,
         photoUrl: vehicleData.photoUrl || '',
+        manualInfo: manualData,
         refuels: [],
         maintenances: [],
         documents: vehicleData.documents || [],
-        technicalSpecs: vehicleData.technicalSpecs,
+        technicalSpecs: updatedSpecs,
         aiChatHistory: []
       };
       setVehicles([newCar, ...vehicles]);
       setSelectedCarId(newCar.id);
-      showToast(`Nuovo veicolo aggiunto al garage: ${newCar.brand} ${newCar.model}`, 'success');
+      showToast(`Nuovo veicolo aggiunto: ${newCar.brand} ${newCar.model} (Manuale di Manutenzione scaricato)`, 'success');
     }
   };
+
+  // Ensure all existing vehicles in the garage have their official manual fetched and indexed
+  useEffect(() => {
+    let isCancelled = false;
+    const checkAndFetchMissingManuals = async () => {
+      const carsNeedingManual = vehicles.filter(v => !v.manualInfo && v.brand && v.model);
+      if (carsNeedingManual.length === 0) return;
+
+      for (const car of carsNeedingManual) {
+        try {
+          const manual = await searchAndRetrieveCarManual({
+            brand: car.brand,
+            model: car.model,
+            year: car.registrationDate ? new Date(car.registrationDate).getFullYear() : 2018,
+            fuelType: car.fuelType,
+            motorization: car.motorization,
+            trimLevel: car.trimLevel
+          });
+          if (manual && !isCancelled) {
+            setVehicles(prev => prev.map(v => v.id === car.id ? {
+              ...v,
+              manualInfo: manual,
+              technicalSpecs: {
+                ...(v.technicalSpecs || {}),
+                manualInfo: manual
+              }
+            } : v));
+          }
+        } catch (e) {
+          console.debug('Background manual fetch error:', e);
+        }
+      }
+    };
+
+    checkAndFetchMissingManuals();
+    return () => { isCancelled = true; };
+  }, [vehicles.length]);
 
   // Handler: Direct Vehicle Update (For Quattroruote specs, documents vault, AI chat)
   const handleDirectUpdateVehicle = (updatedCar: Vehicle) => {

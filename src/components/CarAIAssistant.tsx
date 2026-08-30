@@ -21,7 +21,11 @@ import {
   Camera,
   User,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  BookOpen,
+  ExternalLink,
+  FileCheck,
+  CheckCircle2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Vehicle, AIChatMessage } from '../types';
@@ -96,89 +100,87 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
 
   const promptCategories = [
     {
-      id: 'controls',
-      title: 'ESP & Launch Control',
-      icon: Sliders,
-      description: 'Disattivazione controlli di trazione e modalità sportive',
+      id: 'maintenance',
+      title: 'Manutenzione & Fluidi',
+      icon: Wrench,
+      description: 'Olio motore, filtri, candele, cinghie e livelli',
       prompts: [
-        'Come si disattivano i controlli trazione (ASR/TCS) per partire su neve o fango?',
-        'Come si disattiva completamente l\'ESP / ESC su questa vettura?',
-        'Qual è la procedura esatta per fare il Launch Control con questo cambio?',
-        'Qual è la differenza tra modalità ESC Sport ed ESC totalmente disattivato?'
+        'Quale olio motore con specifica esatta e quanti litri occorrono?',
+        'Come azzerare la spia tagliando / chiave inglese / cambio olio?',
+        'A quanti km o anni va sostituita la cinghia o catena di distribuzione?',
+        'Qual è la coppia di serraggio in Nm dei bulloni delle ruote?'
       ]
     },
     {
-      id: 'isa',
-      title: 'Suono Limite Velocità (ISA)',
-      icon: VolumeX,
-      description: 'Disattivazione o silenziamento cicalino GSR II',
+      id: 'tires',
+      title: 'Gomme & Freni',
+      icon: AlertTriangle,
+      description: 'Pressioni pneumatici, reset TPMS e pastiglie freni',
       prompts: [
-        'Come posso togliere o silenziare il cicalino di superamento del limite di velocità (ISA)?',
-        'Esiste una scorciatoia o tasto rapido sul volante per spegnere l\'avviso limiti?',
-        'Perché l\'avviso sonoro del limite si riattiva a ogni riavvio del veicolo?',
-        'Come impostare l\'avviso del limite di velocità solo visivo e silenzioso?'
-      ]
-    },
-    {
-      id: 'adas',
-      title: 'Taratura & Guida ADAS',
-      icon: ShieldAlert,
-      description: 'Regolazione Lane Assist, ACC, Front Assist e sensori',
-      prompts: [
-        'Come regolare la sensibilità e vibrazione del Lane Assist (Mantenimento Corsia)?',
-        'Come tarare la distanza di sicurezza del Cruise Control Adattivo (ACC)?',
-        'Come calibrare o disattivare la frenata automatica di emergenza (Front Assist)?',
-        'Come impostare i sensori dell\'angolo cieco (Blind Spot Monitor)?'
+        'Quali pressioni pneumatici sono raccomandate a vuoto e a pieno carico?',
+        'Come si esegue il reset della spia pressione pneumatici (TPMS)?',
+        'Quale liquido freni è prescritto e quando va sostituito?',
+        'Come capire se le pastiglie dei freni sono da sostituire?'
       ]
     },
     {
       id: 'screen',
-      title: 'Schermo & Infotainment',
+      title: 'Infotainment & Elettronica',
       icon: Tv,
-      description: 'Riavvio forzato, Apple CarPlay, Android Auto e Cockpit',
+      description: 'Riavvio schermo, Apple CarPlay, Android Auto e Bluetooth',
       prompts: [
         'Come fare il riavvio forzato (hard reset) dello schermo se è bloccato?',
         'Come collegare Apple CarPlay o Android Auto in modalità wireless o cavo?',
-        'Come personalizzare le schermate del quadro strumenti digitale (Digital Cockpit)?',
+        'Dove si trova la presa diagnosi OBD2 e la scatola fusibili?',
         'Come ripristinare ai valori di fabbrica l\'infotainment di bordo?'
       ]
     },
     {
+      id: 'battery',
+      title: 'Batteria & Emergenza',
+      icon: KeyRound,
+      description: 'Avviamento con cavi, Start & Stop e telecomandi',
+      prompts: [
+        'Cosa fare se la batteria è a terra e come collegare i cavi di emergenza?',
+        'Perché lo Start & Stop non si attiva e da cosa dipende?',
+        'Come aprire e chiudere finestrini e tettuccio tenendo premuto il telecomando?',
+        'Come sbloccare il freno a mano o il cambio se la batteria è scarica?'
+      ]
+    },
+    {
+      id: 'controls',
+      title: 'Guida & Controlli',
+      icon: Sliders,
+      description: 'ESP, ASR, Launch Control e modalità di guida',
+      prompts: [
+        'Come si disattivano i controlli trazione (ASR/TCS) per partire su neve o fango?',
+        'Come si disattiva completamente l\'ESP / ESC su questa vettura?',
+        'Qual è la procedura per fare il Launch Control se supportato?',
+        'Come togliere o silenziare l\'avviso acustico del limite di velocità (ISA)?'
+      ]
+    },
+    {
       id: 'lights',
-      title: 'Spie Cruscotto & OBD',
-      icon: AlertTriangle,
-      description: 'Significato spie, allarmi rossi/gialli e codici diagnosi',
+      title: 'Spie & Diagnosi OBD',
+      icon: ShieldAlert,
+      description: 'Significato spie cruscotto, allarmi e codici errore',
       prompts: [
         'Cosa fare se si accende la spia gialla avaria motore (MIL)?',
         'Quali sono le spie rosse di pericolo che impongono l\'arresto immediato?',
         'Come leggere e interpretare i codici errore OBD2 (P0xxx)?',
-        'Come azzerare la spia tagliando / chiave inglese / cambio olio?'
-      ]
-    },
-    {
-      id: 'manual',
-      title: 'Fluidi & Manutenzione',
-      icon: Wrench,
-      description: 'Specifiche olio, coppie bulloni, fusibili e pressioni',
-      prompts: [
-        'Quale olio motore con specifica esatta e quanti litri occorrono?',
-        'Qual è la coppia di serraggio in Nm dei bulloni delle ruote?',
-        'Dove si trova la presa diagnosi OBD2 e la scatola fusibili?',
-        'Quali pressioni pneumatici sono raccomandate a vuoto e a pieno carico?'
-      ]
-    },
-    {
-      id: 'comfort',
-      title: 'Trucchi & Comfort',
-      icon: KeyRound,
-      description: 'Telecomandi, specchietti, luci e sblocchi di emergenza',
-      prompts: [
-        'Come aprire e chiudere tutti i finestrini e tettuccio dal telecomando?',
-        'Come attivare l\'abbassamento automatico dello specchietto in retromarcia?',
-        'Come attivare i fari Follow Me Home a motore spento?',
-        'Come sbloccare il cambio o freno a mano se la batteria è scarica?'
+        'Cosa fare se si accende la spia del filtro antiparticolato DPF/FAP?'
       ]
     }
+  ];
+
+  const quickSuggestionChips = [
+    'Quale olio motore e quanti litri?',
+    'Come azzerare la spia tagliando?',
+    'Pressione pneumatici corretta e reset TPMS',
+    'Hard reset dello schermo bloccato',
+    'Batteria scarica: come collegare i cavi?',
+    'Come disattivare l\'antislittamento ESP su neve?',
+    'Collegamento Apple CarPlay / Android Auto'
   ];
 
   const chatMessages: AIChatMessage[] = vehicle.aiChatHistory && vehicle.aiChatHistory.length > 0 
@@ -187,7 +189,14 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         {
           id: 'welcome_msg',
           role: 'assistant',
-          content: `Ciao! Sono il tuo **Assistente Tecnico Ufficiale e Manuale di Bordo** per la tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nPosso aiutarti su:\n- 🎛️ Disattivazione **ESP, ASR** e Launch Control\n- 🔊 Silenziamento cicalino **limite velocità (ISA GSR II)** e tasti rapidi\n- 🛡️ Taratura e regolazione di tutti gli **ADAS** (Lane Assist, ACC)\n- 📱 **Hard Reset dello schermo**, Apple CarPlay e Android Auto\n- ⚠️ **Diagnosi spie** e lettura foto di cruscotto o vano motore\n- 🔧 **Oli motore omologati**, coppie di serraggio e fusibili\n\n*Digita una richiesta o premi il tasto **"Domande Rapide"** in alto.*`,
+          content: `Ciao! Sono il tuo **Assistente Tecnico & Manuale di Bordo** dedicato alla tua **${vehicle.brand} ${vehicle.model}** ${vehicle.trimLevel ? `(${vehicle.trimLevel})` : ''} — ${vehicle.motorization || vehicle.fuelType}.\n\nPuoi chiedermi **qualsiasi cosa** in merito alla tua auto:
+- 🔧 **Manutenzione**: specifiche olio motore, quantità, filtri, cinghie e coppie di serraggio
+- 🔄 **Reset e procedure**: azzeramento spia tagliando, reset pressione TPMS, riavvio forzato schermo
+- 🎛️ **Guida e controlli**: disattivazione ESP/ASR per neve o fango, Launch Control, avvisi sonori
+- ⚡ **Batteria ed emergenza**: avviamento con cavi, anomalie Start & Stop, fusibili
+- ⚠️ **Diagnosi spie**: inviami una domanda o scatta una **foto del cruscotto / spia** con il pulsante della fotocamera
+
+*Scrivi la tua domanda nel campo in basso oppure tocca uno dei suggerimenti rapidi.*`,
           timestamp: new Date().toISOString(),
         }
       ];
@@ -318,6 +327,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   };
 
   const activeCategory = promptCategories.find(c => c.id === activeModalTab) || promptCategories[0];
+  const manualData = vehicle.manualInfo || vehicle.technicalSpecs?.manualInfo;
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm flex flex-col h-[calc(100dvh-175px)] min-h-[480px] md:h-[700px] max-h-[800px] overflow-hidden animate-in fade-in duration-200 relative">
@@ -330,10 +340,10 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-xs sm:text-sm text-white truncate">Assistente Tecnico</h3>
+              <h3 className="font-bold text-xs sm:text-sm text-white truncate">Assistente Tecnico & Manuale di Bordo</h3>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/20 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Attivo
+                Manuale Attivo
               </span>
             </div>
             <p className="text-[11px] text-slate-300 truncate font-medium">
@@ -365,6 +375,41 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {/* 1.1 DEDICATED OFFICIAL OWNER MANUAL STATUS BAR */}
+      <div className="bg-slate-800 border-b border-slate-700/80 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+            <BookOpen className="w-3.5 h-3.5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-white text-xs truncate">
+                {manualData?.title || `Manuale di Uso e Manutenzione Ufficiale — ${vehicle.brand} ${vehicle.model}`}
+              </span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30 shrink-0 inline-flex items-center gap-0.5">
+                <CheckCircle2 className="w-2.5 h-2.5" /> Scaricato & Indicizzato
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-300 truncate">
+              Fonte: {manualData?.source || 'manuals.startmycar.com / Archivio Costruttore'} · Risposte dirette basate su configurazione e allestimento
+            </p>
+          </div>
+        </div>
+
+        {manualData?.url && (
+          <a
+            href={manualData.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+            title="Apri o scarica il manuale originale in formato PDF"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Apri PDF Ufficiale</span>
+          </a>
+        )}
       </div>
 
       {/* 2. MESSAGES FEED */}
@@ -492,6 +537,24 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         </div>
       )}
 
+      {/* 4.5. QUICK SUGGESTION CHIPS BAR */}
+      <div className="px-3 py-2 bg-slate-100/90 border-t border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-0.5">
+          <Sparkles className="w-3 h-3 text-blue-600" /> Suggeriti:
+        </span>
+        {quickSuggestionChips.map((chip, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => handleSendMessage(chip)}
+            disabled={isLoading}
+            className="shrink-0 text-[11px] font-semibold bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/90 hover:border-blue-300 rounded-full px-2.5 py-1 transition-all cursor-pointer shadow-2xs active:scale-95 disabled:opacity-50"
+          >
+            {chip}
+          </button>
+        ))}
+      </div>
+
       {/* 5. COMPACT INPUT BAR */}
       <div className="p-2 sm:p-3 bg-white border-t border-slate-200/80 flex items-center gap-1.5 sm:gap-2 shrink-0">
         
@@ -551,7 +614,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
         {/* Text Input */}
         <input
           type="text"
-          placeholder="Chiedi su controlli ESP, suono ISA, reset schermo, fusibili..."
+          placeholder="Chiedi qualsiasi cosa (olio, spie, pressione gomme, batteria, rumori, reset...)"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => {
