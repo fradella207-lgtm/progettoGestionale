@@ -25,10 +25,13 @@ import {
   BookOpen,
   ExternalLink,
   FileCheck,
-  CheckCircle2
+  CheckCircle2,
+  Upload,
+  Plus
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Vehicle, AIChatMessage } from '../types';
+import { ManualManagerModal } from './modals/ManualManagerModal';
 
 interface CarAIAssistantProps {
   vehicle: Vehicle;
@@ -43,6 +46,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showPromptsModal, setShowPromptsModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
   const [activeModalTab, setActiveModalTab] = useState('controls');
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -398,18 +402,30 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           </div>
         </div>
 
-        {manualData?.url && (
-          <a
-            href={manualData.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
-            title="Apri o scarica il manuale originale in formato PDF"
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowManualModal(true)}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95 border border-slate-600"
+            title="Cerca, allega o carica il tuo manuale PDF / cartaceo"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Apri PDF Ufficiale</span>
-          </a>
-        )}
+            <Upload className="w-3.5 h-3.5 text-blue-400" />
+            <span>Gestisci / Allega Manuale</span>
+          </button>
+
+          {manualData?.url && (
+            <a
+              href={manualData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+              title="Apri o scarica il manuale originale in formato PDF"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Apri PDF</span>
+            </a>
+          )}
+        </div>
       </div>
 
       {/* 2. MESSAGES FEED */}
@@ -730,6 +746,17 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           </div>
         </div>
       )}
+
+      {/* 7. MODAL GESTIONE & ALLEGATO MANUALE DI BORDO */}
+      <ManualManagerModal
+        isOpen={showManualModal}
+        vehicle={vehicle}
+        onClose={() => setShowManualModal(false)}
+        onSaveManual={(updatedVehicle) => {
+          onUpdateVehicle(updatedVehicle);
+          setShowManualModal(false);
+        }}
+      />
 
     </div>
   );

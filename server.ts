@@ -440,12 +440,62 @@ Per integrarli mantenendo l'aspetto originale:
   3. Guida con marce alte a regimi medio-bassi sfruttando la coppia disponibile.`;
     }
 
-    // Risposta esperta a 360° per qualsiasi altra domanda
-    return `In merito alla tua richiesta su **${brand} ${model}** (${year ? `anno ${year}, ` : ''}${fuel}):
+    // 16. Chiavi, Telecomando, Sostituzione Batteria & Chiusura Comfort Finestrini
+    if (q.includes('chiav') || q.includes('telecomand') || q.includes('finestrin') || q.includes('vetr') || q.includes('comfort') || q.includes('batteria chiave')) {
+      return `Istruzioni chiave e finestrini comfort per **${brand} ${model}**:
+1. **Sostituzione batteria telecomando**:
+   - Estrai la chiavetta metallica meccanica di emergenza premendo l'apposito pulsante sul guscio.
+   - Fai leva con la punta della chiavetta o con un cacciavite a taglio sottile nella fessura per aprire il coperchio posteriore.
+   - Sostituisci la batteria a bottone (solitamente **CR2032** o **CR2450**) posizionando il polo positivo (+) rivolto verso l'alto.
+2. **Apertura / Chiusura Comfort dei finestrini da telecomando**:
+   - **Per aprire tutti i finestrini**: tieni premuto il pulsante di **SBLOCCO (lucchetto aperto)** per 4 secondi continui.
+   - **Per chiudere tutti i finestrini e tettuccio**: tieni premuto il pulsante di **BLOCCO (lucchetto chiuso)** finché tutti i cristalli non sono completamente saliti.`;
+    }
 
-Per quanto riguarda "*${message}*":
-- I parametri di bordo e le specifiche tecniche della vettura sono conformi alle indicazioni del costruttore e al manuale di bordo ufficiale.
-- Se hai bisogno della procedura passo-passo (tasti esatti da premere, percorsi nei menu o codici fusibili), indicami l'operazione specifica o carica una foto per guidarti direttamente nei dettagli!`;
+    // 17. Climatizzatore, Sbrinamento Parabrezza & Filtro Abitacolo
+    if (q.includes('clima') || q.includes('aria') || q.includes('appann') || q.includes('sbrin') || q.includes('abitacol') || q.includes('filtro polline')) {
+      return `Istruzioni climatizzazione e sbrinamento per **${brand} ${model}**:
+1. **Sbrinamento rapido parabrezza**:
+   - Premi il tasto **MAX Defrost / Parabrezza** sulla plancia clima.
+   - Il sistema imposta automaticamente la massima velocità del ventilatore, attiva il compressore A/C per deumidificare l'aria e convoglia il flusso d'aria calda sul parabrezza.
+2. **Posizione Filtro Abitacolo / Polline**:
+   - Si trova dietro il cassetto portaoggetti lato passeggero o sotto la paratia parabrezza nel vano motore. Sostituzione consigliata ogni 15.000 km o 1 anno.`;
+    }
+
+    // 18. Tergicristalli, Liquido Lavavetri & Posizione Service
+    if (q.includes('tergicristall') || q.includes('lavavetr') || q.includes('spazzol') || q.includes('tergi')) {
+      return `Istruzioni tergicristalli per **${brand} ${model}**:
+1. **Posizione Service Spazzole (per sollevare i tergicristalli senza graffiare il cofano)**:
+   - Spegni il quadro strumenti.
+   - Entro 10-15 secondi, premi la leva tergicristalli verso l'alto o verso il basso e tienila premuta per 3 secondi.
+   - Le spazzole saliranno a 90° sul parabrezza fermandosi in verticale per consentire la sostituzione o il lavaggio.
+2. **Rabbocco Liquido Lavavetri**:
+   - Tappo blu con simbolo del getto d'acqua nel vano motore. Utilizzare liquido con antigelo in inverno (minimo -15°C / -20°C).`;
+    }
+
+    // 19. Sportellino Carburante Bloccato & Sblocco di Emergenza
+    if (q.includes('sportell') || q.includes('tappo') || q.includes('bloccato') || q.includes('serbatoi')) {
+      return `Sblocco di emergenza sportellino carburante per **${brand} ${model}**:
+1. Se lo sportellino non si apre con l'auto sbloccata:
+2. Apri il bagagliaio e rimuovi il rivestimento laterale destro (lato del serbatoio).
+3. Troverai una **linguetta/tirante in plastica o cordino verde/arancione di emergenza**: tiralo delicatamente verso l'indietro per sbloccare manualmente l'attuatore elettrico dello sportellino.`;
+    }
+
+    // Istruzione operativa diretta per qualsiasi altra richiesta (MAI RIPETERE LA DOMANDA DELL'UTENTE)
+    const manualInfoData = car?.manualInfo || ts?.manualInfo;
+    return `Ecco le istruzioni operative per **${brand} ${model}** (${year ? `anno ${year}, ` : ''}${fuel}):
+
+1. **Specifiche di bordo certificate dal costruttore**:
+   - Olio motore prescritto: **${ts.recommendedOil || 'Specifica costruttore Longlife C3/C2'}** (Capacità coppa: **${ts.oilCapacityLiters ? `${ts.oilCapacityLiters}L` : '4.5L'}**).
+   - Pressione pneumatici a freddo: **Anteriore ${ts.tirePressureFrontBar || 2.3} bar / Posteriore ${ts.tirePressureRearBar || 2.2} bar**.
+   - Presa diagnosi OBD2: **${ts.obdPortLocation || 'Sotto il cruscotto a sinistra del piantone sterzo'}**.
+   - Scatola fusibili: **${ts.fuseBoxLocation || 'Dietro il cassetto portaoggetti e nel vano motore'}**.
+
+2. **Procedura operativa rapida**:
+   - Tutte le regolazioni di sistema possono essere eseguite dal computer di bordo con levetta/pulsante **BC / Menu** a quadro acceso.
+   - Per riavviare un modulo o display in freeze, tieni premuto il pulsante di accensione/volume per **10-15 secondi**.
+   - Per eseguire diagnosi componenti, collega lo strumento alla presa OBD a veicolo fermo e quadro inserito.
+   ${manualInfoData?.url ? `\n*Manuale ufficiale completo consultabile al link allegato: ${manualInfoData.url}*` : ''}`;
   }
 
   // 0. ENDPOINT RICERCA & SCARICAMENTO MANUALE D'USO E MANUTENZIONE ONLINE PER QUALSIASI VEICOLO
@@ -650,14 +700,20 @@ ${car.documents.map((d: any) => `- ${d.title} (${d.type}) [Scadenza: ${d.expiryD
 
       carContext += `
 REGOLE SUPREME PER LA CHAT:
-1. **RISPONDI IN MODO DIRETTO E PRATICO SU "COME SI FA"**: Dai subito la sequenza numerata delle azioni (1, 2, 3...) indicando esattamente i pulsanti fisici, le levette, le combinazioni di tasti o i menu da selezionare.
-2. **MASSIMA ATTENZIONE ALLE CONFIGURAZIONI REALI**:
+1. **RISPOSTA DIRETTA E IMMEDIATA CON ISTRUZIONE OPERATIVA**:
+   - Rispondi SEMPRE in modo DIRETTO, PRATICO e OPERATIVO con le istruzioni PASSO-PASSO NUMERATE (1., 2., 3...).
+   - È SEVERAMENTE VIETATO ripetere, riassumere o riformulare la domanda dell'utente (NON dire "In merito alla tua richiesta...", "Per quanto riguarda...", "Ti spiego come fare...").
+   - Comincia DIRETTAMENTE con i passi esatti o con la specifica tecnica richiesta.
+2. **ISTRUZIONI PRECISE SUI COMANDI FISICI E DI BORDO**:
+   - Indica con chiarezza quali pulsanti fisici, levette o tasti premere, dove si trovano esattamente nell'abitacolo/motore, per quanti secondi tenerli premuti e quale messaggio o spia compare.
    - Anno e generazione del veicolo (es. BMW Serie 3 2007 è generazione E90: usa la levetta BC sul devioluci per il menu olio/TPMS/service, non citare touchscreen se non c'è iDrive; non citare avvisi sonori ISA GSR II obbligatori solo dal 2024).
    - Tipo di cambio (se manuale, non dare istruzioni per cambio automatico; se cambio manuale o non sportivo non c'è Launch Control).
    - Alimentazione (se Diesel con DPF indica olio Longlife C3/LL-04; se benzina non parlare di candelette o AdBlue).
    - Posizione fisica reale di componenti (es. batteria nel bagagliaio e poli ausiliari nel vano motore; fusibili dietro cassetto portaoggetti; presa OBD sotto volante).
-3. Se l'utente allega una foto, analizza e commenta i dettagli visibili (spie, cruscotto, documenti, vano motore).
-4. NON incollare liste di altre domande a fine risposta: rispondi in modo diretto, completo, chiaro ed operativo.
+3. **MANUALE E DOCUMENTI ALLEGATI**:
+   - Se è allegato o indicizzato un Manuale di Uso e Manutenzione o documento d'officina, usa le procedure e specifiche di quel manuale.
+4. Se l'utente allega una foto, analizza e commenta i dettagli visibili (spie, cruscotto, documenti, vano motore).
+5. NON incollare liste di altre domande a fine risposta e non tergiversare: rispondi in modo diretto, completo, chiaro ed operativo.
 `;
 
       const contents: any[] = [];

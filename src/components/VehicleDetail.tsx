@@ -206,13 +206,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   }, [vehicle, currentKm, isPHEV]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 pb-28 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
       
       {/* 1. VEICOLO SHOWCASE CON FOTO IN EVIDENZA E DETTAGLI */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
+      <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
         
         {/* Large Prominent Vehicle Photo Showcase */}
-        <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 md:h-40 rounded-2xl bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group">
+        <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 md:h-40 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group">
           {vehicle.photoUrl ? (
             <>
               <img 
@@ -221,24 +221,24 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
               <button
                 onClick={onOpenEditCar}
-                className="absolute bottom-2.5 right-2.5 bg-black/70 hover:bg-black/90 active:scale-95 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 opacity-90 transition-all shadow-xs cursor-pointer"
+                className="absolute bottom-2.5 right-2.5 bg-slate-950/80 hover:bg-slate-950 active:scale-95 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 border border-white/20 transition-all shadow-xs cursor-pointer"
                 title="Modifica foto veicolo"
               >
-                <Camera className="w-3.5 h-3.5" />
+                <Camera className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Foto</span>
               </button>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center text-slate-400 gap-2 p-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-white shadow-2xs border border-slate-200 flex items-center justify-center text-slate-400">
-                <Car className="w-8 h-8 stroke-[1.5] text-slate-500" />
+              <div className="w-14 h-14 rounded-2xl bg-slate-800 shadow-2xs border border-slate-700 flex items-center justify-center text-slate-400">
+                <Car className="w-8 h-8 stroke-[1.5] text-slate-400" />
               </div>
               <button
                 onClick={onOpenEditCar}
-                className="text-xs text-blue-600 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                className="text-xs text-indigo-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Aggiungi Foto
               </button>
@@ -253,12 +253,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight break-words">
-                  {vehicle.brand} <span className="text-blue-600">{vehicle.model}</span>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight break-words">
+                  {vehicle.brand} <span className="text-indigo-600">{vehicle.model}</span>
                 </h2>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
                   {vehicle.motorization && (
-                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg">
+                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200/60">
                       {vehicle.motorization}
                     </span>
                   )}
@@ -276,15 +276,15 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               </div>
               
               {/* Authentic European License Plate */}
-              <div className="bg-white border-2 border-slate-400 rounded-lg px-2.5 py-0.5 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
-                <div className="bg-blue-700 text-white text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
+              <div className="bg-white border-2 border-slate-300 rounded-lg px-2.5 py-0.5 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
+                <div className="bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
                   <span className="text-[7px]">★</span>
                   <span>IT</span>
                 </div>
-                <span className="text-sm font-mono font-black tracking-[2px] text-slate-900 uppercase whitespace-nowrap">
+                <span className="text-sm font-mono font-black tracking-[2px] text-slate-950 uppercase whitespace-nowrap">
                   {vehicle.plate}
                 </span>
-                <div className="bg-blue-700 text-yellow-300 text-[8px] font-bold px-1 py-0.2 rounded hidden sm:block">
+                <div className="bg-blue-600 text-yellow-300 text-[8px] font-bold px-1 py-0.2 rounded hidden sm:block">
                   ●
                 </div>
               </div>
@@ -296,7 +296,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               onClick={onOpenEditCar}
               className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-900 border border-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer self-start sm:self-auto"
             >
-              <Edit3 className="w-3.5 h-3.5 text-blue-600" />
+              <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
               <span>Modifica</span>
             </button>
           </div>
@@ -305,9 +305,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
             
             {/* Spec 1: Chilometri */}
-            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
-                <Gauge className="w-3 h-3 text-blue-600 shrink-0" /> Odometro
+            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
+                <Gauge className="w-3 h-3 text-indigo-600 shrink-0" /> Odometro
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
                 {currentKm.toLocaleString('it-IT')} km
@@ -315,9 +315,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </div>
 
             {/* Spec 2: Alimentazione */}
-            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
-                {isPHEV || isBEV ? <Zap className="w-3 h-3 text-amber-500 shrink-0" /> : <Fuel className="w-3 h-3 text-blue-600 shrink-0" />} Alimentazione
+            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
+                {isPHEV || isBEV ? <Zap className="w-3 h-3 text-amber-500 shrink-0" /> : <Fuel className="w-3 h-3 text-indigo-600 shrink-0" />} Alimentazione
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={vehicle.fuelType}>
                 {vehicle.fuelType}
@@ -325,8 +325,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </div>
 
             {/* Spec 3: Serbatoio / Batteria */}
-            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 truncate">
+            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 truncate">
                 {isPHEV ? 'Serbatoio + Batt.' : (isBEV ? 'Capacità Batteria' : 'Capienza Serb.')}
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={
@@ -345,8 +345,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </div>
 
             {/* Spec 4: Potenza / Anno */}
-            <div className="bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
+            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
                 <Calendar className="w-3 h-3 text-slate-400 shrink-0" /> {vehicle.powerCv ? 'Potenza' : 'Anno'}
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
@@ -360,17 +360,17 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       </section>
 
       {/* 2. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs flex flex-col gap-4 min-w-0">
+      <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
         
         {/* Header Sezione Statistiche */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-slate-100 pb-3 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <Receipt className="w-4 h-4 text-blue-600 shrink-0" />
+            <Receipt className="w-4 h-4 text-indigo-600 shrink-0" />
             <span className="text-xs font-black uppercase text-slate-900 tracking-wider truncate">
               Riepilogo Costi & Efficienza Energetica
             </span>
           </div>
-          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-lg self-start sm:self-auto shrink-0">
+          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-lg self-start sm:self-auto shrink-0 border border-slate-200/70">
             Percorrenza: {metrics.totalDistance.toLocaleString('it-IT')} km
           </span>
         </div>
@@ -381,19 +381,19 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           {/* Card 1: Spesa Totale di Gestione */}
           <div className="md:px-4 first:pl-0 flex flex-col justify-between min-w-0">
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider truncate">
                 Spesa Totale
               </span>
-              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] border border-slate-200 shrink-0">
+              <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] border border-slate-200/80 shrink-0">
                 {metrics.costPerKm} {settings.currency}/km
               </span>
             </div>
             <div className="my-1.5">
-              <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 truncate block">
+              <span className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 truncate block">
                 {settings.currency} {metrics.totalOverallSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 font-medium">
               Costo complessivo (Carburante + Manutenzioni)
             </p>
           </div>

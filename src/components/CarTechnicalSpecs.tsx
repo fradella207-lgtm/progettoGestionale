@@ -14,9 +14,12 @@ import {
   FileSpreadsheet,
   BookOpen,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  Upload,
+  Settings
 } from 'lucide-react';
 import { Vehicle, VehicleTechnicalSpecs } from '../types';
+import { ManualManagerModal } from './modals/ManualManagerModal';
 
 interface CarTechnicalSpecsProps {
   vehicle: Vehicle;
@@ -30,6 +33,7 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   const specs: VehicleTechnicalSpecs = vehicle.technicalSpecs || {};
 
@@ -142,17 +146,29 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
               </div>
             </div>
 
-            {(vehicle.manualInfo || specs.manualInfo)?.url && (
-              <a
-                href={(vehicle.manualInfo || specs.manualInfo)?.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsManualModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-all cursor-pointer shrink-0 active:scale-95 border border-slate-200"
+                title="Gestisci, cerca o allega manuale"
               >
-                <ExternalLink className="w-4 h-4" />
-                <span>Consulta / Scarica PDF Originale</span>
-              </a>
-            )}
+                <Upload className="w-3.5 h-3.5 text-blue-600" />
+                <span>Gestisci / Allega</span>
+              </button>
+
+              {(vehicle.manualInfo || specs.manualInfo)?.url && (
+                <a
+                  href={(vehicle.manualInfo || specs.manualInfo)?.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>PDF Originale</span>
+                </a>
+              )}
+            </div>
           </div>
 
           {(vehicle.manualInfo || specs.manualInfo)?.indexedChapters && (
@@ -419,6 +435,17 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
           </div>
         </div>
       )}
+
+      {/* MODAL GESTIONE MANUALE */}
+      <ManualManagerModal
+        isOpen={isManualModalOpen}
+        vehicle={vehicle}
+        onClose={() => setIsManualModalOpen(false)}
+        onSaveManual={(updatedVehicle) => {
+          onUpdateVehicle(updatedVehicle);
+          setIsManualModalOpen(false);
+        }}
+      />
     </div>
   );
 };

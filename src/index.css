@@ -3,16 +3,31 @@
 
 /* Modern Smooth Animations & Transitions */
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-900 antialiased selection:bg-blue-600 selection:text-white;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
+  
+  body {
+    @apply bg-slate-100/70 text-slate-900 antialiased selection:bg-indigo-600 selection:text-white;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    overscroll-behavior-y: none;
+  }
+}
+
+/* Safe Area Inset Support for Modern Mobile Devices (iOS notch & Android gesture bars) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -70,5 +85,6 @@
 .animate-float {
   animation: float-slow 4s ease-in-out infinite;
 }
+
 
 
