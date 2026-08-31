@@ -614,9 +614,9 @@ export default function App() {
       />
 
       {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL & CHARGING MAP) */}
-      <main className="flex-1 flex flex-col pb-24">
+      <main className="flex-1 flex flex-col pb-16">
         {currentView === 'stations' ? (
-          <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 md:p-8 animate-in fade-in duration-200">
+          <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2 animate-in fade-in duration-200">
             <FuelAndChargingMap 
               vehicles={vehicles}
               selectedVehicle={selectedVehicle}

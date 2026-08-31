@@ -13,7 +13,7 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -27,6 +27,7 @@
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
+    touch-action: pan-x pan-y;
   }
 
   h1, h2, h3, h4, h5, h6, p, span, button, input, select, textarea {

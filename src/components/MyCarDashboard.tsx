@@ -76,7 +76,7 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
   const hasManual = !!(currentVehicle.manualInfo || currentVehicle.technicalSpecs?.manualInfo);
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-2.5 sm:px-6 py-2.5 sm:py-6 space-y-3.5 sm:space-y-6 pb-28 font-['Plus_Jakarta_Sans',sans-serif] min-w-0 overflow-x-hidden">
+    <div className="w-full max-w-6xl mx-auto px-2.5 sm:px-6 py-2.5 sm:py-6 space-y-3.5 sm:space-y-6 pb-4 font-['Plus_Jakarta_Sans',sans-serif] min-w-0 overflow-x-hidden">
       
       {/* VEHICLE SELECTOR & HERO CARD */}
       <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-xs space-y-3 sm:space-y-5 w-full min-w-0 overflow-hidden">

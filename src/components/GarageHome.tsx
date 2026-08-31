@@ -101,7 +101,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
   }, [vehicles, searchQuery, selectedFuelCategory]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 flex flex-col gap-5 pb-28 font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 flex flex-col gap-5 pb-4 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* 1. DYNAMIC GARAGE HERO & SUMMARY CARDS */}
       <section className="flex flex-col gap-3.5">

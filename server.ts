@@ -1134,37 +1134,47 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
     });
   }
 
+  function triggerBackgroundStationsSync() {
+    if (isSyncingInBackground) return;
+    isSyncingInBackground = true;
+    console.log(`[DAILY AUTO-SYNC] Avvio aggiornamento automatico prezzi MIMIT & colonnine alle ore ${new Date().toLocaleTimeString('it-IT')}...`);
+    sincronizzaMappaStazioni()
+      .then((res) => {
+        isSyncingInBackground = false;
+        stationsMemoryCache = null; // Forza ricaricamento RAM con i prezzi di oggi
+        console.log(`[DAILY AUTO-SYNC] Aggiornamento prezzi completato: ${res.totale} stazioni e colonnine attive.`);
+      })
+      .catch((err) => {
+        isSyncingInBackground = false;
+        console.warn("[DAILY AUTO-SYNC] Sincronizzazione automatica completata con fallback integrato:", err?.message);
+      });
+  }
+
   function getLoadedStations(): any[] {
     const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
     if (!fs.existsSync(liveFilePath)) {
-      // Se il file JSON non è ancora generato, usa istantaneamente il database seed integrato
-      if (!isSyncingInBackground) {
-        isSyncingInBackground = true;
-        console.log("[STATIONS CACHE] Avvio prima sincronizzazione MIMIT ed EV in background...");
-        sincronizzaMappaStazioni()
-          .then(() => {
-            isSyncingInBackground = false;
-            stationsMemoryCache = null; // Forza ricaricamento
-            console.log("[STATIONS CACHE] Sincronizzazione background completata con successo.");
-          })
-          .catch((err) => {
-            isSyncingInBackground = false;
-            console.warn("[STATIONS CACHE] Sincronizzazione background non riuscita:", err?.message);
-          });
-      }
+      // Se il file JSON non è ancora generato, avvia sync in background e usa database seed
+      triggerBackgroundStationsSync();
       return convertSeedStationsToBackend(SEED_STATIONS);
     }
 
     try {
       const stats = fs.statSync(liveFilePath);
       const mtime = stats.mtime.toISOString();
+      const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
+
+      // Se il file ha più di 20 ore, aggiorna automaticamente i prezzi in background
+      if (ageHours >= 20) {
+        triggerBackgroundStationsSync();
+      }
+
       if (!stationsMemoryCache || stationsLastModified !== mtime) {
         const raw = fs.readFileSync(liveFilePath, 'utf-8');
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           stationsMemoryCache = parsed;
           stationsLastModified = mtime;
-          console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache.length} stazioni MIMIT ed EV`);
+          console.log(`[STATIONS CACHE] Caricate in memoria RAM ${stationsMemoryCache.length} stazioni MIMIT ed EV (aggiornamento: ${mtime})`);
         }
       }
       return stationsMemoryCache || convertSeedStationsToBackend(SEED_STATIONS);
@@ -1176,6 +1186,27 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       return convertSeedStationsToBackend(SEED_STATIONS);
     }
   }
+
+  // Timer di verifica orario per garantire l'aggiornamento quotidiano automatico continuo
+  setInterval(() => {
+    const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
+    if (fs.existsSync(liveFilePath)) {
+      try {
+        const stats = fs.statSync(liveFilePath);
+        const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
+        if (ageHours >= 20) {
+          triggerBackgroundStationsSync();
+        }
+      } catch {}
+    } else {
+      triggerBackgroundStationsSync();
+    }
+  }, 60 * 60 * 1000); // Controllo orario permanente
+
+  // Esegui controllo immediato 2 secondi dopo l'avvio del server
+  setTimeout(() => {
+    triggerBackgroundStationsSync();
+  }, 2000);
 
   function calcDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // km

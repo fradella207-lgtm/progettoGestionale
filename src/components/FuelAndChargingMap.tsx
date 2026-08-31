@@ -231,13 +231,23 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     if (navigator.geolocation && !localStorage.getItem('garage_location_dismissed')) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const coords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          setUserLocation(coords);
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.setView([coords.lat, coords.lng], 12);
+          const rawLat = pos.coords.latitude;
+          const rawLng = pos.coords.longitude;
+          // Verify if location is inside Italy (Lat 35-48, Lng 6-19). Emulators often default to US coordinates.
+          const isWithinItaly = rawLat >= 35.0 && rawLat <= 48.0 && rawLng >= 6.0 && rawLng <= 19.5;
+          
+          if (isWithinItaly) {
+            const coords = { lat: rawLat, lng: rawLng };
+            setUserLocation(coords);
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.setView([coords.lat, coords.lng], 12);
+            }
+          } else {
+            // Emulator/Foreign GPS detected: Center on Italy to ensure all national stations remain visible
+            setUserLocation({ lat: 41.9028, lng: 12.4964 });
+            setMaxDistanceKm(9999);
+            setLocationStatus('GPS emulatore/estero rilevato: mappa impostata su tutta Italia');
+            setTimeout(() => setLocationStatus(''), 4000);
           }
         },
         () => {
@@ -354,10 +364,11 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const [typeFilter, setTypeFilter] = useState<'all' | 'fuel' | 'ev' | 'both'>(defaultCategoryFilter);
   const [specificFuelFilter, setSpecificFuelFilter] = useState<string>('all');
   const [brandFilter, setBrandFilter] = useState<string>('all');
-  const [maxDistanceKm, setMaxDistanceKm] = useState<number>(500); // Default to all Italy so all stations show
+  const [maxDistanceKm, setMaxDistanceKm] = useState<number>(9999); // Default to all Italy so all stations show without limits
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('price');
   const [onlyOpen24h, setOnlyOpen24h] = useState(false);
   const [onlyWithServices, setOnlyWithServices] = useState(false);
+  const [disableClustering, setDisableClustering] = useState(false); // Toggle to show 100% individual pins on emulator/desktop
 
   // Update default filter when vehicles or settings change if not manually edited
   useEffect(() => {
@@ -599,7 +610,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       }
 
       // Max Distance
-      if (maxDistanceKm < 500 && st.distanceKm && st.distanceKm > maxDistanceKm) {
+      if (maxDistanceKm < 5000 && st.distanceKm && st.distanceKm > maxDistanceKm) {
         return false;
       }
 
@@ -758,9 +769,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
     markersGroupRef.current.clearLayers();
 
-    // If zoomed out (e.g. initial view of Italy or whole region zoom < 9), aggregate nearby stations into clean cluster badges
-    // When zoomed in (zoom >= 9), show individual detailed price pins with no overlap
-    if (currentZoom < 9 && filteredStations.length > 50) {
+    // If zoomed out and clustering is enabled, aggregate nearby stations into clean cluster badges
+    // When zoomed in or when clustering is disabled, show individual detailed price pins for every station
+    if (!disableClustering && currentZoom < 9 && filteredStations.length > 50) {
       // Grid-based clustering calculation
       const gridSize = currentZoom <= 6 ? 1.5 : (currentZoom <= 7 ? 0.9 : 0.45);
       const clusters: {
@@ -925,7 +936,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         markersGroupRef.current?.addLayer(marker);
       });
     }
-  }, [filteredStations, selectedStation, lowestPriceStationId, currentZoom]);
+  }, [filteredStations, selectedStation, lowestPriceStationId, currentZoom, disableClustering]);
 
   return (
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
@@ -1242,27 +1253,64 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         </div>
       )}
 
-      {/* 3. COLOR LEGEND BAR FOR PRICES (COMPATTA) */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-white rounded-xl sm:rounded-2xl border border-slate-200 text-[10px] sm:text-[11px] font-bold text-slate-600 overflow-x-auto gap-2.5 no-scrollbar">
-        <span className="text-slate-400 whitespace-nowrap">Prezzi:</span>
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0"></span>
-            <span>Conveniente</span>
+      {/* 3. COLOR LEGEND & MAP DISPLAY CONTROLS */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-white rounded-xl sm:rounded-2xl border border-slate-200 text-[10px] sm:text-[11px] font-bold text-slate-600 shadow-2xs">
+        
+        {/* Color Legend */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <span className="text-slate-400 whitespace-nowrap">Prezzi:</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+            <span>Economico</span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-600 shrink-0"></span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0"></span>
             <span>Medio</span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0"></span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
             <span>Alto</span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-600 shrink-0"></span>
-            <span>Colonnina EV</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-teal-600 shrink-0"></span>
+            <span>EV</span>
           </div>
         </div>
+
+        {/* Quick View Controls & Clustering Switch */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setMaxDistanceKm(9999);
+              mapInstanceRef.current?.flyTo([41.9028, 12.4964], 6, { duration: 1 });
+            }}
+            title="Visualizza l'intero territorio nazionale italiano"
+            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+          >
+            <span>🇮🇹</span>
+            <span>Tutta Italia</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDisableClustering(!disableClustering)}
+            title={disableClustering ? "Attiva raggruppamento per zona" : "Mostra ogni singolo pin distributore/colonnina senza raggruppare"}
+            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border ${
+              disableClustering
+                ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs'
+                : 'bg-slate-100 hover:bg-slate-200 border-transparent text-slate-700'
+            }`}
+          >
+            <span>{disableClustering ? '📌 Tutti i pin' : '🔵 Raggruppati'}</span>
+          </button>
+
+          <span className="hidden sm:inline-flex text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Aggiornato quotidianamente
+          </span>
+        </div>
+
       </div>
 
       {/* 4. MAIN MAP & LIST GRID */}
