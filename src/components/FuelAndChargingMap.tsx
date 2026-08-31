@@ -51,7 +51,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   // Data source state: Live from /api/stations with fallback to SEED_STATIONS and offline localStorage cache
   const [liveStations, setLiveStations] = useState<Station[]>(() => {
     try {
-      const cached = localStorage.getItem('garage_cached_stations_v1');
+      const cached = localStorage.getItem('garage_cached_stations_v2');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -186,7 +186,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (activeType) {
         params.append('type', activeType);
       }
-      params.append('limit', '1200');
+      params.append('limit', '3500');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
       if (!res.ok) throw new Error('API error');
@@ -211,7 +211,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         });
         try {
           // Cache in localStorage for instantaneous offline and mobile startup
-          localStorage.setItem('garage_cached_stations_v1', JSON.stringify(mapped.slice(0, 200)));
+          localStorage.setItem('garage_cached_stations_v2', JSON.stringify(mapped.slice(0, 800)));
         } catch {
           // localStorage safe ignore
         }

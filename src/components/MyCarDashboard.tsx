@@ -76,28 +76,28 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
   const hasManual = !!(currentVehicle.manualInfo || currentVehicle.technicalSpecs?.manualInfo);
 
   return (
-    <div className="max-w-6xl mx-auto px-3.5 sm:px-6 py-3.5 sm:py-6 space-y-5 pb-28 font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 sm:py-6 space-y-4 sm:space-y-6 pb-28 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* VEHICLE SELECTOR & HERO CARD */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
+      <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-xs space-y-3.5 sm:space-y-5">
         
         {/* Top selector row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 shrink-0">Auto attiva:</span>
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400 shrink-0">Auto attiva:</span>
             <div className="flex items-center gap-1.5">
               {vehicles.map((v) => (
                 <button
                   key={v.id}
                   type="button"
                   onClick={() => onSelectVehicle(v.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
+                  className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap active:scale-95 ${
                     v.id === currentVehicle.id
                       ? 'bg-slate-900 text-white shadow-xs'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/70'
                   }`}
                 >
-                  <Car className={`w-3.5 h-3.5 ${v.id === currentVehicle.id ? 'text-indigo-400' : 'text-slate-400'}`} />
+                  <Car className={`w-4 h-4 ${v.id === currentVehicle.id ? 'text-indigo-400' : 'text-slate-400'}`} />
                   <span>{v.brand} {v.model}</span>
                 </button>
               ))}
@@ -105,75 +105,75 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
           </div>
 
           {vehicles.length > 1 && (
-            <span className="text-[11px] text-slate-400 font-bold shrink-0">
+            <span className="text-xs text-slate-400 font-bold shrink-0 hidden sm:inline">
               {vehicles.length} auto disponibili
             </span>
           )}
         </div>
 
         {/* HERO DETAILS */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-6 items-center">
           
           {/* Car Photo */}
-          <div className="md:col-span-4 relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-video sm:aspect-[16/10] bg-slate-900 border border-slate-200 shadow-inner group">
+          <div className="md:col-span-4 relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[16/10] sm:aspect-video md:aspect-[16/10] bg-slate-900 border border-slate-200 shadow-inner group">
             <img
               src={currentVehicle.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&auto=format&fit=crop&q=80'}
               alt={`${currentVehicle.brand} ${currentVehicle.model}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/40 pointer-events-none" />
-            <div className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-slate-950/80 backdrop-blur-md text-white rounded-lg font-mono font-black text-[11px] tracking-wider border border-white/20">
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-slate-950/30 pointer-events-none" />
+            <div className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-slate-950/85 backdrop-blur-md text-white rounded-lg font-mono font-black text-xs tracking-wider border border-white/20">
               {currentVehicle.plate || 'TARGA'}
             </div>
-            <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-indigo-600/90 backdrop-blur-md text-white rounded-lg font-black text-[10px] shadow-xs">
+            <div className="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-indigo-600/90 backdrop-blur-md text-white rounded-lg font-black text-xs shadow-xs">
               {currentVehicle.fuelType}
             </div>
           </div>
 
           {/* Car Meta and Quick Stats */}
-          <div className="md:col-span-8 space-y-3.5 min-w-0">
+          <div className="md:col-span-8 space-y-3 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-black uppercase tracking-wider text-indigo-600">Scheda Tecnica & AI</span>
+                <span className="text-xs font-black uppercase tracking-wider text-indigo-600">Scheda Tecnica & AI</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                <span className="text-[11px] text-slate-500 font-semibold truncate">
+                <span className="text-xs text-slate-500 font-semibold truncate">
                   Immatr.: {currentVehicle.registrationDate ? new Date(currentVehicle.registrationDate).toLocaleDateString('it-IT') : 'N/D'}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight mt-0.5 break-words">
                 {currentVehicle.brand} <span className="text-indigo-600">{currentVehicle.model}</span>
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
                 {currentVehicle.motorization || currentVehicle.fuelType} 
                 {currentVehicle.powerCv ? ` • ${currentVehicle.powerCv} CV (${currentVehicle.powerKw || Math.round(currentVehicle.powerCv * 0.735)} kW)` : ''}
               </p>
             </div>
 
-            {/* Micro badges */}
+            {/* Micro badges - 2 columns on mobile, 4 on desktop */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Chilometri</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentKm.toLocaleString('it-IT')} km</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase block truncate">Chilometri</span>
+                <span className="text-sm font-black text-slate-900 mt-0.5 block truncate">{currentKm.toLocaleString('it-IT')} km</span>
               </div>
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Documenti</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.documents?.length || 0} file</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase block truncate">Documenti</span>
+                <span className="text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.documents?.length || 0} file</span>
               </div>
-              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-200/80 min-w-0">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase block truncate">Tagliandi</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.maintenances?.length || 0}</span>
+              <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200/80 min-w-0">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase block truncate">Tagliandi</span>
+                <span className="text-sm font-black text-slate-900 mt-0.5 block truncate">{currentVehicle.maintenances?.length || 0}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(true)}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-left cursor-pointer transition-all hover:scale-[1.02] active:scale-95 min-w-0 ${
+                className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border text-left cursor-pointer transition-all hover:scale-[1.02] active:scale-95 min-w-0 min-h-[44px] ${
                   hasManual 
                     ? 'bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 shadow-2xs' 
                     : 'bg-indigo-50 hover:bg-indigo-100/80 border-indigo-200 shadow-2xs'
                 }`}
                 title="Visualizza, allega o cerca il manuale ufficiale di bordo"
               >
-                <span className={`text-[9px] font-extrabold uppercase block truncate ${hasManual ? 'text-emerald-700' : 'text-indigo-700'}`}>Manuale</span>
+                <span className={`text-[11px] font-extrabold uppercase block truncate ${hasManual ? 'text-emerald-700' : 'text-indigo-700'}`}>Manuale</span>
                 <span className={`text-xs font-black mt-0.5 flex items-center gap-1 truncate ${hasManual ? 'text-emerald-900' : 'text-indigo-900'}`}>
                   {hasManual ? <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <Upload className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
                   <span className="truncate">{hasManual ? 'Indicizzato' : 'Allega PDF'}</span>
@@ -186,35 +186,35 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 
       </div>
 
-      {/* SECTION TABS (Scheda Tecnica / Documenti / Assistente AI) */}
-      <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-2xl w-full max-w-lg shadow-inner">
+      {/* SECTION TABS (Scheda Tecnica / Documenti / Assistente AI) - Large touch targets on mobile */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/80 rounded-2xl w-full max-w-lg shadow-inner">
         
         <button
           type="button"
           onClick={() => setActiveTab('specs')}
-          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+          className={`flex-1 min-h-[44px] py-2 px-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
             activeTab === 'specs'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+          <Layers className="w-4 h-4 text-indigo-600 shrink-0" />
           <span className="truncate">Scheda</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('documents')}
-          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer relative active:scale-95 ${
+          className={`flex-1 min-h-[44px] py-2 px-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer relative active:scale-95 ${
             activeTab === 'documents'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <FileText className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+          <FileText className="w-4 h-4 text-slate-700 shrink-0" />
           <span className="truncate">Libretto</span>
           {currentVehicle.documents && currentVehicle.documents.length > 0 && (
-            <span className="w-4 h-4 rounded-full bg-slate-900 text-white text-[8.5px] font-black flex items-center justify-center shrink-0">
+            <span className="w-4.5 h-4.5 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center shrink-0">
               {currentVehicle.documents.length}
             </span>
           )}
@@ -223,13 +223,13 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
         <button
           type="button"
           onClick={() => setActiveTab('assistant')}
-          className={`flex-1 py-2.5 px-1.5 sm:px-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+          className={`flex-1 min-h-[44px] py-2 px-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
             activeTab === 'assistant'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <Bot className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <Bot className="w-4 h-4 text-emerald-600 shrink-0" />
           <span className="truncate">Assistente AI</span>
         </button>
 

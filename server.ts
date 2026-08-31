@@ -1204,7 +1204,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
       const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 50; // default 50 km
       const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
-      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 2500) : 1200;
+      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 5000) : 2500;
 
       let filtered = stations;
 
@@ -1270,15 +1270,15 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         });
       }
 
-      // 5. Risultati limitati con bilanciamento
+      // 5. Risultati bilanciati per garantire colonnine EV e distributori ovunque
       let dataToSend = [];
       if (typeParam === 'all') {
         const evList = filtered.filter(st => st.tipo === 'elettrico' || st.tipo === 'ev');
         const fuelList = filtered.filter(st => st.tipo !== 'elettrico' && st.tipo !== 'ev');
         
-        // Includi tutti gli hub EV presenti nell'area (fino a 250) + distributori di carburante fino al limite
-        const evPortion = evList.slice(0, 250);
-        const remainingLimit = Math.max(limitParam - evPortion.length, 100);
+        // Includi TUTTE le colonnine e hub EV presenti nell'area filtrata (fino a 1000)
+        const evPortion = evList.slice(0, 1000);
+        const remainingLimit = Math.max(limitParam - evPortion.length, 500);
         const fuelPortion = fuelList.slice(0, remainingLimit);
         
         dataToSend = [...evPortion, ...fuelPortion];

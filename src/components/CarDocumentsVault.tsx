@@ -181,15 +181,15 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
     <div className="space-y-6 animate-in fade-in duration-200">
       
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-              <Shield className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
+              <Shield className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">Libretto & Documenti di Bordo</h2>
+            <h2 className="text-base sm:text-lg font-black text-slate-900">Libretto & Documenti di Bordo</h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Archivia e visualizza in mobilità il Libretto DUC, Certificato di Assicurazione, Bollo e Manutenzioni.
           </p>
         </div>
@@ -197,7 +197,7 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-sm hover:shadow transition-all text-xs active:scale-95 cursor-pointer"
+          className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl sm:rounded-2xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 cursor-pointer self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Aggiungi Documento</span>
@@ -206,26 +206,26 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
 
       {/* DOCUMENT LIST */}
       {docs.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-10 text-center space-y-4">
+        <div className="bg-white border border-dashed border-slate-300 rounded-2xl sm:rounded-3xl p-6 sm:p-10 text-center space-y-4">
           <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
             <FileText className="w-7 h-7" />
           </div>
           <div className="max-w-md mx-auto">
-            <h3 className="text-sm font-bold text-slate-900">Nessun documento memorizzato per questa auto</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">Nessun documento memorizzato per questa auto</h3>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Carica una foto o PDF della tua polizza assicurativa o del libretto di circolazione per averli sempre a portata di mano anche offline.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
           >
             <Upload className="w-4 h-4" /> Carica ora il primo documento
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {docs.map((doc) => {
             const badge = getTypeBadge(doc.type);
             const Icon = badge.icon;
@@ -239,11 +239,11 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
               <div
                 key={doc.id}
                 onClick={() => setSelectedDocForPreview(doc)}
-                className="bg-white border border-slate-200/80 hover:border-blue-400 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                className="bg-white border border-slate-200/80 hover:border-blue-400 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group min-w-0"
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border ${badge.bg}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border ${badge.bg}`}>
                       <Icon className="w-3.5 h-3.5" />
                       {badge.label}
                     </span>
@@ -252,38 +252,38 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
                       type="button"
                       title="Elimina documento"
                       onClick={(e) => handleDeleteDocument(doc.id, e)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                       {doc.title}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5 line-clamp-2">
                       {doc.notes || doc.fileName}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
                   {doc.expiryDate ? (
                     <div className="flex items-center gap-1 font-semibold">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <Calendar className="w-4 h-4 text-slate-400" />
                       <span className={isExpired ? 'text-rose-600 font-bold' : (isExpiringSoon ? 'text-amber-600 font-bold' : 'text-slate-600')}>
                         Scadenza: {new Date(doc.expiryDate).toLocaleDateString('it-IT')}
                       </span>
                     </div>
                   ) : (
-                    <div className="text-slate-400 text-[11px]">
+                    <div className="text-slate-400 text-xs">
                       Caricato il {new Date(doc.uploadDate).toLocaleDateString('it-IT')}
                     </div>
                   )}
 
-                  <span className="text-blue-600 font-bold flex items-center gap-1 text-[11px] group-hover:translate-x-0.5 transition-transform">
-                    <Eye className="w-3.5 h-3.5" /> Apri
+                  <span className="text-blue-600 font-bold flex items-center gap-1 text-xs sm:text-sm group-hover:translate-x-0.5 transition-transform">
+                    <Eye className="w-4 h-4" /> Apri
                   </span>
                 </div>
               </div>
