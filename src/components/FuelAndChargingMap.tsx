@@ -368,7 +368,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const [sortBy, setSortBy] = useState<'distance' | 'price' | 'rating'>('price');
   const [onlyOpen24h, setOnlyOpen24h] = useState(false);
   const [onlyWithServices, setOnlyWithServices] = useState(false);
-  const [disableClustering, setDisableClustering] = useState(false); // Toggle to show 100% individual pins on emulator/desktop
+  const [densityMode, setDensityMode] = useState<'smart' | 'best_only' | 'all'>('smart'); // 'smart': Anti-collision decluttering | 'best_only': Top deals | 'all': All pins
+  const [mapViewVersion, setMapViewVersion] = useState<number>(0);
+  const [visibleListLimit, setVisibleListLimit] = useState<number>(35);
 
   // Update default filter when vehicles or settings change if not manually edited
   useEffect(() => {
@@ -703,6 +705,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       // Listen to map pan/zoom to dynamically load real MIMIT stations and handle clustering at different zoom levels
       let moveTimeout: any = null;
       map.on('moveend', () => {
+        setMapViewVersion(v => v + 1);
         clearTimeout(moveTimeout);
         moveTimeout = setTimeout(() => {
           const z = map.getZoom();
@@ -715,10 +718,11 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             const c = map.getCenter();
             fetchAreaStations({ lat: c.lat, lng: c.lng, radius: 50 });
           }
-        }, 350);
+        }, 200);
       });
       map.on('zoomend', () => {
         setCurrentZoom(map.getZoom());
+        setMapViewVersion(v => v + 1);
       });
     }
 
@@ -763,17 +767,104 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     userMarkerRef.current = marker;
   }, [userLocation]);
 
-  // UPDATE ALL STATION MARKERS ON MAP WITH INTELLIGENT CLUSTERING AT LOW ZOOMS & COLOR-CODED PINS AT HIGH ZOOMS
+  // ---------------------------------------------------------------------------
+  // ULTRA-FAST ADAPTIVE DECLUTTERING & COLLISION-FREE MARKER RENDERER
+  // Eliminates overlapping clutter at all zoom levels while keeping 60 FPS performance
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!mapInstanceRef.current || !markersGroupRef.current) return;
 
-    markersGroupRef.current.clearLayers();
+    const map = mapInstanceRef.current;
+    const markersGroup = markersGroupRef.current;
+    markersGroup.clearLayers();
 
-    // If zoomed out and clustering is enabled, aggregate nearby stations into clean cluster badges
-    // When zoomed in or when clustering is disabled, show individual detailed price pins for every station
-    if (!disableClustering && currentZoom < 9 && filteredStations.length > 50) {
-      // Grid-based clustering calculation
-      const gridSize = currentZoom <= 6 ? 1.5 : (currentZoom <= 7 ? 0.9 : 0.45);
+    const currentBounds = map.getBounds();
+    const paddedBounds = currentBounds.pad(0.12); // Frustum culling buffer (12%)
+
+    // 1. Frustum Culling: Only evaluate stations that are inside or near current viewport
+    const visiblePool = filteredStations.filter(st => paddedBounds.contains([st.lat, st.lng]));
+    if (visiblePool.length === 0) return;
+
+    // Helper: Render full detailed price pill
+    const renderIndividualMarker = (st: Station, isProminentDeal = false, zOffset = 0) => {
+      const minInfo = getMinPrice(st);
+      const isBestPrice = st.id === lowestPriceStationId || isProminentDeal;
+      const isSelected = selectedStation?.id === st.id;
+      const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+
+      let iconSymbol = '⛽';
+      if (st.type === 'ev') iconSymbol = '⚡';
+      if (st.type === 'both') iconSymbol = '⛽⚡';
+
+      const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
+
+      const markerHtml = `
+        <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-115 z-50' : 'hover:scale-105'} transition-all">
+          <div class="${colorScheme.bg} text-white px-2 py-0.5 rounded-lg shadow-sm border ${
+            isSelected 
+              ? 'border-amber-300 ring-3 ring-amber-400 font-black' 
+              : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400 font-black' : 'border-white/90 font-bold')
+          } text-[11px] tracking-tight whitespace-nowrap flex items-center gap-1">
+            <span class="text-[10px]">${iconSymbol}</span>
+            <span>${priceText}</span>
+          </div>
+          <div class="w-1.5 h-1.5 ${colorScheme.bg} rotate-45 -mt-0.5 shadow-2xs border-r border-b border-black/10"></div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        className: 'custom-station-pin-container',
+        html: markerHtml,
+        iconSize: [56, 26],
+        iconAnchor: [28, 26]
+      });
+
+      const marker = L.marker([st.lat, st.lng], { 
+        icon: customIcon,
+        zIndexOffset: isSelected ? 1000 : (isBestPrice ? 500 : zOffset)
+      });
+
+      marker.on('click', () => {
+        setSelectedStation(st);
+        map.panTo([st.lat, st.lng], { animate: true, duration: 0.4 });
+      });
+
+      markersGroup.addLayer(marker);
+    };
+
+    // Helper: Render sleek compact mini-dot for secondary stations in dense areas (anti-collision)
+    const renderCompactDotMarker = (st: Station) => {
+      const minInfo = getMinPrice(st);
+      const isSelected = selectedStation?.id === st.id;
+      const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+      const symbol = st.type === 'ev' ? '⚡' : '⛽';
+
+      const dotHtml = `
+        <div class="cursor-pointer group flex items-center justify-center transition-transform hover:scale-125 ${isSelected ? 'scale-125 ring-2 ring-amber-400' : ''}">
+          <div class="w-4 h-4 rounded-full ${colorScheme.bg} border border-white shadow-xs flex items-center justify-center text-[8px] text-white font-black">
+            ${symbol}
+          </div>
+        </div>
+      `;
+
+      const dotIcon = L.divIcon({
+        className: 'custom-dot-pin-container',
+        html: dotHtml,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+
+      const marker = L.marker([st.lat, st.lng], { icon: dotIcon, zIndexOffset: isSelected ? 800 : 10 });
+      marker.on('click', () => {
+        setSelectedStation(st);
+        map.panTo([st.lat, st.lng], { animate: true, duration: 0.4 });
+      });
+
+      markersGroup.addLayer(marker);
+    };
+
+    // Helper: Spatial Grid Clustering
+    const renderGridClusters = (stations: Station[], gridSize: number) => {
       const clusters: {
         [key: string]: {
           latSum: number;
@@ -785,7 +876,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         }
       } = {};
 
-      filteredStations.forEach(st => {
+      stations.forEach(st => {
         const gridX = Math.floor(st.lat / gridSize);
         const gridY = Math.floor(st.lng / gridSize);
         const key = `${gridX}_${gridY}`;
@@ -810,133 +901,120 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         if (st.type === 'fuel' || st.type === 'both') cl.hasFuel = true;
 
         const p = getMinPrice(st).price;
-        if (p > 0 && p < cl.minPrice) {
-          cl.minPrice = p;
-        }
+        if (p > 0 && p < cl.minPrice) cl.minPrice = p;
       });
 
-      // Render each cluster badge or individual station if cluster size is 1
       Object.values(clusters).forEach(cl => {
         const count = cl.stations.length;
         const centerLat = cl.latSum / count;
         const centerLng = cl.lngSum / count;
 
         if (count === 1) {
-          const st = cl.stations[0];
-          const minInfo = getMinPrice(st);
-          const isBestPrice = st.id === lowestPriceStationId;
-          const isSelected = selectedStation?.id === st.id;
-          const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
-
-          let iconSymbol = '⛽';
-          if (st.type === 'ev') iconSymbol = '⚡';
-          if (st.type === 'both') iconSymbol = '⛽⚡';
-
-          const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
-
-          const markerHtml = `
-            <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-120 z-50' : 'hover:scale-110'} transition-transform">
-              <div class="${colorScheme.bg} text-white px-2 py-1 rounded-xl shadow-md border ${isSelected ? 'border-amber-300 ring-3 ring-amber-400' : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400' : 'border-white/90')} text-[11px] font-black tracking-tight whitespace-nowrap flex items-center gap-1">
-                <span>${iconSymbol}</span>
-                <span>${priceText}</span>
-              </div>
-              <div class="w-2 h-2 ${colorScheme.bg} rotate-45 -mt-1 shadow-xs border-r border-b border-black/10"></div>
-            </div>
-          `;
-
-          const customIcon = L.divIcon({
-            className: 'custom-station-pin-container',
-            html: markerHtml,
-            iconSize: [60, 30],
-            iconAnchor: [30, 30]
-          });
-
-          const marker = L.marker([st.lat, st.lng], { icon: customIcon });
-          marker.on('click', () => {
-            setSelectedStation(st);
-            mapInstanceRef.current?.panTo([st.lat, st.lng], { animate: true, duration: 0.5 });
-          });
-          markersGroupRef.current?.addLayer(marker);
+          renderIndividualMarker(cl.stations[0]);
         } else {
-          // Clustered bubble icon with station count & min price tag
           let typeIcon = '⛽';
           if (cl.hasEv && cl.hasFuel) typeIcon = '⛽⚡';
           else if (cl.hasEv) typeIcon = '⚡';
 
-          const priceBadge = cl.minPrice !== Infinity 
-            ? `<div class="bg-white/95 text-slate-900 px-1.5 py-0.5 rounded-full text-[10px] font-black shadow-xs border border-slate-200 whitespace-nowrap">da €${cl.minPrice.toFixed(3).replace('.', ',')}</div>`
+          const priceTag = cl.minPrice !== Infinity 
+            ? `<span class="bg-white text-slate-900 px-1 py-0.2 rounded-md text-[9px] font-black shadow-2xs whitespace-nowrap">da €${cl.minPrice.toFixed(3).replace('.', ',')}</span>`
             : '';
 
           const clusterHtml = `
-            <div class="custom-cluster-badge cursor-pointer flex flex-col items-center group transition-all duration-200">
-              <div class="bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-2xl px-2.5 py-1.5 shadow-lg border-2 border-white flex items-center gap-1.5 ring-2 ring-blue-500/30">
-                <span class="text-xs">${typeIcon}</span>
-                <span class="text-xs font-black tracking-tight">${count} stazioni</span>
+            <div class="custom-cluster-badge cursor-pointer flex flex-col items-center group transition-transform hover:scale-105">
+              <div class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-xl px-2 py-1 shadow-md border border-white flex items-center gap-1.5 ring-1 ring-blue-400/40">
+                <span class="text-[10px]">${typeIcon}</span>
+                <span class="text-[11px] font-black tracking-tight">${count}</span>
+                ${priceTag}
               </div>
-              ${priceBadge ? `<div class="-mt-1 z-10">${priceBadge}</div>` : ''}
             </div>
           `;
 
           const clusterIcon = L.divIcon({
             className: 'custom-cluster-container',
             html: clusterHtml,
-            iconSize: [80, 42],
-            iconAnchor: [40, 21]
+            iconSize: [84, 30],
+            iconAnchor: [42, 15]
           });
 
-          const clusterMarker = L.marker([centerLat, centerLng], { icon: clusterIcon });
-          
-          // Clicking cluster zooms in smoothly towards that city/area
+          const clusterMarker = L.marker([centerLat, centerLng], { icon: clusterIcon, zIndexOffset: 200 });
           clusterMarker.on('click', () => {
-            const nextZoom = Math.min(currentZoom + 3, 15);
-            mapInstanceRef.current?.flyTo([centerLat, centerLng], nextZoom, { duration: 0.8 });
+            const nextZoom = Math.min(currentZoom + (currentZoom < 9 ? 3 : 2), 16);
+            map.flyTo([centerLat, centerLng], nextZoom, { duration: 0.6 });
           });
 
-          markersGroupRef.current?.addLayer(clusterMarker);
+          markersGroup.addLayer(clusterMarker);
         }
       });
-    } else {
-      // Zoom >= 12: High-resolution individual station markers with complete price tags
-      filteredStations.forEach(st => {
-        const minInfo = getMinPrice(st);
-        const isBestPrice = st.id === lowestPriceStationId;
-        const isSelected = selectedStation?.id === st.id;
-        const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+    };
 
-        let iconSymbol = '⛽';
-        if (st.type === 'ev') iconSymbol = '⚡';
-        if (st.type === 'both') iconSymbol = '⛽⚡';
+    // --- EXECUTE DENSITY STRATEGY ---
+    if (densityMode === 'best_only') {
+      // Show top 8 most economical stations in current view
+      const topDeals = [...visiblePool]
+        .sort((a, b) => {
+          const pA = getMinPrice(a).price || 999;
+          const pB = getMinPrice(b).price || 999;
+          return pA - pB;
+        })
+        .slice(0, 10);
 
-        const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
-
-        const markerHtml = `
-          <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-120 z-50' : 'hover:scale-110'} transition-transform">
-            <div class="${colorScheme.bg} text-white px-2 py-1 rounded-xl shadow-md border ${isSelected ? 'border-amber-300 ring-3 ring-amber-400' : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400' : 'border-white/90')} text-[11px] font-black tracking-tight whitespace-nowrap flex items-center gap-1">
-              <span>${iconSymbol}</span>
-              <span>${priceText}</span>
-            </div>
-            <div class="w-2 h-2 ${colorScheme.bg} rotate-45 -mt-1 shadow-xs border-r border-b border-black/10"></div>
-          </div>
-        `;
-
-        const customIcon = L.divIcon({
-          className: 'custom-station-pin-container',
-          html: markerHtml,
-          iconSize: [60, 30],
-          iconAnchor: [30, 30]
-        });
-
-        const marker = L.marker([st.lat, st.lng], { icon: customIcon });
-
-        marker.on('click', () => {
-          setSelectedStation(st);
-          mapInstanceRef.current?.panTo([st.lat, st.lng], { animate: true, duration: 0.5 });
-        });
-
-        markersGroupRef.current?.addLayer(marker);
-      });
+      topDeals.forEach(st => renderIndividualMarker(st, true));
+      return;
     }
-  }, [filteredStations, selectedStation, lowestPriceStationId, currentZoom, disableClustering]);
+
+    if (densityMode === 'all') {
+      // Force all individual pins (capped to 120 for mobile safety)
+      visiblePool.slice(0, 120).forEach(st => renderIndividualMarker(st));
+      return;
+    }
+
+    // Default 'smart' Mode (Hierarchical Clustering & Screen-space anti-collision)
+    if (currentZoom < 8 && visiblePool.length > 25) {
+      renderGridClusters(visiblePool, 1.2);
+    } else if (currentZoom >= 8 && currentZoom <= 10 && visiblePool.length > 20) {
+      renderGridClusters(visiblePool, 0.22);
+    } else if (currentZoom >= 11 && currentZoom <= 13 && visiblePool.length > 15) {
+      renderGridClusters(visiblePool, 0.025);
+    } else {
+      // Zoom >= 14: Street Level Screen-Space Collision Avoidance
+      // Prioritize selected station and lowest price
+      const sorted = [...visiblePool].sort((a, b) => {
+        if (a.id === selectedStation?.id) return -1;
+        if (b.id === selectedStation?.id) return 1;
+        const pA = getMinPrice(a).price || 999;
+        const pB = getMinPrice(b).price || 999;
+        return pA - pB;
+      });
+
+      const occupiedPixels: { x: number; y: number }[] = [];
+      const MAX_STREET_MARKERS = 80;
+      let count = 0;
+
+      for (const st of sorted) {
+        if (count >= MAX_STREET_MARKERS) break;
+
+        const pt = map.latLngToContainerPoint([st.lat, st.lng]);
+        const isSelected = st.id === selectedStation?.id;
+        const isBestPrice = st.id === lowestPriceStationId;
+
+        // Collision check with already placed badges (min 42px on screen)
+        const isColliding = occupiedPixels.some(
+          occ => Math.hypot(occ.x - pt.x, occ.y - pt.y) < 42
+        );
+
+        if (!isColliding || isSelected || isBestPrice) {
+          renderIndividualMarker(st);
+          occupiedPixels.push({ x: pt.x, y: pt.y });
+          count++;
+        } else {
+          // Render as secondary compact dot pin so nothing is occluded or illegible
+          renderCompactDotMarker(st);
+          count++;
+        }
+      }
+    }
+  }, [filteredStations, selectedStation, lowestPriceStationId, currentZoom, densityMode, mapViewVersion]);
 
   return (
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
@@ -1292,18 +1370,45 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             <span>Tutta Italia</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setDisableClustering(!disableClustering)}
-            title={disableClustering ? "Attiva raggruppamento per zona" : "Mostra ogni singolo pin distributore/colonnina senza raggruppare"}
-            className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border ${
-              disableClustering
-                ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs'
-                : 'bg-slate-100 hover:bg-slate-200 border-transparent text-slate-700'
-            }`}
-          >
-            <span>{disableClustering ? '📌 Tutti i pin' : '🔵 Raggruppati'}</span>
-          </button>
+          {/* Density Mode Selector */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+            <button
+              type="button"
+              onClick={() => setDensityMode('smart')}
+              title="Vista ottimizzata con anti-collisione e raggruppamento dinamico (consigliata)"
+              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                densityMode === 'smart' 
+                  ? 'bg-white text-[#2563eb] shadow-2xs font-extrabold' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              🎯 Chiara
+            </button>
+            <button
+              type="button"
+              onClick={() => setDensityMode('best_only')}
+              title="Mostra solo le stazioni con i prezzi più convenienti nell'area visibile"
+              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                densityMode === 'best_only' 
+                  ? 'bg-white text-emerald-700 shadow-2xs font-extrabold' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              💎 Top Prezzi
+            </button>
+            <button
+              type="button"
+              onClick={() => setDensityMode('all')}
+              title="Mostra tutti i singoli pin senza raggruppamento"
+              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+                densityMode === 'all' 
+                  ? 'bg-white text-slate-900 shadow-2xs font-extrabold' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              📌 Tutti
+            </button>
+          </div>
 
           <span className="hidden sm:inline-flex text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1580,7 +1685,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">
-                {filteredStations.map((st) => {
+                {filteredStations.slice(0, visibleListLimit).map((st) => {
                   const minInfo = getMinPrice(st);
                   const isSelected = selectedStation?.id === st.id;
                   const isBestPrice = st.id === lowestPriceStationId;
@@ -1640,6 +1745,16 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                     </div>
                   );
                 })}
+
+                {filteredStations.length > visibleListLimit && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleListLimit(prev => prev + 35)}
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer text-center mt-1 border border-slate-200 shadow-2xs"
+                  >
+                    Mostra altri distributori (+35) • {filteredStations.length - visibleListLimit} rimanenti
+                  </button>
+                )}
               </div>
             )}
 

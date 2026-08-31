@@ -1226,6 +1226,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
   // -------------------------------------------------------------
   app.get("/api/stations", async (req, res) => {
     try {
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
       const stations = getLoadedStations();
       const totalDatabaseCount = stations.length;
 
@@ -1235,7 +1236,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
       const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 50; // default 50 km
       const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
-      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 10000) : 6000;
+      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 4000) : 1000;
 
       let filtered = stations;
 
@@ -1302,12 +1303,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       }
 
       // 5. Risultati: restituisci tutte le stazioni fino al limite massimo
-      let dataToSend = [];
-      if (typeParam === 'all') {
-        dataToSend = filtered.slice(0, limitParam);
-      } else {
-        dataToSend = filtered.slice(0, limitParam);
-      }
+      const dataToSend = filtered.slice(0, limitParam);
 
       return res.json({
         success: true,
