@@ -187,10 +187,10 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
             <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold shrink-0">
               <Shield className="w-5 h-5" />
             </div>
-            <h2 className="text-base sm:text-lg font-black text-slate-900">Libretto & Documenti di Bordo</h2>
+            <h2 className="text-base sm:text-lg font-black text-slate-900">Documenti dell'Auto</h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Archivia e visualizza in mobilità il Libretto DUC, Certificato di Assicurazione, Bollo e Manutenzioni.
+            Archivia e visualizza in mobilità Libretto DUC, Certificato di Assicurazione, Bollo e Manutenzioni.
           </p>
         </div>
 

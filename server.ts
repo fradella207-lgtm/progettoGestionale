@@ -1151,9 +1151,24 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
   }
 
   function getLoadedStations(): any[] {
-    const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
-    if (!fs.existsSync(liveFilePath)) {
-      // Se il file JSON non è ancora generato, avvia sync in background e usa database seed
+    const candidatePaths = [
+      path.join(process.cwd(), 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'live_stations_output.json'),
+      path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
+      path.join(__dirname, 'live_stations_output.json'),
+    ];
+
+    let liveFilePath = '';
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        liveFilePath = p;
+        break;
+      }
+    }
+
+    if (!liveFilePath) {
+      // Se il file JSON non è ancora generato, avvia sync in background e usa database seed arricchito
       triggerBackgroundStationsSync();
       return convertSeedStationsToBackend(SEED_STATIONS);
     }
@@ -1189,18 +1204,26 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
 
   // Timer di verifica orario per garantire l'aggiornamento quotidiano automatico continuo
   setInterval(() => {
-    const liveFilePath = path.join(process.cwd(), 'src', 'data', 'live_stations_output.json');
-    if (fs.existsSync(liveFilePath)) {
-      try {
-        const stats = fs.statSync(liveFilePath);
-        const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
-        if (ageHours >= 20) {
-          triggerBackgroundStationsSync();
-        }
-      } catch {}
-    } else {
-      triggerBackgroundStationsSync();
+    const candidatePaths = [
+      path.join(process.cwd(), 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'live_stations_output.json'),
+      path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
+      path.join(__dirname, 'live_stations_output.json'),
+    ];
+    let found = false;
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        found = true;
+        try {
+          const stats = fs.statSync(p);
+          const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
+          if (ageHours >= 20) triggerBackgroundStationsSync();
+        } catch {}
+        break;
+      }
     }
+    if (!found) triggerBackgroundStationsSync();
   }, 60 * 60 * 1000); // Controllo orario permanente
 
   // Esegui controllo immediato 2 secondi dopo l'avvio del server
@@ -1240,32 +1263,23 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
 
       let filtered = stations;
 
+      const isEvStation = (st: any) => 
+        st.tipo === 'elettrico' || 
+        st.tipo === 'ev' || 
+        (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
+          sp.tipo_servizio?.toLowerCase().includes('kw') || 
+          sp.tipo_servizio?.toLowerCase().includes('type') || 
+          sp.tipo_servizio?.toLowerCase().includes('ccs') ||
+          sp.tipo_servizio?.toLowerCase().includes('tesla') ||
+          sp.tipo_servizio?.toLowerCase().includes('supercharger') ||
+          sp.tipo_servizio?.toLowerCase().includes('chademo')
+        ));
+
       // 1. Filtro Tipo (Carburante vs Colonnina Elettrica)
       if (typeParam === 'ev' || typeParam === 'elettrico') {
-        filtered = filtered.filter(st => 
-          st.tipo === 'elettrico' || 
-          st.tipo === 'ev' || 
-          (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
-            sp.tipo_servizio?.toLowerCase().includes('kw') || 
-            sp.tipo_servizio?.toLowerCase().includes('type') || 
-            sp.tipo_servizio?.toLowerCase().includes('ccs') ||
-            sp.tipo_servizio?.toLowerCase().includes('tesla') ||
-            sp.tipo_servizio?.toLowerCase().includes('supercharger') ||
-            sp.tipo_servizio?.toLowerCase().includes('chademo')
-          ))
-        );
+        filtered = filtered.filter(isEvStation);
       } else if (typeParam === 'fuel' || typeParam === 'carburante') {
-        filtered = filtered.filter(st => 
-          st.tipo === 'carburante' || 
-          st.tipo === 'fuel' || 
-          (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
-            sp.tipo_servizio?.toLowerCase().includes('benzina') || 
-            sp.tipo_servizio?.toLowerCase().includes('gasolio') || 
-            sp.tipo_servizio?.toLowerCase().includes('diesel') ||
-            sp.tipo_servizio?.toLowerCase().includes('gpl') ||
-            sp.tipo_servizio?.toLowerCase().includes('metano')
-          ))
-        );
+        filtered = filtered.filter(st => !isEvStation(st));
       }
 
       // 2. Filtro per Bounding Box (Viewport della mappa)
@@ -1302,8 +1316,15 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         });
       }
 
-      // 5. Risultati: restituisci tutte le stazioni fino al limite massimo
-      const dataToSend = filtered.slice(0, limitParam);
+      // 5. Risultati: restituisci tutte le colonnine EV e distributori senza penalizzare le EV
+      let dataToSend: any[] = [];
+      if (typeParam === 'all') {
+        const evList = filtered.filter(isEvStation);
+        const fuelList = filtered.filter(st => !isEvStation(st));
+        dataToSend = [...evList, ...fuelList.slice(0, Math.max(0, limitParam - evList.length))];
+      } else {
+        dataToSend = filtered.slice(0, limitParam);
+      }
 
       return res.json({
         success: true,

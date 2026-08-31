@@ -212,7 +212,7 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
           }`}
         >
           <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 shrink-0" />
-          <span className="truncate">Libretto</span>
+          <span className="truncate">Documenti</span>
           {currentVehicle.documents && currentVehicle.documents.length > 0 && (
             <span className="w-4 h-4 rounded-full bg-slate-900 text-white text-[9px] font-black flex items-center justify-center shrink-0">
               {currentVehicle.documents.length}

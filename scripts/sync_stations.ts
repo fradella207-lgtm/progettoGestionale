@@ -503,7 +503,22 @@ async function elaboraColonnineElettriche(): Promise<OutputStazione[]> {
     { id: "ev_hub_59", nome: "Be Charge Ultra-Fast - Siracusa", via: "Viale Epipoli 250, Siracusa (SR)", comune: "Siracusa", lat: 37.0891, lng: 15.2612, kw: 300, op: "Be Charge" },
     { id: "ev_hub_60", nome: "Tesla Supercharger - Cagliari Elmas", via: "Via dei Trasvolatori 1, Elmas (CA)", comune: "Elmas", lat: 39.2612, lng: 9.0654, kw: 250, op: "Tesla" },
     { id: "ev_hub_61", nome: "Tesla Supercharger - Olbia Aeroporto", via: "Aeroporto Costa Smeralda, Olbia (SS)", comune: "Olbia", lat: 40.9182, lng: 9.5182, kw: 250, op: "Tesla" },
-    { id: "ev_hub_62", nome: "Be Charge Ultra-Fast - Sassari Predda Niedda", via: "Strada 1 Predda Niedda, Sassari (SS)", comune: "Sassari", lat: 40.7381, lng: 8.5312, kw: 300, op: "Be Charge" }
+    { id: "ev_hub_62", nome: "Be Charge Ultra-Fast - Sassari Predda Niedda", via: "Strada 1 Predda Niedda, Sassari (SS)", comune: "Sassari", lat: 40.7381, lng: 8.5312, kw: 300, op: "Be Charge" },
+    // Ulteriori Hub Strategici Autostradali e Metropolitani
+    { id: "ev_hub_63", nome: "Ionity HPC - Carpi Est (A22 del Brennero)", via: "Via dell'Industria 12, Carpi (MO)", comune: "Carpi", lat: 44.7891, lng: 10.8841, kw: 350, op: "Ionity" },
+    { id: "ev_hub_64", nome: "Ionity HPC - Forlì (A14)", via: "Via Ravegnana 380, Forlì (FC)", comune: "Forlì", lat: 44.2412, lng: 12.0612, kw: 350, op: "Ionity" },
+    { id: "ev_hub_65", nome: "Tesla Supercharger - Barberino di Mugello", via: "Via Antonio Meucci 2, Barberino di Mugello (FI)", comune: "Barberino di Mugello", lat: 43.9891, lng: 11.2312, kw: 250, op: "Tesla" },
+    { id: "ev_hub_66", nome: "Tesla Supercharger - Grosseto", via: "Via Senegal 35, Grosseto (GR)", comune: "Grosseto", lat: 42.7781, lng: 11.1112, kw: 250, op: "Tesla" },
+    { id: "ev_hub_67", nome: "Tesla Supercharger - Civitavecchia Porto", via: "Via Tarquinia 14, Civitavecchia (RM)", comune: "Civitavecchia", lat: 42.0981, lng: 11.8012, kw: 250, op: "Tesla" },
+    { id: "ev_hub_68", nome: "Free To X - Teano Ovest (A1)", via: "Autostrada A1 km 655, Teano (CE)", comune: "Teano", lat: 41.2512, lng: 14.0712, kw: 300, op: "Free To X" },
+    { id: "ev_hub_69", nome: "Free To X - Giove Ovest (A1 Orte)", via: "Autostrada A1 km 481, Giove (TR)", comune: "Giove", lat: 42.5112, lng: 12.3312, kw: 300, op: "Free To X" },
+    { id: "ev_hub_70", nome: "Tesla Supercharger - Potenza Tito Scalo", via: "Contrada Santa Loja, Tito (PZ)", comune: "Tito", lat: 40.5981, lng: 15.7212, kw: 250, op: "Tesla" },
+    { id: "ev_hub_71", nome: "Tesla Supercharger - Campobasso Termoli", via: "Contrada Ponticelli, Termoli (CB)", comune: "Termoli", lat: 41.9812, lng: 14.9812, kw: 250, op: "Tesla" },
+    { id: "ev_hub_72", nome: "Tesla Supercharger - L'Aquila Ovest", via: "Strada Statale 17, L'Aquila (AQ)", comune: "L'Aquila", lat: 42.3612, lng: 13.3612, kw: 250, op: "Tesla" },
+    { id: "ev_hub_73", nome: "Tesla Supercharger - Aosta Grand Chemin", via: "Grand Chemin 30, Saint-Christophe (AO)", comune: "Saint-Christophe", lat: 45.7412, lng: 7.3412, kw: 250, op: "Tesla" },
+    { id: "ev_hub_74", nome: "Tesla Supercharger - Courmayeur Monte Bianco", via: "Strada Statale 26, Courmayeur (AO)", comune: "Courmayeur", lat: 45.7912, lng: 6.9681, kw: 250, op: "Tesla" },
+    { id: "ev_hub_75", nome: "Tesla Supercharger - Trento Sud", via: "Via Stella 11, Trento (TN)", comune: "Trento", lat: 46.0312, lng: 11.1312, kw: 250, op: "Tesla" },
+    { id: "ev_hub_76", nome: "Tesla Supercharger - Udine Tavagnacco", via: "Via Nazionale 70, Tavagnacco (UD)", comune: "Tavagnacco", lat: 46.1012, lng: 13.2181, kw: 250, op: "Tesla" }
   ];
 
   // Inserisci sempre i principali hub italiani consolidati (evitando duplicati per ID)
@@ -561,8 +576,8 @@ export async function sincronizzaMappaStazioni(): Promise<{ totale: number; carb
     elaboraColonnineElettriche()
   ]);
 
-  // 2. Unisci tutti i punti in un unico array unificato
-  const outputCompleto: OutputStazione[] = [...distributori, ...colonnine];
+  // 2. Unisci tutti i punti in un unico array unificato (colonnine in prima linea per garantire sempre visibilità)
+  const outputCompleto: OutputStazione[] = [...colonnine, ...distributori];
 
   // 3. Assicura che la directory di destinazione esista
   const targetDir = path.dirname(OUTPUT_FILE_PATH);
