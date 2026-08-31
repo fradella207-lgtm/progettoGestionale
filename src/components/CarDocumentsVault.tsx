@@ -197,7 +197,7 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
-          className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl sm:rounded-2xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 cursor-pointer self-start sm:self-auto shrink-0"
+          className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl sm:rounded-2xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Aggiungi Documento</span>
@@ -294,8 +294,8 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
 
       {/* MODAL AGGIUNGI DOCUMENTO */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
@@ -470,17 +470,17 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
 
       {/* MODAL ANTEPRIMA DOCUMENTO */}
       {selectedDocForPreview && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">{selectedDocForPreview.title}</h3>
-                <span className="text-xs text-slate-500">{selectedDocForPreview.fileName}</span>
+              <div className="min-w-0 pr-2">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">{selectedDocForPreview.title}</h3>
+                <span className="text-xs text-slate-500 truncate block">{selectedDocForPreview.fileName}</span>
               </div>
               <button 
                 type="button" 
                 onClick={() => setSelectedDocForPreview(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-full"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-full shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>

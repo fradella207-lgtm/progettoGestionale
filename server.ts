@@ -1204,7 +1204,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
       const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 50; // default 50 km
       const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
-      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 5000) : 2500;
+      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 10000) : 6000;
 
       let filtered = stations;
 
@@ -1270,18 +1270,10 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         });
       }
 
-      // 5. Risultati bilanciati per garantire colonnine EV e distributori ovunque
+      // 5. Risultati: restituisci tutte le stazioni fino al limite massimo
       let dataToSend = [];
       if (typeParam === 'all') {
-        const evList = filtered.filter(st => st.tipo === 'elettrico' || st.tipo === 'ev');
-        const fuelList = filtered.filter(st => st.tipo !== 'elettrico' && st.tipo !== 'ev');
-        
-        // Includi TUTTE le colonnine e hub EV presenti nell'area filtrata (fino a 1000)
-        const evPortion = evList.slice(0, 1000);
-        const remainingLimit = Math.max(limitParam - evPortion.length, 500);
-        const fuelPortion = fuelList.slice(0, remainingLimit);
-        
-        dataToSend = [...evPortion, ...fuelPortion];
+        dataToSend = filtered.slice(0, limitParam);
       } else {
         dataToSend = filtered.slice(0, limitParam);
       }

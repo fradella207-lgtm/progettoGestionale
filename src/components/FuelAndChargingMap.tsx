@@ -186,7 +186,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (activeType) {
         params.append('type', activeType);
       }
-      params.append('limit', '3500');
+      params.append('limit', '6000');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
       if (!res.ok) throw new Error('API error');
@@ -758,11 +758,11 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
     markersGroupRef.current.clearLayers();
 
-    // If zoomed out (e.g. initial view of Italy or whole region zoom < 12), aggregate nearby stations into clean cluster badges
-    // When zoomed in (zoom >= 12), show individual detailed price pins with no overlap
-    if (currentZoom < 12 && filteredStations.length > 10) {
+    // If zoomed out (e.g. initial view of Italy or whole region zoom < 9), aggregate nearby stations into clean cluster badges
+    // When zoomed in (zoom >= 9), show individual detailed price pins with no overlap
+    if (currentZoom < 9 && filteredStations.length > 50) {
       // Grid-based clustering calculation
-      const gridSize = currentZoom <= 7 ? 1.2 : (currentZoom <= 9 ? 0.45 : (currentZoom <= 10 ? 0.22 : 0.09));
+      const gridSize = currentZoom <= 6 ? 1.5 : (currentZoom <= 7 ? 0.9 : 0.45);
       const clusters: {
         [key: string]: {
           latSum: number;

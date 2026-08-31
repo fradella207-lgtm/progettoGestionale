@@ -79,19 +79,20 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200 w-full min-w-0">
       {/* Banner AI Sync Header */}
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-md relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-md relative overflow-hidden w-full min-w-0">
         <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-44 h-44 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-          <div className="space-y-1 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/30 text-blue-200 text-xs font-bold tracking-wider uppercase">
-              <Sparkles className="w-3.5 h-3.5" /> Dati Ufficiali Quattroruote & Costruttore
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full min-w-0">
+          <div className="space-y-1 max-w-xl min-w-0 w-full">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/30 text-blue-200 text-[10px] sm:text-xs font-bold tracking-wider uppercase max-w-full">
+              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="truncate">Dati Ufficiali Quattroruote</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+            <h2 className="text-lg sm:text-2xl font-black tracking-tight break-words">
               {vehicle.brand} {vehicle.model}
             </h2>
-            <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
+            <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed break-words">
               {specs.summaryQuattroruote || 
                 `${vehicle.motorization || vehicle.fuelType} con tutte le specifiche di fabbrica, pressioni pneumatici e lubrificanti omologati.`}
             </p>
@@ -101,7 +102,7 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
             type="button"
             onClick={handleGenerateWithAI}
             disabled={isGenerating}
-            className="min-h-[44px] self-start md:self-auto inline-flex items-center gap-2 px-4 py-2.5 bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-2xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 disabled:opacity-75 cursor-pointer"
+            className="min-h-[44px] w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-blue-900 hover:bg-blue-50 font-bold rounded-xl sm:rounded-2xl shadow-sm hover:shadow transition-all text-xs sm:text-sm active:scale-95 disabled:opacity-75 cursor-pointer shrink-0"
           >
             <RefreshCw className={`w-4 h-4 text-blue-600 ${isGenerating ? 'animate-spin' : ''}`} />
             <span>{isGenerating ? 'Ricerca dati Quattroruote...' : 'Ricalcola con AI'}</span>
@@ -109,48 +110,48 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
         </div>
 
         {successMessage && (
-          <div className="mt-3 p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <div className="mt-3 p-2.5 sm:p-3 bg-emerald-500/20 border border-emerald-400/40 rounded-xl text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
             <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-            <span>{successMessage}</span>
+            <span className="break-words">{successMessage}</span>
           </div>
         )}
 
         {generateError && (
-          <div className="mt-3 p-3 bg-rose-500/20 border border-rose-400/40 rounded-xl text-rose-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <div className="mt-3 p-2.5 sm:p-3 bg-rose-500/20 border border-rose-400/40 rounded-xl text-rose-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
-            <span>{generateError}</span>
+            <span className="break-words">{generateError}</span>
           </div>
         )}
       </div>
 
       {/* OFFICIAL OWNER'S MANUAL CARD */}
       {(vehicle.manualInfo || specs.manualInfo) && (
-        <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                <BookOpen className="w-5 h-5" />
+        <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-xs space-y-3 w-full min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 w-full min-w-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 w-full">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                <BookOpen className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-sm sm:text-base font-black text-slate-900 truncate">
-                    {(vehicle.manualInfo || specs.manualInfo)?.title || `Manuale di Uso e Manutenzione Ufficiale`}
+                  <h3 className="text-xs sm:text-base font-black text-slate-900 truncate">
+                    {(vehicle.manualInfo || specs.manualInfo)?.title || `Manuale di Uso e Manutenzione`}
                   </h3>
-                  <span className="text-xs bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Indicizzato
+                  <span className="text-[10px] sm:text-xs bg-emerald-50 text-emerald-700 font-extrabold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shrink-0">
+                    <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" /> Indicizzato
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 truncate mt-0.5">
+                <p className="text-[11px] sm:text-xs text-slate-500 truncate mt-0.5">
                   Fonte: {(vehicle.manualInfo || specs.manualInfo)?.source || 'Manuale Costruttore'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(true)}
-                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs sm:text-sm transition-all cursor-pointer shrink-0 active:scale-95 border border-slate-200"
+                className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs sm:text-sm transition-all cursor-pointer shrink-0 active:scale-95 border border-slate-200"
                 title="Gestisci, cerca o allega manuale"
               >
                 <Upload className="w-4 h-4 text-blue-600" />
@@ -162,7 +163,7 @@ export const CarTechnicalSpecs: React.FC<CarTechnicalSpecsProps> = ({
                   href={(vehicle.manualInfo || specs.manualInfo)?.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                  className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>PDF</span>
