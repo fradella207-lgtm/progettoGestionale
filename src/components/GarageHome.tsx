@@ -100,7 +100,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-5 pb-6 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* 1. HEADER SECTION - Clean, Airy & Minimalist */}
-      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5">
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="w-2 h-2 rounded-full bg-indigo-600" />
@@ -112,15 +112,6 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             I Tuoi Veicoli
           </h2>
         </div>
-
-        {/* Primary Action Button */}
-        <button
-          onClick={onOpenAddCar}
-          className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <Plus className="w-4 h-4 text-indigo-400" />
-          <span>Aggiungi Veicolo</span>
-        </button>
       </section>
 
       {/* 2. FLEET QUICK STATS STRIP (Light & Clean) */}

@@ -251,17 +251,33 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
               </div>
             </div>
 
-            {/* Visual SVG Timeline Bar/Chart */}
-            <div className="w-full pt-4 pb-2">
-              <div className="h-44 sm:h-52 w-full flex items-end gap-2 sm:gap-4 px-2 border-b border-slate-200 relative">
+            {/* Visual Enhanced Timeline Bar/Chart */}
+            <div className="w-full pt-6 pb-2">
+              <div className="h-48 sm:h-56 w-full flex items-end gap-2.5 sm:gap-4 px-3 sm:px-6 border-b border-slate-200 relative bg-gradient-to-b from-slate-50/50 to-transparent rounded-t-2xl">
+                
+                {/* Horizontal grid lines for scale */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-4 px-1 opacity-40 z-0">
+                  <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
+                    <span className="text-[9px] font-mono text-slate-400 -mt-2">
+                      {chartMetric === 'efficiency' ? `${maxEfficiency.toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(maxDistance)} km` : `${settings.currency} ${Math.round(maxSpent)}`)}
+                    </span>
+                  </div>
+                  <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
+                    <span className="text-[9px] font-mono text-slate-400 -mt-2">
+                      {chartMetric === 'efficiency' ? `${(maxEfficiency * 0.5).toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(maxDistance * 0.5)} km` : `${settings.currency} ${Math.round(maxSpent * 0.5)}`)}
+                    </span>
+                  </div>
+                  <div className="w-full border-b border-slate-200" />
+                </div>
+
                 {/* Horizontal reference dashed line for average */}
                 {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
                   <div 
-                    className="absolute left-0 right-0 border-b-2 border-dashed border-indigo-200 pointer-events-none z-0 flex items-center justify-end pr-2"
-                    style={{ bottom: `${Math.min(92, Math.max(8, (safeAverageKmPerUnit / maxEfficiency) * 100))}%` }}
+                    className="absolute left-0 right-0 border-b-2 border-dashed border-indigo-400/80 pointer-events-none z-10 flex items-center justify-end pr-2 transition-all duration-300"
+                    style={{ bottom: `${Math.min(92, Math.max(10, (safeAverageKmPerUnit / maxEfficiency) * 100))}%` }}
                   >
-                    <span className="text-[10px] font-bold text-indigo-500 bg-white/90 px-1 rounded shadow-2xs">
-                      Media {safeAverageKmPerUnit.toFixed(1)} km/{unitLabel}
+                    <span className="text-[9.5px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs">
+                      Media: {safeAverageKmPerUnit.toFixed(1)} km/{unitLabel}
                     </span>
                   </div>
                 )}
@@ -269,25 +285,30 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                 {chronologicalTrips.map((trip) => {
                   let value = trip.kmPerUnit;
                   let maxVal = maxEfficiency;
-                  let valueLabel = `${trip.kmPerUnit.toFixed(1)} km/${unitLabel}`;
+                  let valueDisplay = `${trip.kmPerUnit.toFixed(1)}`;
+                  let unitDisplay = `km/${unitLabel}`;
                   
                   if (chartMetric === 'distance') {
                     value = trip.distanceKm;
                     maxVal = maxDistance;
-                    valueLabel = `+${trip.distanceKm.toLocaleString('it-IT')} km`;
+                    valueDisplay = `${Math.round(trip.distanceKm)}`;
+                    unitDisplay = 'km';
                   } else if (chartMetric === 'spent') {
                     value = trip.totalSpent;
                     maxVal = maxSpent;
-                    valueLabel = `${settings.currency} ${trip.totalSpent.toFixed(2)}`;
+                    valueDisplay = `${trip.totalSpent.toFixed(1)}`;
+                    unitDisplay = settings.currency;
                   }
 
-                  const heightPercent = Math.min(96, Math.max(12, (value / maxVal) * 100));
+                  const heightPercent = Math.min(94, Math.max(14, (value / maxVal) * 100));
                   const isHovered = hoveredTripId === trip.id;
+                  const isExpanded = expandedTripId === trip.id;
                   const dateFormatted = trip.endDate 
                     ? new Date(trip.endDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
                     : `Trip #${trip.tripIndex}`;
 
                   const usageObj = USAGE_PRESETS.find(u => u.id === trip.usageCategory);
+                  const isBest = trip.isBest && chartMetric === 'efficiency';
 
                   return (
                     <div 
@@ -295,38 +316,68 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                       onMouseEnter={() => setHoveredTripId(trip.id)}
                       onMouseLeave={() => setHoveredTripId(null)}
                       onClick={() => toggleExpand(trip.id)}
-                      className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer"
+                      className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer z-10"
                     >
-                      {/* Interactive Tooltip Card */}
+                      {/* Floating Tooltip Card */}
                       {isHovered && (
-                        <div className="absolute -top-16 z-30 bg-slate-900 text-white text-[11px] p-2 rounded-xl shadow-lg whitespace-nowrap pointer-events-none flex flex-col gap-0.5 animate-in fade-in duration-100">
-                          <span className="font-bold text-indigo-300">Trip #{trip.tripIndex} ({dateFormatted})</span>
-                          <span>{valueLabel}</span>
-                          {trip.usageCategory && (
-                            <span className="text-[10px] text-slate-300">Utilizzo: {trip.usageCategory}</span>
-                          )}
+                        <div className="absolute -top-24 z-30 bg-slate-950/95 backdrop-blur text-white text-xs p-2.5 rounded-2xl shadow-xl whitespace-nowrap pointer-events-none flex flex-col gap-1 border border-slate-700 animate-in fade-in zoom-in-95 duration-150">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-extrabold text-indigo-300 text-[11px]">Trip #{trip.tripIndex} • {dateFormatted}</span>
+                            {usageObj && (
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded bg-indigo-900/80 text-indigo-200 border border-indigo-700">
+                                {usageObj.id}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm font-black text-white flex items-center gap-1">
+                            <span>{valueDisplay}</span>
+                            <span className="text-[11px] font-semibold text-slate-400">{unitDisplay}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-300 pt-0.5 border-t border-slate-800">
+                            <span>{Math.round(trip.distanceKm)} km percorsi</span>
+                            <span>•</span>
+                            <span>{settings.currency} {trip.totalSpent.toFixed(2)}</span>
+                          </div>
                         </div>
                       )}
 
+                      {/* Top Value Tag */}
+                      <span className={`text-[10px] font-extrabold transition-all duration-150 mb-1.5 ${
+                        isHovered || isExpanded 
+                          ? 'text-indigo-700 scale-110 font-black' 
+                          : (isBest ? 'text-emerald-600 font-black' : 'text-slate-500')
+                      }`}>
+                        {valueDisplay}
+                      </span>
+
                       {/* Bar Pillar */}
                       <div 
-                        className={`w-full max-w-[42px] rounded-t-xl transition-all duration-200 relative ${
+                        className={`w-full max-w-[48px] rounded-t-xl transition-all duration-200 relative overflow-hidden shadow-2xs ${
                           isHovered 
-                            ? 'bg-indigo-600 shadow-md scale-y-105' 
-                            : (trip.isBest && chartMetric === 'efficiency' 
-                                ? 'bg-emerald-500' 
-                                : (trip.usageCategory ? 'bg-indigo-500' : 'bg-slate-300 hover:bg-indigo-400'))
+                            ? 'bg-gradient-to-t from-indigo-700 to-indigo-500 shadow-md ring-2 ring-indigo-400 scale-y-[1.02]' 
+                            : (isBest 
+                                ? 'bg-gradient-to-t from-emerald-600 to-teal-400 shadow-emerald-200' 
+                                : (trip.usageCategory 
+                                    ? 'bg-gradient-to-t from-indigo-600 to-blue-500' 
+                                    : 'bg-gradient-to-t from-slate-400 to-slate-300 hover:from-indigo-500 hover:to-indigo-400'))
                         }`}
                         style={{ height: `${heightPercent}%` }}
                       >
-                        {/* Optional small indicator dot on top */}
-                        {trip.usageCategory && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white absolute top-1 left-1/2 -translate-x-1/2 shadow-xs" />
+                        {/* Shimmer line on top */}
+                        <div className="w-full h-1 bg-white/40 absolute top-0 left-0 right-0" />
+
+                        {/* Optional small category icon on bar */}
+                        {usageObj && (
+                          <div className="absolute top-1.5 left-1/2 -translate-x-1/2 text-white/90">
+                            <usageObj.icon className="w-2.5 h-2.5" />
+                          </div>
                         )}
                       </div>
 
                       {/* X-Axis Date Label */}
-                      <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-800 transition-colors mt-2 text-center truncate max-w-[48px]">
+                      <span className={`text-[10px] font-bold transition-colors mt-2 text-center truncate max-w-[54px] ${
+                        isHovered ? 'text-indigo-700 font-extrabold' : 'text-slate-500'
+                      }`}>
                         {dateFormatted}
                       </span>
                     </div>
@@ -336,25 +387,25 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             </div>
 
             {/* Chart Legend / Notes */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-slate-500">
-              <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-500">
+              <div className="flex items-center gap-3 flex-wrap font-medium">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-500" />
-                  <span>Con Utilizzo Assegnato</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500" />
+                  <span>Con Categoria Utilizzo</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
                   <span>Standard</span>
                 </span>
                 {metrics.bestTrip && (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                    <span>Migliore Efficienza</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400" />
+                    <span className="font-bold text-emerald-700">Migliore Efficienza</span>
                   </span>
                 )}
               </div>
               <span className="text-[10.5px] italic text-slate-400">
-                Tocca una barra per aprire i dettagli del ciclo
+                Clicca su una colonna per espandere il dettaglio del ciclo
               </span>
             </div>
           </section>

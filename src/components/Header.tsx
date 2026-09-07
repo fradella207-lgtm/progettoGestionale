@@ -117,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nuova Auto</span>
+            <span className="hidden sm:inline">Aggiungi Veicolo</span>
             <span className="sm:hidden text-xs">Aggiungi</span>
           </button>
         )}

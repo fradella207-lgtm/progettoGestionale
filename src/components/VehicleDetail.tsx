@@ -232,138 +232,88 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 pb-28 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
       
-      {/* 0. VEHICLE FLEET QUICK SWITCHER BAR */}
-      {vehicles && vehicles.length > 0 && (
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-          <div className="flex items-center gap-1.5 min-w-0">
-            {onBackToGarage && (
-              <button
-                type="button"
-                onClick={onBackToGarage}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
-                title="Torna alla vista Flotta Garage"
-              >
-                <Warehouse className="w-3.5 h-3.5 text-indigo-600 group-hover:-translate-x-0.5 transition-transform" />
-                <span>Garage ({vehicles.length})</span>
-              </button>
-            )}
-            {vehicles.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => onSelectVehicle && onSelectVehicle(v.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-                  v.id === vehicle.id
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-black'
-                    : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
-                }`}
-              >
-                <Car className="w-3 h-3" />
-                <span>{v.brand} {v.model}</span>
-                <span className={`text-[9.5px] font-mono px-1 py-0.2 rounded font-black ${
-                  v.id === vehicle.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                }`}>
-                  {v.plate}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 1. VEICOLO COMPACT HEADER - Minimal, Lightweight & Ergonomic */}
-      <section className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+      {/* 1. VEICOLO SHOWCASE HEADER - Generous Image, Crisp Identity & Specs */}
+      <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0">
           
-          {/* Left: Thumbnail & Identity */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Compact Photo Thumbnail or Avatar */}
-            <div 
-              onClick={onOpenEditCar}
-              className="w-16 h-12 sm:w-20 sm:h-14 rounded-xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group shadow-2xs"
-              title="Clicca per modificare foto o dati"
-            >
-              {vehicle.photoUrl ? (
-                <>
-                  <img 
-                    src={vehicle.photoUrl} 
-                    alt={`${vehicle.brand} ${vehicle.model}`} 
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Camera className="w-3.5 h-3.5 text-white" />
-                  </div>
-                </>
-              ) : (
-                <Car className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
-              )}
-            </div>
+          {/* Bigger, high-res vehicle photo with subtle camera change button */}
+          <div 
+            onClick={onOpenEditCar}
+            className="w-full sm:w-56 md:w-64 h-40 sm:h-36 md:h-40 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group shadow-2xs"
+            title="Clicca per modificare foto o dettagli veicolo"
+          >
+            {vehicle.photoUrl ? (
+              <>
+                <img 
+                  src={vehicle.photoUrl} 
+                  alt={`${vehicle.brand} ${vehicle.model}`} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+                <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
+                  <Camera className="w-4 h-4" />
+                  <span>Cambia Foto</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-white transition-colors">
+                <Car className="w-12 h-12 stroke-[1.2]" />
+                <span className="text-xs font-bold">Aggiungi Foto</span>
+              </div>
+            )}
+          </div>
 
-            {/* Vehicle Title & License Plate */}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-950 tracking-tight truncate">
+          {/* Vehicle Identity & Badges */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+            <div className="flex items-start justify-between gap-2 flex-wrap">
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-tight truncate">
                   {vehicle.brand} <span className="text-theme-primary">{vehicle.model}</span>
                 </h2>
-                
-                {/* European License Plate - Compact */}
-                <div className="bg-white border border-slate-300 rounded-md px-2 py-0.5 shadow-2xs inline-flex items-center gap-1 shrink-0 select-none">
-                  <span className="bg-blue-600 text-white text-[7px] font-black px-1 py-0.2 rounded-[2px]">IT</span>
-                  <span className="text-xs font-mono font-bold tracking-[1.5px] text-slate-950 uppercase">{vehicle.plate}</span>
-                </div>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5 truncate">
+                  {vehicle.motorization ? `${vehicle.motorization} • ` : ''}Anno {vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D'}
+                </p>
               </div>
 
-              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 font-medium truncate">
-                {vehicle.motorization && <span>{vehicle.motorization}</span>}
-                {vehicle.technicalSpecs?.euroClass && (
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.2 rounded border border-emerald-200/60">
-                    {vehicle.technicalSpecs.euroClass}
-                  </span>
-                )}
-                <span>• Anno {vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D'}</span>
+              {/* European License Plate */}
+              <div className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
+                <span className="bg-blue-600 text-white text-[8px] font-black px-1 py-0.5 rounded-[3px]">IT</span>
+                <span className="text-xs sm:text-sm font-mono font-bold tracking-[2px] text-slate-950 uppercase">{vehicle.plate}</span>
               </div>
             </div>
-          </div>
 
-          {/* Right: Clean Unified Actions (No duplicate commands) */}
-          <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0">
-            <button 
-              id="btn-header-add-refuel"
-              type="button"
-              onClick={() => onOpenAddRefuel(isPHEV ? 'fuel' : undefined)}
-              className="bg-theme-primary hover:bg-theme-primary-hover active:scale-95 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{isBEV ? 'Ricarica' : 'Rifornimento'}</span>
-            </button>
-
-            <button 
-              id="btn-header-add-maint"
-              type="button"
-              onClick={onOpenAddMaintenance}
-              className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
-            >
-              <Wrench className="w-3.5 h-3.5 text-slate-600" />
-              <span>Tagliando</span>
-            </button>
-
-            <button 
-              id="btn-edit-car-profile"
-              type="button"
-              onClick={onOpenEditCar}
-              className="bg-white hover:bg-slate-50 active:scale-95 text-slate-700 border border-slate-200 text-xs font-bold px-2.5 py-2 rounded-xl transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
-              title="Modifica dati del veicolo"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden xs:inline">Modifica</span>
-            </button>
+            {/* Badges strip: Euro Class, Fuel, Transmission, Document status */}
+            <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
+              {vehicle.technicalSpecs?.euroClass && (
+                <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-lg border border-emerald-200/80 text-[11px]">
+                  {vehicle.technicalSpecs.euroClass}
+                </span>
+              )}
+              <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-lg border border-slate-200 text-[11px] flex items-center gap-1">
+                {isPHEV || isBEV ? <Zap className="w-3 h-3 text-amber-500" /> : <Fuel className="w-3 h-3 text-slate-500" />}
+                {vehicle.fuelType}
+              </span>
+              {vehicle.technicalSpecs?.transmission && (
+                <span className="bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+                  {vehicle.technicalSpecs.transmission}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setMainTab('documents')}
+                className="bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-700 font-bold px-2.5 py-0.5 rounded-lg border border-indigo-200 text-[11px] flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Visualizza documenti DUC e polizza"
+              >
+                <FileText className="w-3 h-3 text-indigo-600" />
+                <span>{(vehicle.documents || []).length} {(vehicle.documents || []).length === 1 ? 'Documento' : 'Documenti'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Compact Technical Specs Strip - Renamed "Odometro" to "Chilometraggio" */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-left">
-          {/* Chilometraggio (Changed from Odometro) */}
+        {/* Compact Technical Specs Strip - Chilometraggio, Alimentazione, Serbatoio/Batteria, Potenza */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100 text-left">
+          {/* Chilometraggio */}
           <div className="bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 min-w-0">
             <span className="text-[9px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
               <Gauge className="w-2.5 h-2.5 text-theme-primary shrink-0" /> Chilometraggio
@@ -409,7 +359,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       </section>
 
-      {/* 2. UNIFIED TABS BAR: PANORAMICA & REGISTRI | SCHEDA TECNICA | DOCUMENTI DUC | ASSISTENTE AI & MANUALE */}
+      {/* 2. UNIFIED TABS BAR: PANORAMICA & REGISTRI | DOCUMENTI DUC | ASSISTENTE AI & MANUALE | SCHEDA TECNICA */}
       <section className="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/90 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         <button
           type="button"
@@ -422,22 +372,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         >
           <Receipt className="w-3.5 h-3.5 text-indigo-600" />
           <span>Panoramica & Registri</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMainTab('specs')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-            mainTab === 'specs'
-              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-          }`}
-        >
-          <Gauge className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Scheda Tecnica</span>
-          {vehicle.technicalSpecs && (
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          )}
         </button>
 
         <button
@@ -469,12 +403,56 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
           <span>Assistente AI & Manuale</span>
+          {aiAdvices.length > 0 && (
+            <span className="text-[10px] bg-amber-100 text-amber-900 font-black px-1.5 py-0.2 rounded-full">
+              {aiAdvices.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('specs')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            mainTab === 'specs'
+              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Gauge className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Scheda Tecnica</span>
+          {vehicle.technicalSpecs && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          )}
         </button>
       </section>
 
       {/* CONDITIONAL TAB CONTENT */}
       {mainTab === 'overview' && (
         <>
+          {/* PROMINENT QUICK ACTIONS: BLUE FOR REFUEL/CHARGE, GREEN FOR MAINTENANCE */}
+          <section className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button
+              id="btn-action-add-refuel"
+              type="button"
+              onClick={() => onOpenAddRefuel(isPHEV ? 'fuel' : undefined)}
+              className="flex-1 min-h-[46px] bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-black text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-xs hover:shadow transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              {isBEV ? <Zap className="w-4.5 h-4.5 text-amber-300" /> : <Fuel className="w-4.5 h-4.5 text-blue-100" />}
+              <span>{isBEV ? 'Registra Ricarica Elettrica' : (isPHEV ? 'Registra Rifornimento o Ricarica' : 'Registra Rifornimento')}</span>
+            </button>
+
+            <button
+              id="btn-action-add-maint"
+              type="button"
+              onClick={onOpenAddMaintenance}
+              className="flex-1 min-h-[46px] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-xs hover:shadow transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <Wrench className="w-4.5 h-4.5 text-emerald-100" />
+              <span>Registra Tagliando / Manutenzione</span>
+            </button>
+          </section>
+
           {/* 3. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
       <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
         
@@ -896,96 +874,10 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
 
       </section>
-
-      {/* 5. SEZIONE DEDICATA: ASSISTENTE & CONSIGLI AI GARAGE */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs flex flex-col gap-3.5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">
-                Consigli Intelligenti & Diagnostica Preventiva AI
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Analisi predittiva in tempo reale basata su chilometraggio, anzianità e alimentazione ({vehicle.fuelType})
-              </p>
-            </div>
-          </div>
-
-          <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg shrink-0">
-            {aiAdvices.length} {aiAdvices.length === 1 ? 'consiglio' : 'consigli attivi'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {aiAdvices.map((advice) => (
-            <div 
-              key={advice.id}
-              onClick={() => setSelectedDetailData({ type: 'advice', item: advice })}
-              className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start justify-between gap-3 shadow-2xs hover:shadow-xs cursor-pointer select-none active:scale-[0.99] ${
-                advice.urgency === 'high' 
-                  ? 'bg-red-50/70 border-red-200 hover:border-red-300' 
-                  : advice.urgency === 'medium' 
-                    ? 'bg-amber-50/70 border-amber-200 hover:border-amber-300' 
-                    : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-start gap-3 min-w-0">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                  advice.urgency === 'high' 
-                    ? 'bg-red-100 text-red-700' 
-                    : advice.urgency === 'medium' 
-                      ? 'bg-amber-100 text-amber-800' 
-                      : 'bg-blue-50 text-blue-600'
-                }`}>
-                  {advice.urgency === 'high' ? <AlertTriangle className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-xs sm:text-sm font-black text-slate-900">
-                      {advice.title}
-                    </h4>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
-                    {advice.desc}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0 self-center sm:self-start mt-0.5">
-                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg border whitespace-nowrap ${
-                  advice.urgency === 'high' 
-                    ? 'bg-red-100 text-red-800 border-red-200' 
-                    : advice.urgency === 'medium' 
-                      ? 'bg-amber-100 text-amber-800 border-amber-200' 
-                      : 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}>
-                  {advice.urgency === 'high' ? 'Urgente' : advice.urgency === 'medium' ? 'Consigliato' : 'Info'}
-                </span>
-                <div className="p-1 rounded-lg bg-white/80 text-slate-400">
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
         </>
       )}
 
-      {/* TAB 2: SCHEDA TECNICA */}
-      {mainTab === 'specs' && (
-        <div className="animate-in fade-in duration-200">
-          <CarTechnicalSpecs 
-            vehicle={vehicle} 
-            onUpdateVehicle={onUpdateVehicle || (() => {})} 
-          />
-        </div>
-      )}
-
-      {/* TAB 3: DOCUMENTI DUC & FATTURE */}
+      {/* TAB 2: DOCUMENTI DUC & FATTURE */}
       {mainTab === 'documents' && (
         <div className="animate-in fade-in duration-200">
           <CarDocumentsVault 
@@ -995,10 +887,98 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         </div>
       )}
 
-      {/* TAB 4: ASSISTENTE AI & MANUALE */}
+      {/* TAB 3: ASSISTENTE AI & MANUALE (CONSIGLI PREVENTIVI + ASSISTENTE CHAT) */}
       {mainTab === 'ai' && (
-        <div className="animate-in fade-in duration-200">
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* SEZIONE: CONSIGLI INTELLIGENTI & DIAGNOSTICA PREVENTIVA AI */}
+          <section className="bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-2xs flex flex-col gap-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide">
+                    Consigli Intelligenti & Diagnostica Preventiva AI
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Analisi predittiva in tempo reale per {vehicle.brand} {vehicle.model} ({currentKm.toLocaleString('it-IT')} km • {vehicle.fuelType})
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-lg shrink-0 self-start sm:self-auto">
+                {aiAdvices.length} {aiAdvices.length === 1 ? 'consiglio' : 'consigli attivi'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {aiAdvices.map((advice) => (
+                <div 
+                  key={advice.id}
+                  onClick={() => setSelectedDetailData({ type: 'advice', item: advice })}
+                  className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-start justify-between gap-3 shadow-2xs hover:shadow-xs cursor-pointer select-none active:scale-[0.99] ${
+                    advice.urgency === 'high' 
+                      ? 'bg-red-50/70 border-red-200 hover:border-red-300' 
+                      : advice.urgency === 'medium' 
+                        ? 'bg-amber-50/70 border-amber-200 hover:border-amber-300' 
+                        : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
+                      advice.urgency === 'high' 
+                        ? 'bg-red-100 text-red-700' 
+                        : advice.urgency === 'medium' 
+                          ? 'bg-amber-100 text-amber-800' 
+                          : 'bg-blue-50 text-blue-600'
+                    }`}>
+                      {advice.urgency === 'high' ? <AlertTriangle className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-900">
+                          {advice.title}
+                        </h4>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
+                        {advice.desc}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0 self-center sm:self-start mt-0.5">
+                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                      advice.urgency === 'high' 
+                        ? 'bg-red-100 text-red-800 border-red-200' 
+                        : advice.urgency === 'medium' 
+                          ? 'bg-amber-100 text-amber-800 border-amber-200' 
+                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}>
+                      {advice.urgency === 'high' ? 'Urgente' : advice.urgency === 'medium' ? 'Consigliato' : 'Info'}
+                    </span>
+                    <div className="p-1 rounded-lg bg-white/80 text-slate-400">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* CHAT ASSISTENTE & MANUALE */}
           <CarAIAssistant 
+            vehicle={vehicle} 
+            onUpdateVehicle={onUpdateVehicle || (() => {})} 
+          />
+        </div>
+      )}
+
+      {/* TAB 4: SCHEDA TECNICA */}
+      {mainTab === 'specs' && (
+        <div className="animate-in fade-in duration-200">
+          <CarTechnicalSpecs 
             vehicle={vehicle} 
             onUpdateVehicle={onUpdateVehicle || (() => {})} 
           />
