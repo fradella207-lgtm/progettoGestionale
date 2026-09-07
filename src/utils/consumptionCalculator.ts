@@ -37,6 +37,7 @@ export interface BoardTrip {
   efficiencyVsAveragePercent?: number; // e.g. +5.2% or -3.1%
   isBest?: boolean;
   isWorst?: boolean;
+  usageCategory?: string; // Optional user classification tag (e.g. "Lavoro", "Viaggio", "Città", "Tempo Libero")
 }
 
 export interface DetailedConsumptionMetrics {
@@ -200,14 +201,16 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
         if (spanKm > 0 && spanQty > 0) {
           const kmPerUnitVal = spanKm / spanQty;
           const unitPer100KmVal = (spanQty / spanKm) * 100;
+          const roundedKmPerUnit = Math.round(kmPerUnitVal * 10) / 10;
+          const roundedUnitPer100Km = Math.round(unitPer100KmVal * 100) / 100;
           const currentTripId = `trip-${lastFullRefuel.id}-${current.id}`;
           tripId = currentTripId;
 
           intervalConsumption = {
-            kmPerUnit: kmPerUnitVal,
-            unitPer100Km: unitPer100KmVal,
-            formattedKmPerUnit: kmPerUnitVal.toFixed(1),
-            formattedUnitPer100Km: unitPer100KmVal.toFixed(2)
+            kmPerUnit: roundedKmPerUnit,
+            unitPer100Km: roundedUnitPer100Km,
+            formattedKmPerUnit: roundedKmPerUnit.toFixed(1),
+            formattedUnitPer100Km: roundedUnitPer100Km.toFixed(2)
           };
 
           certifiedDeltaKmSum += spanKm;
@@ -220,6 +223,7 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
           const daysDuration = Math.max(1, Math.round(Math.abs(dEnd - dStart) / (1000 * 60 * 60 * 24)));
 
           const tripUnit = current.unit || fuelUnit;
+          const assignedUsage = (vehicle.tripUsages && vehicle.tripUsages[currentTripId]) || current.usageType || lastFullRefuel.usageType;
 
           rawTrips.push({
             id: currentTripId,
@@ -231,18 +235,19 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
             startKm: Number(lastFullRefuel.km),
             endKm: Number(current.km),
             distanceKm: spanKm,
-            totalQuantity: Number(spanQty.toFixed(2)),
+            totalQuantity: Math.round(spanQty * 100) / 100,
             unit: tripUnit,
-            totalSpent: Number(spanSpent.toFixed(2)),
-            kmPerUnit: kmPerUnitVal,
-            unitPer100Km: unitPer100KmVal,
-            formattedKmPerUnit: kmPerUnitVal.toFixed(1),
-            formattedUnitPer100Km: unitPer100KmVal.toFixed(2),
+            totalSpent: Math.round(spanSpent * 100) / 100,
+            kmPerUnit: roundedKmPerUnit,
+            unitPer100Km: roundedUnitPer100Km,
+            formattedKmPerUnit: roundedKmPerUnit.toFixed(1),
+            formattedUnitPer100Km: roundedUnitPer100Km.toFixed(2),
             costPerKm: (spanSpent / spanKm).toFixed(3),
             costPer100Km: ((spanSpent / spanKm) * 100).toFixed(2),
             refuelsCount: tripRefuels.length,
             refuels: [], // filled below with enriched refuels
-            energyType: current.energyType
+            energyType: current.energyType,
+            usageCategory: assignedUsage
           });
         }
       }
@@ -290,11 +295,14 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
     }
   }
 
+  const safeKmPerUnit = isFinite(finalKmPerUnit) && !isNaN(finalKmPerUnit) ? Math.round(finalKmPerUnit * 10) / 10 : 0;
+  const safeUnitPer100Km = isFinite(finalUnitPer100Km) && !isNaN(finalUnitPer100Km) ? Math.round(finalUnitPer100Km * 100) / 100 : 0;
+
   // Enrich Board Trips with efficiency comparisons and identify best/worst
   let bestTrip: BoardTrip | undefined = undefined;
   let worstTrip: BoardTrip | undefined = undefined;
 
-  if (boardTrips.length > 0 && finalKmPerUnit > 0) {
+  if (boardTrips.length > 0 && safeKmPerUnit > 0) {
     // Higher kmPerUnit is better (or lower unitPer100Km is better)
     const sortedByEfficiency = [...boardTrips].sort((a, b) => b.kmPerUnit - a.kmPerUnit);
     const bestId = sortedByEfficiency[0].id;
@@ -302,8 +310,8 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
 
     boardTrips.forEach(t => {
       // Comparison vs global average
-      const diffPercent = ((t.kmPerUnit - finalKmPerUnit) / finalKmPerUnit) * 100;
-      t.efficiencyVsAveragePercent = Number(diffPercent.toFixed(1));
+      const diffPercent = ((t.kmPerUnit - safeKmPerUnit) / safeKmPerUnit) * 100;
+      t.efficiencyVsAveragePercent = isFinite(diffPercent) ? Math.round(diffPercent * 10) / 10 : 0;
       if (t.id === bestId && boardTrips.length > 1) t.isBest = true;
       if (t.id === worstId && boardTrips.length > 1) t.isWorst = true;
     });
@@ -317,7 +325,7 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
     : 0;
 
   const avgTripCost = boardTrips.length > 0
-    ? Number((boardTrips.reduce((acc, t) => acc + t.totalSpent, 0) / boardTrips.length).toFixed(2))
+    ? Math.round((boardTrips.reduce((acc, t) => acc + t.totalSpent, 0) / boardTrips.length) * 100) / 100
     : 0;
 
   const calculatedRefuels: RefuelWithCalculation[] = sortedRefuels
@@ -333,8 +341,8 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
     costPerKm,
     fuelCostPerKm,
     costPer100Km,
-    kmPerUnit: finalKmPerUnit > 0 ? finalKmPerUnit.toFixed(1) : '--',
-    unitPer100Km: finalUnitPer100Km > 0 ? finalUnitPer100Km.toFixed(2) : '--',
+    kmPerUnit: safeKmPerUnit > 0 ? safeKmPerUnit.toFixed(1) : '--',
+    unitPer100Km: safeUnitPer100Km > 0 ? safeUnitPer100Km.toFixed(2) : '--',
     fuelUnit,
     isPHEV,
     isBEV,

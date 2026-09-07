@@ -2,10 +2,14 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { sincronizzaMappaStazioni, OutputStazione } from "./scripts/sync_stations";
 import { SEED_STATIONS } from "./src/data/seedStations";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -1152,10 +1156,14 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
 
   function getLoadedStations(): any[] {
     const candidatePaths = [
+      path.join(process.cwd(), 'public', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'live_stations_output.json'),
+      path.join(__dirname, 'public', 'data', 'live_stations_output.json'),
       path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
+      path.join(__dirname, 'data', 'live_stations_output.json'),
       path.join(__dirname, 'live_stations_output.json'),
     ];
 
@@ -1205,10 +1213,14 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
   // Timer di verifica orario per garantire l'aggiornamento quotidiano automatico continuo
   setInterval(() => {
     const candidatePaths = [
+      path.join(process.cwd(), 'public', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'src', 'data', 'live_stations_output.json'),
+      path.join(process.cwd(), 'dist', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'live_stations_output.json'),
+      path.join(__dirname, 'public', 'data', 'live_stations_output.json'),
       path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
+      path.join(__dirname, 'data', 'live_stations_output.json'),
       path.join(__dirname, 'live_stations_output.json'),
     ];
     let found = false;
@@ -1316,12 +1328,13 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         });
       }
 
-      // 5. Risultati: restituisci tutte le colonnine EV e distributori senza penalizzare le EV
+      // 5. Risultati: restituisci colonnine EV e distributori bilanciati
       let dataToSend: any[] = [];
       if (typeParam === 'all') {
         const evList = filtered.filter(isEvStation);
         const fuelList = filtered.filter(st => !isEvStation(st));
-        dataToSend = [...evList, ...fuelList.slice(0, Math.max(0, limitParam - evList.length))];
+        const fuelLimit = Math.max(Math.min(fuelList.length, 50), limitParam - evList.length);
+        dataToSend = [...evList, ...fuelList.slice(0, fuelLimit)];
       } else {
         dataToSend = filtered.slice(0, limitParam);
       }

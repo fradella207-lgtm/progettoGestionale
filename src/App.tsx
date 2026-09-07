@@ -194,6 +194,12 @@ export default function App() {
     localStorage.setItem('garage_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Apply theme color palette to HTML document root
+  useEffect(() => {
+    const theme = settings.themeColor || 'indigo';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [settings.themeColor]);
+
   useEffect(() => {
     localStorage.setItem('garage_user_account', JSON.stringify(account));
   }, [account]);
@@ -263,9 +269,12 @@ export default function App() {
     return vehicles.find(v => v.id === selectedCarId) || vehicles[0];
   }, [vehicles, selectedCarId]);
 
-  // Handler: Select vehicle and navigate to detail
-  const handleSelectVehicle = (vehicleId: string) => {
+  const [detailInitialTab, setDetailInitialTab] = useState<'overview' | 'specs' | 'documents' | 'ai'>('overview');
+
+  // Handler: Select vehicle and navigate to detail with optional initial tab
+  const handleSelectVehicle = (vehicleId: string, tab: 'overview' | 'specs' | 'documents' | 'ai' = 'overview') => {
     setSelectedCarId(vehicleId);
+    setDetailInitialTab(tab);
     setCurrentView('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -511,7 +520,7 @@ export default function App() {
     showToast('Tutti i veicoli sono stati rimossi dal garage.', 'info');
   };
 
-  // Import Garage from JSON
+  // Import Garage from JSON (Full replace / restore)
   const handleImportGarage = (imported: Vehicle[]) => {
     setVehicles(imported);
     if (imported.length > 0) {
@@ -525,6 +534,32 @@ export default function App() {
       } catch (e) {}
     }
     showToast(`${imported.length} veicoli importati con successo!`, 'success');
+  };
+
+  // Import Vehicles from JSON (Smart Merge or Add)
+  const handleImportVehicles = (imported: Vehicle[]) => {
+    if (!imported || imported.length === 0) return;
+    const existingIds = new Set(vehicles.map(v => v.id));
+    const newCars = imported.filter(v => !existingIds.has(v.id));
+    const updatedExisting = vehicles.map(existing => {
+      const matching = imported.find(v => v.id === existing.id);
+      return matching ? matching : existing;
+    });
+    const mergedList = [...newCars, ...updatedExisting];
+    setVehicles(mergedList);
+
+    if (imported[0]?.id) {
+      setSelectedCarId(imported[0].id);
+      setCurrentView('detail');
+    }
+    if (account.id) {
+      localStorage.setItem(`garage_vehicles_${account.id}`, JSON.stringify(mergedList));
+      try {
+        const userDocRef = doc(db, 'users', account.id);
+        setDoc(userDocRef, { vehicles: mergedList, updatedAt: new Date().toISOString() }, { merge: true });
+      } catch (e) {}
+    }
+    showToast(`${imported.length} veicol${imported.length === 1 ? 'o importato' : 'i importati'} con successo!`, 'success');
   };
 
   // Auth Login Handlers
@@ -649,12 +684,18 @@ export default function App() {
               setIsAddCarModalOpen(true);
             }}
             onDeleteVehicle={handleDeleteVehicle}
+            onImportVehicles={handleImportVehicles}
           />
         ) : (
           selectedVehicle ? (
             <VehicleDetail 
               vehicle={selectedVehicle}
+              vehicles={vehicles}
               settings={settings}
+              initialTab={detailInitialTab}
+              onSelectVehicle={(id) => setSelectedCarId(id)}
+              onBackToGarage={() => setCurrentView('garage')}
+              onUpdateVehicle={handleDirectUpdateVehicle}
               onOpenEditCar={() => {
                 setVehicleToEdit(selectedVehicle);
                 setIsAddCarModalOpen(true);
@@ -686,7 +727,7 @@ export default function App() {
               <p className="text-base text-[#64748b]">Nessun veicolo selezionato.</p>
               <button 
                 onClick={() => setCurrentView('garage')}
-                className="mt-4 bg-[#2563eb] text-white text-xs font-bold px-4 py-2 rounded-xl"
+                className="mt-4 bg-[#2563eb] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
               >
                 Torna al Garage
               </button>
@@ -697,7 +738,7 @@ export default function App() {
 
       {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}
       <BottomNavigation 
-        activeTab={currentView === 'stations' ? 'stations' : (currentView === 'my_car' ? 'my_car' : 'garage')}
+        activeTab={currentView === 'stations' ? 'stations' : 'garage'}
         onSelectTab={(tab) => {
           setCurrentView(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });

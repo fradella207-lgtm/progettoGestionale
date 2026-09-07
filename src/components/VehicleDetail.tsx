@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Car, 
   Plus, 
@@ -21,7 +21,11 @@ import {
   Filter,
   SlidersHorizontal,
   ChevronUp,
-  Check
+  Check,
+  FileText,
+  Warehouse,
+  ShieldCheck,
+  BookOpen
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
@@ -29,10 +33,18 @@ import { BoardTripsModal } from './modals/BoardTripsModal';
 import { RefuelsRegistryModal } from './modals/RefuelsRegistryModal';
 import { MaintenancesRegistryModal } from './modals/MaintenancesRegistryModal';
 import { calculateVehicleConsumptionMetrics, RefuelWithCalculation } from '../utils/consumptionCalculator';
+import { CarTechnicalSpecs } from './CarTechnicalSpecs';
+import { CarDocumentsVault } from './CarDocumentsVault';
+import { CarAIAssistant } from './CarAIAssistant';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
+  vehicles?: Vehicle[];
   settings: AppSettings;
+  initialTab?: 'overview' | 'specs' | 'documents' | 'ai';
+  onSelectVehicle?: (vehicleId: string) => void;
+  onBackToGarage?: () => void;
+  onUpdateVehicle?: (updated: Vehicle) => void;
   onOpenEditCar: () => void;
   onOpenAddRefuel: (energyType?: EnergySourceType) => void;
   onOpenEditRefuel: (refuel: RefuelRecord) => void;
@@ -43,7 +55,12 @@ interface VehicleDetailProps {
 
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   vehicle,
+  vehicles,
   settings,
+  initialTab = 'overview',
+  onSelectVehicle,
+  onBackToGarage,
+  onUpdateVehicle,
   onOpenEditCar,
   onOpenAddRefuel,
   onOpenEditRefuel,
@@ -51,6 +68,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenEditMaintenance,
   onOpenFixTank
 }) => {
+  const [mainTab, setMainTab] = useState<'overview' | 'specs' | 'documents' | 'ai'>(initialTab || 'overview');
+
+  useEffect(() => {
+    if (initialTab) {
+      setMainTab(initialTab);
+    }
+  }, [initialTab]);
   const [activeTab, setActiveTab] = useState<'refuels' | 'maintenances'>('refuels');
   const [selectedDetailData, setSelectedDetailData] = useState<DetailModalData | null>(null);
 
@@ -208,158 +232,250 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   return (
     <div className="w-full max-w-7xl mx-auto p-3.5 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 pb-28 font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden">
       
-      {/* 1. VEICOLO SHOWCASE CON FOTO IN EVIDENZA E DETTAGLI */}
-      <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs flex flex-col md:flex-row items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
-        
-        {/* Large Prominent Vehicle Photo Showcase */}
-        <div className="w-full md:w-64 lg:w-72 h-44 sm:h-48 md:h-40 rounded-2xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-inner group">
-          {vehicle.photoUrl ? (
-            <>
-              <img 
-                src={vehicle.photoUrl} 
-                alt={`${vehicle.brand} ${vehicle.model}`} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+      {/* 0. VEHICLE FLEET QUICK SWITCHER BAR */}
+      {vehicles && vehicles.length > 0 && (
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+          <div className="flex items-center gap-1.5 min-w-0">
+            {onBackToGarage && (
               <button
-                onClick={onOpenEditCar}
-                className="absolute bottom-2.5 right-2.5 bg-slate-950/80 hover:bg-slate-950 active:scale-95 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 border border-white/20 transition-all shadow-xs cursor-pointer"
-                title="Modifica foto veicolo"
+                type="button"
+                onClick={onBackToGarage}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+                title="Torna alla vista Flotta Garage"
               >
-                <Camera className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Foto</span>
+                <Warehouse className="w-3.5 h-3.5 text-indigo-600 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Garage ({vehicles.length})</span>
               </button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-slate-400 gap-2 p-4 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-slate-800 shadow-2xs border border-slate-700 flex items-center justify-center text-slate-400">
-                <Car className="w-8 h-8 stroke-[1.5] text-slate-400" />
-              </div>
+            )}
+            {vehicles.map((v) => (
               <button
-                onClick={onOpenEditCar}
-                className="text-xs text-indigo-400 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                key={v.id}
+                type="button"
+                onClick={() => onSelectVehicle && onSelectVehicle(v.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+                  v.id === vehicle.id
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-black'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" /> Aggiungi Foto
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Vehicle Identity & Technical Specifications */}
-        <div className="flex-1 flex flex-col justify-between gap-3.5 min-w-0">
-          
-          {/* Top Line: Brand, Model & European Plate */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight break-words">
-                  {vehicle.brand} <span className="text-indigo-600">{vehicle.model}</span>
-                </h2>
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {vehicle.motorization && (
-                    <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200/60">
-                      {vehicle.motorization}
-                    </span>
-                  )}
-                  {vehicle.technicalSpecs?.engineCode && (
-                    <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg">
-                      Cod: {vehicle.technicalSpecs.engineCode}
-                    </span>
-                  )}
-                  {vehicle.technicalSpecs?.euroClass && (
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-lg">
-                      {vehicle.technicalSpecs.euroClass}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Authentic European License Plate */}
-              <div className="bg-white border-2 border-slate-300 rounded-lg px-2.5 py-0.5 shadow-2xs inline-flex items-center gap-1.5 shrink-0 select-none">
-                <div className="bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
-                  <span className="text-[7px]">★</span>
-                  <span>IT</span>
-                </div>
-                <span className="text-sm font-mono font-black tracking-[2px] text-slate-950 uppercase whitespace-nowrap">
-                  {vehicle.plate}
+                <Car className="w-3 h-3" />
+                <span>{v.brand} {v.model}</span>
+                <span className={`text-[9.5px] font-mono px-1 py-0.2 rounded font-black ${
+                  v.id === vehicle.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {v.plate}
                 </span>
-                <div className="bg-blue-600 text-yellow-300 text-[8px] font-bold px-1 py-0.2 rounded hidden sm:block">
-                  ●
-                </div>
-              </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 1. VEICOLO COMPACT HEADER - Minimal, Lightweight & Ergonomic */}
+      <section className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+          
+          {/* Left: Thumbnail & Identity */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Compact Photo Thumbnail or Avatar */}
+            <div 
+              onClick={onOpenEditCar}
+              className="w-16 h-12 sm:w-20 sm:h-14 rounded-xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group shadow-2xs"
+              title="Clicca per modificare foto o dati"
+            >
+              {vehicle.photoUrl ? (
+                <>
+                  <img 
+                    src={vehicle.photoUrl} 
+                    alt={`${vehicle.brand} ${vehicle.model}`} 
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera className="w-3.5 h-3.5 text-white" />
+                  </div>
+                </>
+              ) : (
+                <Car className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
+              )}
             </div>
 
-            {/* Edit Car Data Button */}
+            {/* Vehicle Title & License Plate */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-extrabold text-slate-950 tracking-tight truncate">
+                  {vehicle.brand} <span className="text-theme-primary">{vehicle.model}</span>
+                </h2>
+                
+                {/* European License Plate - Compact */}
+                <div className="bg-white border border-slate-300 rounded-md px-2 py-0.5 shadow-2xs inline-flex items-center gap-1 shrink-0 select-none">
+                  <span className="bg-blue-600 text-white text-[7px] font-black px-1 py-0.2 rounded-[2px]">IT</span>
+                  <span className="text-xs font-mono font-bold tracking-[1.5px] text-slate-950 uppercase">{vehicle.plate}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500 font-medium truncate">
+                {vehicle.motorization && <span>{vehicle.motorization}</span>}
+                {vehicle.technicalSpecs?.euroClass && (
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-1.5 py-0.2 rounded border border-emerald-200/60">
+                    {vehicle.technicalSpecs.euroClass}
+                  </span>
+                )}
+                <span>• Anno {vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Clean Unified Actions (No duplicate commands) */}
+          <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0">
+            <button 
+              id="btn-header-add-refuel"
+              type="button"
+              onClick={() => onOpenAddRefuel(isPHEV ? 'fuel' : undefined)}
+              className="bg-theme-primary hover:bg-theme-primary-hover active:scale-95 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{isBEV ? 'Ricarica' : 'Rifornimento'}</span>
+            </button>
+
+            <button 
+              id="btn-header-add-maint"
+              type="button"
+              onClick={onOpenAddMaintenance}
+              className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+            >
+              <Wrench className="w-3.5 h-3.5 text-slate-600" />
+              <span>Tagliando</span>
+            </button>
+
             <button 
               id="btn-edit-car-profile"
+              type="button"
               onClick={onOpenEditCar}
-              className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-900 border border-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs shrink-0 cursor-pointer self-start sm:self-auto"
+              className="bg-white hover:bg-slate-50 active:scale-95 text-slate-700 border border-slate-200 text-xs font-bold px-2.5 py-2 rounded-xl transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+              title="Modifica dati del veicolo"
             >
-              <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Modifica</span>
+              <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden xs:inline">Modifica</span>
             </button>
           </div>
+        </div>
 
-          {/* Quick Technical Specs Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-            
-            {/* Spec 1: Chilometri */}
-            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
-                <Gauge className="w-3 h-3 text-indigo-600 shrink-0" /> Odometro
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
-                {currentKm.toLocaleString('it-IT')} km
-              </span>
-            </div>
-
-            {/* Spec 2: Alimentazione */}
-            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
-                {isPHEV || isBEV ? <Zap className="w-3 h-3 text-amber-500 shrink-0" /> : <Fuel className="w-3 h-3 text-indigo-600 shrink-0" />} Alimentazione
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={vehicle.fuelType}>
-                {vehicle.fuelType}
-              </span>
-            </div>
-
-            {/* Spec 3: Serbatoio / Batteria */}
-            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 truncate">
-                {isPHEV ? 'Serbatoio + Batt.' : (isBEV ? 'Capacità Batteria' : 'Capienza Serb.')}
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate" title={
-                isPHEV
-                  ? `${vehicle.tankCapacity}L + ${vehicle.batteryCapacity || 13} kWh` 
-                  : (isBEV 
-                    ? `${vehicle.batteryCapacity || vehicle.tankCapacity || '--'} kWh` 
-                    : `${vehicle.tankCapacity || '--'} L`)
-              }>
-                {isPHEV
-                  ? `${vehicle.tankCapacity}L + ${vehicle.batteryCapacity || 13} kWh` 
-                  : (isBEV 
-                    ? `${vehicle.batteryCapacity || vehicle.tankCapacity || '--'} kWh` 
-                    : `${vehicle.tankCapacity || '--'} L`)}
-              </span>
-            </div>
-
-            {/* Spec 4: Potenza / Anno */}
-            <div className="bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl flex flex-col justify-center min-w-0">
-              <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1 truncate">
-                <Calendar className="w-3 h-3 text-slate-400 shrink-0" /> {vehicle.powerCv ? 'Potenza' : 'Anno'}
-              </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 mt-0.5 truncate">
-                {vehicle.powerCv ? `${vehicle.powerCv} CV (${vehicle.powerKw || Math.round(vehicle.powerCv/1.36)} kW)` : (vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D')}
-              </span>
-            </div>
-
+        {/* Compact Technical Specs Strip - Renamed "Odometro" to "Chilometraggio" */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-left">
+          {/* Chilometraggio (Changed from Odometro) */}
+          <div className="bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 min-w-0">
+            <span className="text-[9px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
+              <Gauge className="w-2.5 h-2.5 text-theme-primary shrink-0" /> Chilometraggio
+            </span>
+            <span className="text-xs font-extrabold text-slate-900 truncate block mt-0.5">
+              {currentKm.toLocaleString('it-IT')} km
+            </span>
           </div>
 
+          {/* Alimentazione */}
+          <div className="bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 min-w-0">
+            <span className="text-[9px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
+              {isPHEV || isBEV ? <Zap className="w-2.5 h-2.5 text-amber-500 shrink-0" /> : <Fuel className="w-2.5 h-2.5 text-theme-primary shrink-0" />} Alimentazione
+            </span>
+            <span className="text-xs font-extrabold text-slate-900 truncate block mt-0.5" title={vehicle.fuelType}>
+              {vehicle.fuelType}
+            </span>
+          </div>
+
+          {/* Capacità Serbatoio / Batteria */}
+          <div className="bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 min-w-0">
+            <span className="text-[9px] uppercase font-bold text-slate-400 truncate block">
+              {isPHEV ? 'Serbatoio + Batt.' : (isBEV ? 'Batteria' : 'Serbatoio')}
+            </span>
+            <span className="text-xs font-extrabold text-slate-900 truncate block mt-0.5">
+              {isPHEV
+                ? `${vehicle.tankCapacity}L + ${vehicle.batteryCapacity || 13}kWh` 
+                : (isBEV 
+                  ? `${vehicle.batteryCapacity || vehicle.tankCapacity || '--'} kWh` 
+                  : `${vehicle.tankCapacity || '--'} L`)}
+            </span>
+          </div>
+
+          {/* Potenza / Anno */}
+          <div className="bg-slate-50/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 min-w-0">
+            <span className="text-[9px] uppercase font-bold text-slate-400 flex items-center gap-1 truncate">
+              <Calendar className="w-2.5 h-2.5 text-slate-400 shrink-0" /> {vehicle.powerCv ? 'Potenza' : 'Immatricolazione'}
+            </span>
+            <span className="text-xs font-extrabold text-slate-900 truncate block mt-0.5">
+              {vehicle.powerCv ? `${vehicle.powerCv} CV (${vehicle.powerKw || Math.round(vehicle.powerCv/1.36)} kW)` : (vehicle.registrationDate ? vehicle.registrationDate.split('-')[0] : 'N/D')}
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* 2. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
+      {/* 2. UNIFIED TABS BAR: PANORAMICA & REGISTRI | SCHEDA TECNICA | DOCUMENTI DUC | ASSISTENTE AI & MANUALE */}
+      <section className="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/90 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setMainTab('overview')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            mainTab === 'overview'
+              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Panoramica & Registri</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('specs')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            mainTab === 'specs'
+              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Gauge className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Scheda Tecnica</span>
+          {vehicle.technicalSpecs && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('documents')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            mainTab === 'documents'
+              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Documenti DUC</span>
+          {(vehicle.documents?.length || 0) > 0 && (
+            <span className="text-[10px] bg-indigo-100 text-indigo-800 font-black px-1.5 py-0.2 rounded-full">
+              {vehicle.documents?.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab('ai')}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+            mainTab === 'ai'
+              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span>Assistente AI & Manuale</span>
+        </button>
+      </section>
+
+      {/* CONDITIONAL TAB CONTENT */}
+      {mainTab === 'overview' && (
+        <>
+          {/* 3. SPESE TOTALI & CONSUMI ENERGETICI (INCLUSO CONSUMO PARTE ELETTRICA PER PLUG-IN & TRIP DI BORDO) */}
       <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
         
         {/* Header Sezione Statistiche */}
@@ -490,7 +606,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 {settings.currency} {metrics.totalMaintSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[11px] font-bold text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
-                Libretto →
+                Documenti →
               </span>
             </div>
             <p className="text-[11px] text-[#64748b]">
@@ -500,34 +616,34 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
         </div>
 
-        {/* INTERACTIVE BANNER: TRIP DI BORDO (SE PRESENTI PIENO-PIENO) */}
+        {/* INTERACTIVE BANNER: TRIP DI BORDO (SE PRESENTI PIENO-PIENO) - LIGHT & MINIMAL */}
         {metrics.boardTrips.length > 0 ? (
           <div 
             onClick={() => setIsBoardTripsModalOpen(true)}
-            className="mt-1 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer group select-none relative overflow-hidden"
+            className="mt-1 bg-white border border-slate-200/80 hover:border-indigo-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer group select-none"
           >
-            <div className="flex items-center gap-3.5 min-w-0 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Gauge className="w-5 h-5 text-blue-200" />
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-indigo-600">
+                <Gauge className="w-5 h-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs sm:text-sm font-black text-white tracking-tight">
-                    Andamento Trip di Bordo (Cicli Pieno-Pieno)
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight">
+                    Computer di Bordo & Trip (Pieno-Pieno)
                   </span>
-                  <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-2xs animate-pulse">
-                    {metrics.boardTrips.length} {metrics.boardTrips.length === 1 ? 'Trip Disponibile' : 'Trip Disponibili'}
+                  <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold px-2 py-0.2 rounded-md">
+                    {metrics.boardTrips.length} {metrics.boardTrips.length === 1 ? 'Ciclo' : 'Cicli registrati'}
                   </span>
                 </div>
-                <p className="text-xs text-blue-200 mt-0.5">
-                  Consumo medio certificato: <strong className="text-white">{metrics.kmPerUnit} km/{fuelUnit}</strong> ({metrics.unitPer100Km} {fuelUnit}/100km) • Distanza monitorata: <strong className="text-white">{metrics.boardTrips.reduce((acc, t) => acc + t.distanceKm, 0).toLocaleString('it-IT')} km</strong>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Consumo medio certificato: <strong className="text-slate-800">{metrics.kmPerUnit} km/{fuelUnit}</strong> ({metrics.unitPer100Km} {fuelUnit}/100km) • Distanza monitorata: <strong className="text-slate-800">{metrics.boardTrips.reduce((acc, t) => acc + t.distanceKm, 0).toLocaleString('it-IT')} km</strong>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 px-3 py-2 bg-white/15 group-hover:bg-white/25 rounded-xl text-xs font-black text-white shrink-0 self-end sm:self-center transition-colors">
-              <span>Apri Analisi Trip</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 group-hover:bg-indigo-50 group-hover:text-indigo-700 rounded-xl text-xs font-bold text-slate-700 border border-slate-200/80 shrink-0 self-end sm:self-center transition-colors">
+              <span>Grafico & Classificazione</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         ) : (
@@ -538,162 +654,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </div>
           </div>
         )}
-      </section>
-
-      {/* 3. TASTI AZIONE: RIFORNIMENTO/RICARICA UNO SOPRA L'ALTRO, E DI FIANCO MANUTENZIONE */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch min-w-0">
-        
-        {/* COLONNA SINISTRA: RIFORNIMENTO E/O RICARICA (UNO SOPRA L'ALTRO) */}
-        {isPHEV ? (
-          <div className="flex flex-col gap-2.5 justify-between">
-            {/* 1. Tasto Rifornimento Benzina */}
-            <button
-              id="btn-main-add-refuel-fuel"
-              onClick={() => onOpenAddRefuel('fuel')}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Fuel className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                    + Aggiungi Rifornimento Benzina
-                  </span>
-                  <span className="block text-[11px] text-blue-100 font-medium leading-tight">
-                    Registra litri erogati, pieno e spesa carburante
-                  </span>
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-                <Plus className="w-4 h-4" />
-              </div>
-            </button>
-
-            {/* 2. Tasto Ricarica Elettrica (sotto al rifornimento) */}
-            <button
-              id="btn-main-add-refuel-electric"
-              onClick={() => onOpenAddRefuel('electricity')}
-              className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                    + Aggiungi Ricarica Elettrica
-                  </span>
-                  <span className="block text-[11px] text-amber-100 font-medium leading-tight">
-                    Registra kWh batteria, colonnina o wallbox
-                  </span>
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-                <Plus className="w-4 h-4" />
-              </div>
-            </button>
-          </div>
-        ) : isLPG || isCNG ? (
-          <div className="flex flex-col gap-2.5 justify-between">
-            {/* 1. Tasto Rifornimento Benzina */}
-            <button
-              id="btn-main-add-refuel-fuel"
-              onClick={() => onOpenAddRefuel('fuel')}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Fuel className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                    + Aggiungi Rifornimento Benzina
-                  </span>
-                  <span className="block text-[11px] text-blue-100 font-medium leading-tight">
-                    Registra litri erogati serbatoio benzina
-                  </span>
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-                <Plus className="w-4 h-4" />
-              </div>
-            </button>
-
-            {/* 2. Tasto Rifornimento Gas (GPL o Metano) */}
-            <button
-              id="btn-main-add-refuel-gas"
-              onClick={() => onOpenAddRefuel(isLPG ? 'lpg' : 'cng')}
-              className="bg-sky-600 hover:bg-sky-700 active:scale-98 text-white p-3.5 sm:p-4 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Fuel className="w-5 h-5 text-white" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                    + Aggiungi Rifornimento {isLPG ? 'GPL' : 'Metano'}
-                  </span>
-                  <span className="block text-[11px] text-sky-100 font-medium leading-tight">
-                    Registra erogazione {isLPG ? 'litri GPL' : 'Kg Metano'}
-                  </span>
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-                <Plus className="w-4 h-4" />
-              </div>
-            </button>
-          </div>
-        ) : (
-          <button
-            id="btn-main-add-refuel"
-            onClick={() => onOpenAddRefuel()}
-            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer h-full min-h-[90px]"
-          >
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                {isBEV ? <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> : <Fuel className="w-5 h-5 sm:w-6 sm:h-6 text-white" />}
-              </div>
-              <div className="text-left min-w-0">
-                <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                  + Aggiungi {isBEV ? 'Ricarica' : 'Rifornimento'}
-                </span>
-                <span className="block text-[11px] sm:text-xs text-blue-100 font-medium mt-0.5 leading-tight">
-                  {isBEV ? 'Registra kWh erogati e spesa' : 'Registra litri erogati, pieno e spesa'}
-                </span>
-              </div>
-            </div>
-            <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-              <Plus className="w-5 h-5" />
-            </div>
-          </button>
-        )}
-
-        {/* COLONNA DESTRA: MANUTENZIONE (A FIANCO) */}
-        <button
-          id="btn-main-add-maint"
-          onClick={onOpenAddMaintenance}
-          className={`bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white p-4 sm:p-5 rounded-3xl shadow-xs hover:shadow-md transition-all flex items-center justify-between group cursor-pointer ${
-            isPHEV || isLPG || isCNG ? 'h-full min-h-[100px]' : 'h-full min-h-[90px]'
-          }`}
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <Wrench className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="block text-sm sm:text-base font-extrabold tracking-tight">
-                + Aggiungi Manutenzione
-              </span>
-              <span className="block text-[11px] sm:text-xs text-emerald-100 font-medium mt-0.5 leading-tight">
-                Registra tagliando, ricambi o officina
-              </span>
-            </div>
-          </div>
-          <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform ml-2">
-            <Plus className="w-5 h-5" />
-          </div>
-        </button>
       </section>
 
       {/* AVVISO SERBATOIO SE MANCANTE */}
@@ -779,6 +739,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                             }`}>
                               {refuel.type === 'full' ? 'Pieno' : 'Parziale'}
                             </span>
+                            {refuel.receiptPhoto && (
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-0.5" title="Scontrino allegato">
+                                <Receipt className="w-2.5 h-2.5" />
+                                <span>Foto</span>
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
                             <span>{Number(refuel.km).toLocaleString('it-IT')} km</span>
@@ -825,7 +791,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
         </div>
 
-        {/* CARD B: LIBRETTO MANUTENZIONI & OFFICINA */}
+        {/* CARD B: REGISTRO MANUTENZIONI & OFFICINA */}
         <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-2xs flex flex-col justify-between">
           
           <div>
@@ -837,7 +803,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-900">
-                    Libretto Manutenzioni & Officina
+                    Registro Manutenzioni & Officina
                   </h3>
                   <span className="text-[11px] font-bold text-slate-400">
                     {(vehicle.maintenances || []).length} interventi • {settings.currency} {metrics.totalMaintSpent.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -850,7 +816,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                 onClick={() => setIsMaintenancesRegistryOpen(true)}
                 className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 active:scale-95 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-black flex items-center gap-1 transition-all cursor-pointer"
               >
-                <span>Apri Libretto</span>
+                <span>Apri Registro</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -881,6 +847,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                             <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900 truncate max-w-[120px]">
                               {maint.category || 'Manutenzione'}
                             </span>
+                            {maint.documentPhoto && (
+                              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/80 flex items-center gap-0.5" title="Documento / Fattura allegata">
+                                <FileText className="w-2.5 h-2.5" />
+                                <span>Fattura</span>
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5 truncate">
                             <span>{Number(maint.km).toLocaleString('it-IT')} km</span>
@@ -917,7 +889,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               onClick={() => setIsMaintenancesRegistryOpen(true)}
               className="text-xs font-black text-emerald-700 hover:text-emerald-800 flex items-center gap-1 hover:underline cursor-pointer"
             >
-              Vedi tutto il libretto ({(vehicle.maintenances || []).length}) →
+              Vedi tutto lo storico ({(vehicle.maintenances || []).length}) →
             </button>
           </div>
 
@@ -1000,6 +972,38 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           ))}
         </div>
       </section>
+        </>
+      )}
+
+      {/* TAB 2: SCHEDA TECNICA */}
+      {mainTab === 'specs' && (
+        <div className="animate-in fade-in duration-200">
+          <CarTechnicalSpecs 
+            vehicle={vehicle} 
+            onUpdateVehicle={onUpdateVehicle || (() => {})} 
+          />
+        </div>
+      )}
+
+      {/* TAB 3: DOCUMENTI DUC & FATTURE */}
+      {mainTab === 'documents' && (
+        <div className="animate-in fade-in duration-200">
+          <CarDocumentsVault 
+            vehicle={vehicle} 
+            onUpdateVehicle={onUpdateVehicle || (() => {})} 
+          />
+        </div>
+      )}
+
+      {/* TAB 4: ASSISTENTE AI & MANUALE */}
+      {mainTab === 'ai' && (
+        <div className="animate-in fade-in duration-200">
+          <CarAIAssistant 
+            vehicle={vehicle} 
+            onUpdateVehicle={onUpdateVehicle || (() => {})} 
+          />
+        </div>
+      )}
 
       {/* 6. MODALE DEDICATO: TRIP DI BORDO & EFFICIENZA ENERGETICA */}
       <BoardTripsModal
@@ -1008,6 +1012,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         vehicle={vehicle}
         metrics={metrics}
         settings={settings}
+        onUpdateVehicle={onUpdateVehicle}
       />
 
       {/* 7. MODALE DEDICATO: REGISTRO RIFORNIMENTI & RICARICHE */}
@@ -1029,7 +1034,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         }}
       />
 
-      {/* 8. MODALE DEDICATO: LIBRETTO MANUTENZIONI & OFFICINA */}
+      {/* 8. MODALE DEDICATO: REGISTRO MANUTENZIONI & OFFICINA */}
       <MaintenancesRegistryModal
         isOpen={isMaintenancesRegistryOpen}
         onClose={() => setIsMaintenancesRegistryOpen(false)}

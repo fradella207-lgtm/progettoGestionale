@@ -579,16 +579,21 @@ export async function sincronizzaMappaStazioni(): Promise<{ totale: number; carb
   // 2. Unisci tutti i punti in un unico array unificato (colonnine in prima linea per garantire sempre visibilità)
   const outputCompleto: OutputStazione[] = [...colonnine, ...distributori];
 
-  // 3. Assicura che la directory di destinazione esista
-  const targetDir = path.dirname(OUTPUT_FILE_PATH);
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
+  // 3. Assicura che le directory di destinazione esistano (src/data e public/data per web export)
+  const pathsToSave = [
+    OUTPUT_FILE_PATH,
+    path.join(process.cwd(), 'public', 'data', 'live_stations_output.json')
+  ];
 
-  // 4. Salva il file JSON in modo atomico (scrive prima su file temporaneo .tmp e poi rinomina)
-  const tempFilePath = `${OUTPUT_FILE_PATH}.tmp`;
-  fs.writeFileSync(tempFilePath, JSON.stringify(outputCompleto), 'utf-8');
-  fs.renameSync(tempFilePath, OUTPUT_FILE_PATH);
+  for (const filePath of pathsToSave) {
+    const targetDir = path.dirname(filePath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    const tempFilePath = `${filePath}.tmp`;
+    fs.writeFileSync(tempFilePath, JSON.stringify(outputCompleto), 'utf-8');
+    fs.renameSync(tempFilePath, filePath);
+  }
 
   console.log(`\n=======================================================`);
   console.log(`SINCRONIZZAZIONE COMPLETATA CON SUCCESSO!`);

@@ -11,7 +11,8 @@ import {
   ArrowUpDown,
   Building2,
   Calendar,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { Vehicle, MaintenanceRecord, AppSettings } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
@@ -374,6 +375,12 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
                           {maint.category && (
                             <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
                               {maint.category}
+                            </span>
+                          )}
+                          {maint.documentPhoto && (
+                            <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <FileText className="w-2.5 h-2.5" />
+                              <span>Fattura</span>
                             </span>
                           )}
                         </div>

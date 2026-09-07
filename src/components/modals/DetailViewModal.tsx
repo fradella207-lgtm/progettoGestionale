@@ -17,7 +17,9 @@ import {
   BatteryCharging,
   Flame,
   Clock,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { RefuelRecord, MaintenanceRecord, AIAdvice, Vehicle, AppSettings } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
@@ -230,6 +232,29 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
                     {refuel.notes || 'Nessuna nota o stazione indicata.'}
                   </p>
                 </div>
+
+                {/* Scontrino / Ricevuta allegata */}
+                {refuel.receiptPhoto && (
+                  <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0] flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase flex items-center gap-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-indigo-600" /> Scontrino / Ricevuta Allegata
+                      </span>
+                      {refuel.receiptFileName && (
+                        <span className="text-[10px] text-slate-500 truncate max-w-[150px]">
+                          {refuel.receiptFileName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-900/5 flex items-center justify-center p-1">
+                      <img
+                        src={refuel.receiptPhoto}
+                        alt="Scontrino rifornimento"
+                        className="w-full max-h-64 object-contain rounded-lg shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -300,6 +325,29 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
                     {maint.description || 'Nessun dettaglio aggiuntivo specificato.'}
                   </p>
                 </div>
+
+                {/* Fattura / Documento Allegato */}
+                {maint.documentPhoto && (
+                  <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0] flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-emerald-600" /> Fattura / Documento Allegato
+                      </span>
+                      {maint.documentFileName && (
+                        <span className="text-[10px] text-slate-500 truncate max-w-[150px]">
+                          {maint.documentFileName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-900/5 flex items-center justify-center p-1">
+                      <img
+                        src={maint.documentPhoto}
+                        alt="Fattura intervento"
+                        className="w-full max-h-64 object-contain rounded-lg shadow-2xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}

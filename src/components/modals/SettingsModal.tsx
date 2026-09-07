@@ -1,7 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Settings, Sliders, Database, Download, Upload, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { AppSettings, Vehicle } from '../../types';
+import { X, ArrowLeft, Settings, Sliders, Database, Download, Upload, Trash2, RefreshCw, CheckCircle2, Car, Palette, Check } from 'lucide-react';
+import { AppSettings, Vehicle, AppThemeColor } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
+import { 
+  exportAllVehiclesToJSON, 
+  exportVehicleToJSON, 
+  readJsonFile, 
+  sanitizeImportedGarage, 
+  sanitizeImportedVehicle 
+} from '../../utils/vehicleExportImport';
+
+const THEME_OPTIONS: { id: AppThemeColor; name: string; hex: string; bgClass: string; borderClass: string; desc: string }[] = [
+  { id: 'indigo', name: 'Indaco Elegante', hex: '#4f46e5', bgClass: 'bg-indigo-600', borderClass: 'border-indigo-600', desc: 'Predefinito, sobrio e raffinato' },
+  { id: 'blue', name: 'Blu Cobalto', hex: '#2563eb', bgClass: 'bg-blue-600', borderClass: 'border-blue-600', desc: 'Sportivo e tecnologico' },
+  { id: 'emerald', name: 'Verde Smeraldo', hex: '#059669', bgClass: 'bg-emerald-600', borderClass: 'border-emerald-600', desc: 'Racing Green ed eco-friendly' },
+  { id: 'violet', name: 'Viola Ametista', hex: '#7c3aed', bgClass: 'bg-violet-600', borderClass: 'border-violet-600', desc: 'Moderno ed espressivo' },
+  { id: 'amber', name: 'Ambra GT', hex: '#d97706', bgClass: 'bg-amber-600', borderClass: 'border-amber-600', desc: 'Caldo e dinamico' },
+  { id: 'rose', name: 'Rosso Corsa', hex: '#e11d48', bgClass: 'bg-rose-600', borderClass: 'border-rose-600', desc: 'Passione automobilistica' },
+  { id: 'slate', name: 'Grafite Minimal', hex: '#334155', bgClass: 'bg-slate-700', borderClass: 'border-slate-700', desc: 'Monocromatico ed essenziale' },
+];
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -28,6 +45,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [predictiveAlerts, setPredictiveAlerts] = useState<boolean>(settings.predictiveAlerts);
   const [autoBackup, setAutoBackup] = useState<boolean>(settings.autoBackup);
   const [stationDisplayMode, setStationDisplayMode] = useState<'auto' | 'fuel_only' | 'ev_only' | 'all'>(settings.stationDisplayMode || 'auto');
+  const [themeColor, setThemeColor] = useState<AppThemeColor>(settings.themeColor || 'indigo');
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -43,10 +61,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setPredictiveAlerts(settings.predictiveAlerts);
       setAutoBackup(settings.autoBackup);
       setStationDisplayMode(settings.stationDisplayMode || 'auto');
+      setThemeColor(settings.themeColor || 'indigo');
     }
   }, [isOpen, settings]);
 
   if (!isOpen) return null;
+
+  const handleSelectTheme = (theme: AppThemeColor) => {
+    setThemeColor(theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,41 +80,65 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       fuelPriceAlerts,
       predictiveAlerts,
       autoBackup,
-      stationDisplayMode
+      stationDisplayMode,
+      themeColor
     });
     onClose();
   };
 
   // Export garage as JSON
   const handleExportJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(vehicles, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `garage_backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    if (vehicles.length === 0) {
+      alert('Non ci sono veicoli nel garage da esportare.');
+      return;
+    }
+    exportAllVehiclesToJSON(vehicles);
   };
 
-  // Import JSON
-  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const fileReader = new FileReader();
-    if (e.target.files && e.target.files[0]) {
-      fileReader.readAsText(e.target.files[0], "UTF-8");
-      fileReader.onload = (event) => {
-        try {
-          const parsed = JSON.parse(event.target?.result as string);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            onImportGarage(parsed);
-            alert(`Importazione completata con successo! ${parsed.length} veicoli ripristinati.`);
-            onClose();
-          } else {
-            alert('Il file JSON selezionato non ha una struttura valida per il garage.');
-          }
-        } catch (err) {
-          alert('Errore nella lettura del file JSON.');
-        }
-      };
+  // Import JSON (Supports both single vehicle export and full garage backups)
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const parsed = await readJsonFile(file);
+      if (!parsed) {
+        alert('Il file selezionato è vuoto o non leggibile.');
+        return;
+      }
+
+      if (parsed.exportType === 'single_vehicle' && parsed.vehicle) {
+        const singleCar = sanitizeImportedVehicle(parsed.vehicle);
+        // Merge single car into existing
+        const existingWithoutThis = vehicles.filter(v => v.id !== singleCar.id);
+        onImportGarage([singleCar, ...existingWithoutThis]);
+        alert(`Veicolo "${singleCar.brand} ${singleCar.model}" (${singleCar.plate}) importato con successo!`);
+        onClose();
+      } else if (parsed.exportType === 'full_garage' && Array.isArray(parsed.vehicles)) {
+        const sanitizedList = sanitizeImportedGarage(parsed.vehicles);
+        onImportGarage(sanitizedList);
+        alert(`Garage ripristinato con successo! ${sanitizedList.length} veicoli importati.`);
+        onClose();
+      } else if (parsed.brand && parsed.model) {
+        // Direct single vehicle JSON
+        const singleCar = sanitizeImportedVehicle(parsed);
+        const existingWithoutThis = vehicles.filter(v => v.id !== singleCar.id);
+        onImportGarage([singleCar, ...existingWithoutThis]);
+        alert(`Veicolo "${singleCar.brand} ${singleCar.model}" importato con successo!`);
+        onClose();
+      } else if (Array.isArray(parsed)) {
+        // Direct array
+        const sanitizedList = sanitizeImportedGarage(parsed);
+        onImportGarage(sanitizedList);
+        alert(`Importazione completata con successo! ${sanitizedList.length} veicoli ripristinati.`);
+        onClose();
+      } else {
+        alert('Il file JSON selezionato non ha una struttura valida per il garage.');
+      }
+    } catch (err) {
+      alert('Errore nella lettura del file JSON.');
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -164,6 +212,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
+          {/* SECTION 2: TEMA & COLORI APPLICAZIONE */}
+          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Tema & Colori Applicazione</span>
+              </h4>
+              <span className="text-[11px] font-bold text-slate-500">
+                {THEME_OPTIONS.find(t => t.id === themeColor)?.name}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {THEME_OPTIONS.map((t) => {
+                const isSelected = themeColor === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => handleSelectTheme(t.id)}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-50 shadow-2xs ring-2 ring-slate-900/10 font-bold'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+                    }`}
+                  >
+                    <span 
+                      className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white shadow-2xs"
+                      style={{ backgroundColor: t.hex }}
+                    >
+                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-slate-900 block truncate">{t.name}</span>
+                      <span className="text-[10px] text-slate-400 block truncate leading-tight">{t.desc.split(',')[0]}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
             {/* SECTION 2: MAP & STATIONS PREFERENCES */}
           <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
             <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Mappa Distributori & Colonnine</h4>
@@ -227,23 +317,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={handleExportJSON}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors"
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer"
               >
                 <Download className="w-4 h-4 text-[#2563eb]" />
-                <span>Esporta Garage (JSON)</span>
+                <span>Esporta Garage ({vehicles.length})</span>
               </button>
 
               <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer">
                 <Upload className="w-4 h-4 text-[#059669]" />
-                <span>Importa Backup JSON</span>
+                <span>Importa File JSON</span>
                 <input 
                   type="file" 
-                  accept=".json" 
+                  accept=".json,application/json" 
                   onChange={handleImportJSON} 
                   className="hidden" 
                 />
               </label>
             </div>
+
+            {/* Singoli Veicoli Esportabili */}
+            {vehicles.length > 0 && (
+              <div className="flex flex-col gap-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                <span className="text-[10.5px] font-extrabold text-slate-500 uppercase tracking-wider">Esporta singolo veicolo:</span>
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {vehicles.map(v => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => exportVehicleToJSON(v)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-indigo-50 text-slate-800 hover:text-indigo-700 text-xs font-bold rounded-lg border border-slate-200 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
+                      title={`Esporta dati completi di ${v.brand} ${v.model} in JSON`}
+                    >
+                      <Download className="w-3 h-3 text-indigo-600" />
+                      <span>{v.brand} {v.model} ({v.plate})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button
               type="button"

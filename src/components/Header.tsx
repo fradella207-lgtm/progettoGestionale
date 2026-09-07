@@ -50,24 +50,12 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="btn-back-to-garage"
               onClick={onNavigateGarage}
-              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-90 text-slate-900 transition-all border border-slate-300/80 cursor-pointer shadow-2xs group shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all border border-slate-200 cursor-pointer shadow-2xs group shrink-0"
               title="Torna al Garage"
             >
-              <ArrowLeft className="w-4 h-4 text-indigo-600 group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-4 h-4 text-theme-primary group-hover:-translate-x-0.5 transition-transform" />
               <span className="text-xs sm:text-sm font-bold">Garage</span>
             </button>
-            
-            {selectedVehicle && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-slate-300 font-bold hidden sm:inline">/</span>
-                <span className="text-xs sm:text-sm font-black text-slate-900 truncate max-w-[120px] xs:max-w-[160px] sm:max-w-[240px]">
-                  {selectedVehicle.brand} {selectedVehicle.model}
-                </span>
-                <span className="text-[10px] font-mono font-bold bg-slate-900 text-white px-1.5 py-0.5 rounded-md hidden xs:inline shrink-0">
-                  {selectedVehicle.plate}
-                </span>
-              </div>
-            )}
           </div>
         ) : currentView === 'stations' ? (
           <div className="flex items-center gap-2.5 min-w-0">
@@ -97,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-[9.5px] bg-indigo-100 text-indigo-900 border border-indigo-200 font-black px-1.5 py-0.2 rounded-md">AI</span>
               </h1>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Scheda tecnica, libretto DUC e assistente di bordo
+                Scheda tecnica, documenti DUC e assistente di bordo
               </p>
             </div>
           </div>

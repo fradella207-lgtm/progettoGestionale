@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Wrench, Trash2 } from 'lucide-react';
+import { X, ArrowLeft, Wrench, Trash2, FileText, Camera, Upload, Receipt } from 'lucide-react';
 import { MaintenanceRecord, Vehicle } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -28,6 +28,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   const [cost, setCost] = useState<number | ''>(editingMaintenance?.cost ?? '');
   const [workshop, setWorkshop] = useState(editingMaintenance?.workshop || '');
   const [description, setDescription] = useState(editingMaintenance?.description || '');
+  const [documentPhoto, setDocumentPhoto] = useState<string | undefined>(editingMaintenance?.documentPhoto);
+  const [documentFileName, setDocumentFileName] = useState<string | undefined>(editingMaintenance?.documentFileName);
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -43,6 +45,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
       setCost(editingMaintenance?.cost ?? '');
       setWorkshop(editingMaintenance?.workshop || '');
       setDescription(editingMaintenance?.description || '');
+      setDocumentPhoto(editingMaintenance?.documentPhoto);
+      setDocumentFileName(editingMaintenance?.documentFileName);
     }
   }, [isOpen, editingMaintenance]);
 
@@ -62,7 +66,9 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
       category,
       cost: Number(cost),
       workshop: workshop.trim(),
-      description: description.trim()
+      description: description.trim(),
+      documentPhoto: documentPhoto || undefined,
+      documentFileName: documentFileName || undefined
     });
 
     onClose();
@@ -186,6 +192,65 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669] resize-none"
             />
+          </div>
+
+          {/* FATTURA / DOCUMENTO INTERVENTO (OPZIONALE) */}
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Fattura / Ricevuta Intervento (Opzionale)</span>
+              </label>
+              {documentPhoto && (
+                <button
+                  type="button"
+                  onClick={() => { setDocumentPhoto(undefined); setDocumentFileName(undefined); }}
+                  className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                >
+                  Rimuovi allegato
+                </button>
+              )}
+            </div>
+
+            {documentPhoto ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
+                <img 
+                  src={documentPhoto} 
+                  alt="Fattura manutenzione" 
+                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0 bg-white" 
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-800 truncate">
+                    {documentFileName || 'Fattura_intervento.jpg'}
+                  </p>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
+                    ✓ Documento allegato
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <label className="border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 bg-slate-50/60 hover:bg-emerald-50/30 transition-all cursor-pointer">
+                <Camera className="w-4 h-4 text-emerald-600" />
+                <span>Carica o scatta foto della ricevuta / fattura (opzionale)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        const res = ev.target?.result as string;
+                        setDocumentPhoto(res);
+                        setDocumentFileName(file.name);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           {/* ACTIONS */}

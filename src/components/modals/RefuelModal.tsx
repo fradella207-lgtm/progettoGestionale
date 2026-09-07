@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Fuel, Zap, Trash2, BatteryCharging, Flame } from 'lucide-react';
+import { X, ArrowLeft, Fuel, Zap, Trash2, BatteryCharging, Flame, Receipt, Camera, Upload } from 'lucide-react';
 import { RefuelRecord, Vehicle, EnergySourceType } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -48,6 +48,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
   const [type, setType] = useState<'full' | 'partial'>(editingRefuel?.type || 'full');
   const [notes, setNotes] = useState(editingRefuel?.notes || '');
   const [chargingPowerKw, setChargingPowerKw] = useState<number | ''>(editingRefuel?.chargingPowerKw ?? '');
+  const [receiptPhoto, setReceiptPhoto] = useState<string | undefined>(editingRefuel?.receiptPhoto);
+  const [receiptFileName, setReceiptFileName] = useState<string | undefined>(editingRefuel?.receiptFileName);
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -65,6 +67,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
       setType(editingRefuel?.type || 'full');
       setNotes(editingRefuel?.notes || '');
       setChargingPowerKw(editingRefuel?.chargingPowerKw ?? '');
+      setReceiptPhoto(editingRefuel?.receiptPhoto);
+      setReceiptFileName(editingRefuel?.receiptFileName);
     }
   }, [isOpen, editingRefuel, vehicle, defaultEnergyType]);
 
@@ -115,7 +119,9 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
       energyType,
       unit: fuelUnit,
       chargingPowerKw: chargingPowerKw ? Number(chargingPowerKw) : undefined,
-      notes: notes.trim()
+      notes: notes.trim(),
+      receiptPhoto: receiptPhoto || undefined,
+      receiptFileName: receiptFileName || undefined
     });
 
     onClose();
@@ -413,6 +419,65 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
             />
+          </div>
+
+          {/* RICEVUTA / SCONTRINO (OPZIONALE) */}
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Scontrino / Ricevuta (Opzionale)</span>
+              </label>
+              {receiptPhoto && (
+                <button
+                  type="button"
+                  onClick={() => { setReceiptPhoto(undefined); setReceiptFileName(undefined); }}
+                  className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                >
+                  Rimuovi foto
+                </button>
+              )}
+            </div>
+
+            {receiptPhoto ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
+                <img 
+                  src={receiptPhoto} 
+                  alt="Scontrino rifornimento" 
+                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0 bg-white" 
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-800 truncate">
+                    {receiptFileName || 'Scontrino_allegato.jpg'}
+                  </p>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
+                    ✓ Foto allegata
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <label className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50/60 hover:bg-indigo-50/30 transition-all cursor-pointer">
+                <Camera className="w-4 h-4 text-indigo-500" />
+                <span>Carica o scatta foto dello scontrino (opzionale)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        const res = ev.target?.result as string;
+                        setReceiptPhoto(res);
+                        setReceiptFileName(file.name);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           {/* ACTIONS */}

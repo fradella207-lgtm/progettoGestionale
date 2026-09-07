@@ -9,7 +9,8 @@ import {
   Gauge, 
   Edit3, 
   ChevronRight, 
-  ArrowUpDown
+  ArrowUpDown,
+  Receipt
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, AppSettings, EnergySourceType } from '../../types';
 import { DetailedConsumptionMetrics } from '../../utils/consumptionCalculator';
@@ -425,6 +426,12 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                           }`}>
                             {refuel.type === 'full' ? 'Pieno' : 'Parziale'}
                           </span>
+                          {refuel.receiptPhoto && (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                              <Receipt className="w-2.5 h-2.5" />
+                              <span>Scontrino</span>
+                            </span>
+                          )}
                         </div>
 
                         {refuel.notes && (

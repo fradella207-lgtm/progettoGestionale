@@ -67,12 +67,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const [totalDbCount, setTotalDbCount] = useState<number>(21638);
   const [currentZoom, setCurrentZoom] = useState<number>(11);
 
+  const staticCatalogCacheRef = useRef<any[] | null>(null);
+
   // Helper parser from backend API model to UI Station model
   const parseBackendStations = (rawArray: any[]): Station[] => {
     return rawArray.map((item: any) => {
       if (item.fuelPrices || item.evPlugs) return item as Station;
 
-      const isEvType = item.tipo === 'elettrico' || item.tipo === 'ev' || 
+      const isEvType = item.tipo === 'elettrico' || item.tipo === 'ev' || item.id?.startsWith('ev_') ||
         (item.nome_gestore && (
           item.nome_gestore.toLowerCase().includes('tesla') || 
           item.nome_gestore.toLowerCase().includes('enel x') || 
@@ -81,7 +83,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           item.nome_gestore.toLowerCase().includes('ewiva') || 
           item.nome_gestore.toLowerCase().includes('free to x') || 
           item.nome_gestore.toLowerCase().includes('a2a') || 
-          item.nome_gestore.toLowerCase().includes('neogy')
+          item.nome_gestore.toLowerCase().includes('neogy') ||
+          item.nome_gestore.toLowerCase().includes('supercharger') ||
+          item.nome_gestore.toLowerCase().includes('plenitude')
         ));
 
       const fuelPrices = (item.servizi_prezzi || [])
@@ -150,9 +154,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         determinedType = 'both';
       }
 
+      const stName = item.nome_gestore 
+        ? (isEvType ? `${item.nome_gestore} - ${item.comune || ''}` : `${item.nome_gestore} - ${item.comune || ''}`)
+        : (isEvType ? 'Colonnina Ricarica EV' : 'Stazione Rifornimento');
+
       return {
         id: item.id,
-        name: item.nome_gestore ? `${item.nome_gestore} - ${item.comune || ''}` : (isEvType ? 'Colonnina Ricarica EV' : 'Stazione Rifornimento'),
+        name: stName,
         brand: item.nome_gestore || (isEvType ? 'Colonnina EV' : 'Distributore'),
         type: determinedType,
         address: item.indirizzo_completo || item.comune || '',
@@ -172,9 +180,12 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     });
   };
 
-  // Dynamic fetcher from backend
+  // Dynamic fetcher with double fallback (API Server + Static JSON asset for exports/offline)
   const fetchAreaStations = async (options: { lat?: number; lng?: number; radius?: number; q?: string; bounds?: string; type?: string }) => {
     setIsLoadingAreaStations(true);
+    const activeType = options.type || (typeFilter !== 'all' ? typeFilter : undefined);
+
+    // 1. Livello 1: Tentativo tramite API Server Express (/api/stations)
     try {
       const params = new URLSearchParams();
       if (options.lat !== undefined && !isNaN(options.lat)) params.append('lat', options.lat.toString());
@@ -182,42 +193,98 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (options.radius !== undefined) params.append('radius', options.radius.toString());
       if (options.q) params.append('q', options.q);
       if (options.bounds) params.append('bounds', options.bounds);
-      const activeType = options.type || (typeFilter !== 'all' ? typeFilter : undefined);
       if (activeType) {
         params.append('type', activeType);
       }
-      params.append('limit', '6000');
+      params.append('limit', '8000');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
-      if (!res.ok) throw new Error('API error');
-      const json = await res.json();
+      if (res.ok) {
+        const json = await res.json();
 
-      if (json.totalInDatabase) {
-        setTotalDbCount(json.totalInDatabase);
+        if (json.totalInDatabase) {
+          setTotalDbCount(json.totalInDatabase);
+        }
+        if (json.updatedAt) {
+          setLastSyncTime(new Date(json.updatedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+        }
+
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          const mapped = parseBackendStations(json.data);
+          setLiveStations(prev => {
+            const map = new Map<string, Station>();
+            prev.forEach(st => map.set(st.id, st));
+            mapped.forEach(st => map.set(st.id, st));
+            return Array.from(map.values());
+          });
+          try {
+            localStorage.setItem('garage_cached_stations_v2', JSON.stringify(mapped.slice(0, 800)));
+          } catch {}
+          setIsLoadingAreaStations(false);
+          return;
+        }
       }
-      if (json.updatedAt) {
-        setLastSyncTime(new Date(json.updatedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+    } catch (apiErr) {
+      // Procedi al Livello 2 (fallback statico per esportazioni)
+    }
+
+    // 2. Livello 2: Fallback Static Asset (Ideale per progetti esportati, GitHub Pages, Vercel, Netlify, Capacitor)
+    try {
+      if (!staticCatalogCacheRef.current) {
+        const staticRes = await fetch('/data/live_stations_output.json');
+        if (staticRes.ok) {
+          const staticData = await staticRes.json();
+          if (Array.isArray(staticData) && staticData.length > 0) {
+            staticCatalogCacheRef.current = staticData;
+          }
+        }
       }
 
-      if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-        const mapped = parseBackendStations(json.data);
+      if (staticCatalogCacheRef.current && staticCatalogCacheRef.current.length > 0) {
+        let items = staticCatalogCacheRef.current;
+        setTotalDbCount(items.length);
+        setLastSyncTime('Oggi (Live MIMIT & EV)');
+
+        const isEvStation = (st: any) => 
+          st.tipo === 'elettrico' || 
+          st.tipo === 'ev' || 
+          st.id?.startsWith('ev_') ||
+          (st.servizi_prezzi && st.servizi_prezzi.some((sp: any) => 
+            sp.tipo_servizio?.toLowerCase().includes('kw') || 
+            sp.tipo_servizio?.toLowerCase().includes('type') || 
+            sp.tipo_servizio?.toLowerCase().includes('ccs') ||
+            sp.tipo_servizio?.toLowerCase().includes('supercharger') ||
+            sp.tipo_servizio?.toLowerCase().includes('tesla')
+          ));
+
+        if (activeType === 'ev' || activeType === 'elettrico') {
+          items = items.filter(isEvStation);
+        } else if (activeType === 'fuel' || activeType === 'carburante') {
+          items = items.filter(st => !isEvStation(st));
+        }
+
+        if (options.q) {
+          const query = options.q.toLowerCase().trim();
+          items = items.filter(st => 
+            (st.nome_gestore || '').toLowerCase().includes(query) ||
+            (st.indirizzo_completo || '').toLowerCase().includes(query) ||
+            (st.comune || '').toLowerCase().includes(query)
+          );
+        }
+
+        const mapped = parseBackendStations(items.slice(0, 6000));
         setLiveStations(prev => {
           const map = new Map<string, Station>();
-          // Mantieni stazioni precedentemente scoperte
           prev.forEach(st => map.set(st.id, st));
-          // Aggiungi o aggiorna con le nuove
           mapped.forEach(st => map.set(st.id, st));
           return Array.from(map.values());
         });
         try {
-          // Cache in localStorage for instantaneous offline and mobile startup
           localStorage.setItem('garage_cached_stations_v2', JSON.stringify(mapped.slice(0, 800)));
-        } catch {
-          // localStorage safe ignore
-        }
+        } catch {}
       }
-    } catch (e) {
-      console.warn('Caricamento stazioni API non disponibile, utilizzo catalogo offline:', e);
+    } catch (staticErr) {
+      console.warn('Caricamento catalogo offline statico:', staticErr);
     } finally {
       setIsLoadingAreaStations(false);
     }

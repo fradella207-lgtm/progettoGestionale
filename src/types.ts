@@ -22,6 +22,9 @@ export interface RefuelRecord {
   unit?: 'L' | 'kWh' | 'Kg';
   chargingPowerKw?: number; // Optional charging speed for EV/PHEV
   notes?: string;
+  usageType?: string; // Optional trip classification e.g. "Lavoro", "Viaggio", "Urbano"
+  receiptPhoto?: string; // Optional: Base64 data URI of the fuel/charging receipt
+  receiptFileName?: string;
 }
 
 export interface MaintenanceRecord {
@@ -32,6 +35,9 @@ export interface MaintenanceRecord {
   description: string;
   workshop: string;
   cost: number;
+  documentPhoto?: string; // Optional: Base64 data URI of the maintenance invoice/receipt
+  documentFileName?: string;
+  notes?: string;
 }
 
 export interface VehicleDocument {
@@ -163,6 +169,7 @@ export interface Vehicle {
   technicalSpecs?: VehicleTechnicalSpecs;
   manualInfo?: VehicleManualInfo;
   aiChatHistory?: AIChatMessage[];
+  tripUsages?: Record<string, string>; // Maps tripId to classification tag (e.g. "Lavoro", "Viaggio", "Città")
 }
 
 export interface AIAdvice {
@@ -183,6 +190,8 @@ export interface AppNotification {
   read: boolean;
 }
 
+export type AppThemeColor = 'indigo' | 'blue' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
+
 export interface AppSettings {
   unitDistance: 'km' | 'mi';
   currency: '€' | '$' | '£';
@@ -190,6 +199,7 @@ export interface AppSettings {
   predictiveAlerts: boolean;
   autoBackup: boolean;
   stationDisplayMode?: 'auto' | 'fuel_only' | 'ev_only' | 'all';
+  themeColor?: AppThemeColor;
 }
 
 export type StationType = 'fuel' | 'ev' | 'both';
