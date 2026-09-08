@@ -43,10 +43,12 @@ export interface MaintenanceRecord {
 export interface VehicleDocument {
   id: string;
   title: string;
-  type: 'libretto' | 'assicurazione' | 'bollo' | 'tagliando' | 'altro';
+  type: 'libretto' | 'assicurazione' | 'bollo' | 'tagliando' | 'altro' | 'other';
+  category?: string;
   fileName: string;
   fileType: string;
   fileData: string; // Base64 data URI
+  fileSize?: number;
   uploadDate: string;
   expiryDate?: string;
   notes?: string;
@@ -76,6 +78,8 @@ export interface VehicleManualInfo {
   uploadedFileName?: string;
   uploadedFileType?: string;
   uploadedFileData?: string;
+  fileData?: string;
+  isUserUploaded?: boolean;
   lastUpdated?: string;
   keyProcedures?: {
     espAndControls?: string;

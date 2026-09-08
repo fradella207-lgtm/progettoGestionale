@@ -33,7 +33,6 @@ import { BoardTripsModal } from './modals/BoardTripsModal';
 import { RefuelsRegistryModal } from './modals/RefuelsRegistryModal';
 import { MaintenancesRegistryModal } from './modals/MaintenancesRegistryModal';
 import { calculateVehicleConsumptionMetrics, RefuelWithCalculation } from '../utils/consumptionCalculator';
-import { CarTechnicalSpecs } from './CarTechnicalSpecs';
 import { CarDocumentsVault } from './CarDocumentsVault';
 import { CarAIAssistant } from './CarAIAssistant';
 
@@ -41,7 +40,7 @@ interface VehicleDetailProps {
   vehicle: Vehicle;
   vehicles?: Vehicle[];
   settings: AppSettings;
-  initialTab?: 'overview' | 'specs' | 'documents' | 'ai';
+  initialTab?: 'overview' | 'documents' | 'ai';
   onSelectVehicle?: (vehicleId: string) => void;
   onBackToGarage?: () => void;
   onUpdateVehicle?: (updated: Vehicle) => void;
@@ -68,7 +67,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenEditMaintenance,
   onOpenFixTank
 }) => {
-  const [mainTab, setMainTab] = useState<'overview' | 'specs' | 'documents' | 'ai'>(initialTab || 'overview');
+  const [mainTab, setMainTab] = useState<'overview' | 'documents' | 'ai'>((initialTab === 'overview' || initialTab === 'documents' || initialTab === 'ai') ? initialTab : 'overview');
 
   useEffect(() => {
     if (initialTab) {
@@ -407,22 +406,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             <span className="text-[10px] bg-amber-100 text-amber-900 font-black px-1.5 py-0.2 rounded-full">
               {aiAdvices.length}
             </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMainTab('specs')}
-          className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-            mainTab === 'specs'
-              ? 'bg-white text-slate-900 shadow-xs border border-slate-200 font-black'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-          }`}
-        >
-          <Gauge className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Scheda Tecnica</span>
-          {vehicle.technicalSpecs && (
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           )}
         </button>
       </section>
@@ -969,16 +952,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
           {/* CHAT ASSISTENTE & MANUALE */}
           <CarAIAssistant 
-            vehicle={vehicle} 
-            onUpdateVehicle={onUpdateVehicle || (() => {})} 
-          />
-        </div>
-      )}
-
-      {/* TAB 4: SCHEDA TECNICA */}
-      {mainTab === 'specs' && (
-        <div className="animate-in fade-in duration-200">
-          <CarTechnicalSpecs 
             vehicle={vehicle} 
             onUpdateVehicle={onUpdateVehicle || (() => {})} 
           />

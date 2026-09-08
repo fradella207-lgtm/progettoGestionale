@@ -704,7 +704,10 @@ ${car.documents.map((d: any) => `- ${d.title} (${d.type}) [Scadenza: ${d.expiryD
 
       carContext += `
 REGOLE SUPREME PER LA CHAT:
-1. **RISPOSTA DIRETTA E IMMEDIATA CON ISTRUZIONE OPERATIVA**:
+1. **RIFERIMENTO AL MANUALE DI BORDO CARICATO**:
+   - L'utente ha caricato e collegato il manuale d'uso e manutenzione della vettura (${manualData.uploadedFileName || manualData.title || 'Manuale di bordo'}).
+   - Fai SEMPRE esplicito riferimento a questo manuale nelle tue risposte (es. "In base al manuale d'uso della tua auto...", "Come riportato nella sezione Manutenzione del manuale..."), citando i passaggi e le specifiche ufficiali.
+2. **RISPOSTA DIRETTA E IMMEDIATA CON ISTRUZIONE OPERATIVA**:
    - Rispondi SEMPRE in modo DIRETTO, PRATICO e OPERATIVO con le istruzioni PASSO-PASSO NUMERATE (1., 2., 3...).
    - È SEVERAMENTE VIETATO ripetere, riassumere o riformulare la domanda dell'utente (NON dire "In merito alla tua richiesta...", "Per quanto riguarda...", "Ti spiego come fare...").
    - Comincia DIRETTAMENTE con i passi esatti o con la specifica tecnica richiesta.
@@ -1271,7 +1274,7 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       const lngParam = req.query.lng ? parseFloat(req.query.lng as string) : NaN;
       const radiusParam = req.query.radius ? parseFloat(req.query.radius as string) : 50; // default 50 km
       const boundsParam = req.query.bounds as string; // "minLat,minLng,maxLat,maxLng"
-      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 4000) : 1000;
+      const limitParam = req.query.limit ? Math.min(parseInt(req.query.limit as string, 10), 15000) : 6000;
 
       let filtered = stations;
 
@@ -1333,8 +1336,9 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       if (typeParam === 'all') {
         const evList = filtered.filter(isEvStation);
         const fuelList = filtered.filter(st => !isEvStation(st));
-        const fuelLimit = Math.max(Math.min(fuelList.length, 50), limitParam - evList.length);
-        dataToSend = [...evList, ...fuelList.slice(0, fuelLimit)];
+        const evLimit = Math.min(evList.length, 3000);
+        const fuelLimit = Math.min(fuelList.length, limitParam - evLimit);
+        dataToSend = [...evList.slice(0, evLimit), ...fuelList.slice(0, fuelLimit)];
       } else {
         dataToSend = filtered.slice(0, limitParam);
       }
@@ -1352,10 +1356,11 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
     }
   });
 
-  // ENDPOINT DI TRIGGER PER CRON JOB O WEBHOOK ESTERNO
-  app.post("/api/stations/sync", async (req, res) => {
+  // ENDPOINT DI TRIGGER PER CRON JOB O WEBHOOK ESTERNO O PULSANTE MANUALE
+  app.all("/api/stations/sync", async (req, res) => {
     try {
       const result = await sincronizzaMappaStazioni();
+      stationsMemoryCache = null; // Forza ricaricamento RAM istantaneo con i nuovi prezzi
       return res.json({
         success: true,
         message: "Sincronizzazione MIMIT e Open Charge Map completata con successo",

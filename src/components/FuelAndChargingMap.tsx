@@ -69,6 +69,41 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
   const staticCatalogCacheRef = useRef<any[] | null>(null);
 
+  // Helper date formatter: shows real date and time from official MIMIT timestamp
+  const formatPriceUpdateDate = (isoString?: string): string => {
+    if (!isoString) return 'Oggi';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return 'Oggi';
+      const now = new Date();
+      const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      if (isToday) return `Oggi, ${time}`;
+      
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const isYesterday = d.getDate() === yesterday.getDate() && d.getMonth() === yesterday.getMonth() && d.getFullYear() === yesterday.getFullYear();
+      if (isYesterday) return `Ieri, ${time}`;
+
+      const dateStr = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return `${dateStr}, ${time}`;
+    } catch {
+      return 'Oggi';
+    }
+  };
+
+  // Helper distance calculator
+  const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   // Helper parser from backend API model to UI Station model
   const parseBackendStations = (rawArray: any[]): Station[] => {
     return rawArray.map((item: any) => {
@@ -96,14 +131,16 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         .map((sp: any) => {
           const isSelf = sp.tipo_servizio?.toLowerCase().includes('self');
           let fuelName: FuelType = 'Benzina';
-          if (sp.tipo_servizio?.toLowerCase().includes('gasolio') || sp.tipo_servizio?.toLowerCase().includes('diesel')) fuelName = 'Diesel';
-          else if (sp.tipo_servizio?.toLowerCase().includes('gpl')) fuelName = 'GPL';
-          else if (sp.tipo_servizio?.toLowerCase().includes('metano')) fuelName = 'Metano';
+          const tLower = sp.tipo_servizio?.toLowerCase() || '';
+          if (tLower.includes('gasolio') || tLower.includes('diesel') || tLower.includes('hvo')) fuelName = 'Diesel';
+          else if (tLower.includes('gpl')) fuelName = 'GPL';
+          else if (tLower.includes('metano') || tLower.includes('cng')) fuelName = 'Metano';
           return {
             fuel: fuelName,
             price: sp.prezzo,
             isSelf,
-            updatedAt: sp.ultimo_aggiornamento ? new Date(sp.ultimo_aggiornamento).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 'Oggi'
+            rawUpdatedAt: sp.ultimo_aggiornamento,
+            updatedAt: formatPriceUpdateDate(sp.ultimo_aggiornamento)
           };
         });
 
@@ -268,11 +305,38 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           items = items.filter(st => 
             (st.nome_gestore || '').toLowerCase().includes(query) ||
             (st.indirizzo_completo || '').toLowerCase().includes(query) ||
-            (st.comune || '').toLowerCase().includes(query)
+            (st.comune || '').toLowerCase().includes(query) ||
+            (st.bandiera || '').toLowerCase().includes(query)
           );
         }
 
-        const mapped = parseBackendStations(items.slice(0, 6000));
+        // Bounding Box filter for map viewport (pan & zoom)
+        if (options.bounds) {
+          const parts = options.bounds.split(',').map(n => parseFloat(n.trim()));
+          if (parts.length === 4 && !parts.some(isNaN)) {
+            const [minLat, minLng, maxLat, maxLng] = parts;
+            items = items.filter(st => {
+              const lat = st.coordinate?.lat || st.latitudine;
+              const lng = st.coordinate?.lng || st.longitudine;
+              return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+            });
+          }
+        } 
+        // Radius filter for GPS location or city search
+        else if (options.lat !== undefined && options.lng !== undefined && !isNaN(options.lat) && !isNaN(options.lng)) {
+          const rad = options.radius || 45;
+          const uLat = options.lat;
+          const uLng = options.lng;
+          const withDist = items.map(st => {
+            const lat = st.coordinate?.lat || st.latitudine || 0;
+            const lng = st.coordinate?.lng || st.longitudine || 0;
+            return { st, dist: haversineKm(uLat, uLng, lat, lng) };
+          }).filter(x => x.dist <= rad);
+          withDist.sort((a, b) => a.dist - b.dist);
+          items = withDist.map(x => x.st);
+        }
+
+        const mapped = parseBackendStations(items.slice(0, 5000));
         setLiveStations(prev => {
           const map = new Map<string, Station>();
           prev.forEach(st => map.set(st.id, st));
@@ -462,11 +526,21 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           return { price: p, label: specificFuelFilter, unit: '€/L', fuelCategory: 'fuel' };
         }
       }
-      // default self benzina or diesel
+      // Default: match active car fuel (Diesel, Benzina, GPL, Metano) self service
+      let preferredFuel: FuelType = 'Benzina';
+      if (selectedVehicle) {
+        const ft = (selectedVehicle.fuelType || '').toLowerCase();
+        const mot = (selectedVehicle.motorization || '').toLowerCase();
+        if (ft.includes('diesel') || mot.includes('diesel') || mot.includes('d ') || mot.endsWith('d')) preferredFuel = 'Diesel';
+        else if (ft.includes('gpl') || mot.includes('gpl')) preferredFuel = 'GPL';
+        else if (ft.includes('metano') || mot.includes('metano')) preferredFuel = 'Metano';
+      }
+      const selfPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel && p.isSelf);
+      const anyPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel);
       const selfBenz = station.fuelPrices.find(p => p.fuel === 'Benzina' && p.isSelf);
       const selfDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel' && p.isSelf);
-      const chosen = selfBenz || selfDiesel || station.fuelPrices[0];
-      return { price: chosen.price, label: chosen.fuel, unit: '€/L', fuelCategory: 'fuel' };
+      const chosen = selfPreferred || anyPreferred || selfDiesel || selfBenz || station.fuelPrices[0];
+      return { price: chosen.price, label: `${chosen.fuel}${chosen.isSelf ? ' Self' : ''}`, unit: '€/L', fuelCategory: 'fuel' };
     }
     if (station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
@@ -1589,9 +1663,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
               {/* PRICE LIST TABLE */}
               <div className="bg-[#f8fafc] rounded-2xl p-3.5 border border-slate-200 flex flex-col gap-2.5">
-                <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
-                  Listino Prezzi Rilevati
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                    Listino Prezzi Ufficiali MIMIT
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Osservaprezzi MIMIT
+                  </span>
+                </div>
 
                 {/* Fuel Prices */}
                 {selectedStation.fuelPrices && selectedStation.fuelPrices.length > 0 && (
@@ -1600,10 +1679,15 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                       const col = priceColorClass(fp.price, 'fuel');
                       return (
                         <div key={i} className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-2xs">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2.5 h-2.5 rounded-full ${col.bg}`}></span>
-                            <span className="text-xs font-bold text-[#0f172a]">{fp.fuel}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">{fp.isSelf ? '(Self)' : '(Servito)'}</span>
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${col.bg}`}></span>
+                              <span className="text-xs font-bold text-[#0f172a]">{fp.fuel}</span>
+                              <span className="text-[10px] text-slate-500 font-medium">{fp.isSelf ? '(Self)' : '(Servito)'}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium pl-3.5">
+                              Rilevazione: {fp.updatedAt || 'Oggi'}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-black text-[#0f172a]">

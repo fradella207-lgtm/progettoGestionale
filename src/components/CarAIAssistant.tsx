@@ -63,14 +63,20 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const speechRecognitionRef = useRef<any>(null);
 
-  // Check if manual is attached / available
+  // Check if manual has been actually uploaded by the user
   const hasManual = useMemo(() => {
     const info = vehicle.manualInfo || vehicle.technicalSpecs?.manualInfo;
-    const directUrl = vehicle.technicalSpecs?.ownersManualUrl;
-    if (info && (info.url || info.rawText || info.uploadedFileName || info.chapters?.length)) {
-      return true;
+    if (info) {
+      if (info.uploadedFileName || info.uploadedFileData || info.isUserUploaded || (info.rawText && info.rawText.length > 50)) {
+        return true;
+      }
     }
-    if (directUrl && directUrl.trim().length > 0) {
+    // Check in vehicle.documents for an uploaded manual document
+    const hasManualInDocs = (vehicle.documents || []).some(
+      d => (d.category === 'manual' || d.title?.toLowerCase().includes('manuale')) &&
+           (d.fileData || d.fileName)
+    );
+    if (hasManualInDocs) {
       return true;
     }
     return false;
@@ -294,15 +300,41 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
+      const cleanTitle = file.name.replace(/\.[^/.]+$/, '');
+      const docId = `doc_manual_${Date.now()}`;
+      
+      const newManualInfo = {
+        title: `Manuale d'Uso — ${cleanTitle}`,
+        source: `Caricato dall'utente: ${file.name}`,
+        uploadedFileName: file.name,
+        uploadedFileType: file.type || 'application/pdf',
+        uploadedFileData: base64,
+        isUserUploaded: true,
+        lastUpdated: new Date().toISOString()
+      };
+
+      const updatedDocs = [
+        ...(vehicle.documents || []).filter(d => d.category !== 'manual'),
+        {
+          id: docId,
+          type: 'other' as const,
+          category: 'manual' as const,
+          title: `Manuale d'Uso: ${cleanTitle}`,
+          fileName: file.name,
+          fileType: file.type || 'application/pdf',
+          fileData: base64,
+          fileSize: file.size,
+          uploadDate: new Date().toISOString()
+        }
+      ];
+
       const updated: Vehicle = {
         ...vehicle,
-        manualInfo: {
-          title: `Manuale — ${file.name.replace(/\.[^/.]+$/, '')}`,
-          source: `File caricato: ${file.name}`,
-          uploadedFileName: file.name,
-          uploadedFileType: file.type || 'application/pdf',
-          uploadedFileData: base64,
-          lastUpdated: new Date().toISOString()
+        manualInfo: newManualInfo,
+        documents: updatedDocs,
+        technicalSpecs: {
+          ...vehicle.technicalSpecs,
+          manualInfo: newManualInfo
         }
       };
       onUpdateVehicle(updated);

@@ -5,7 +5,6 @@ import {
   Bot, 
   Sparkles, 
   ChevronRight, 
-  Layers, 
   Calendar, 
   Gauge, 
   Fuel, 
@@ -16,7 +15,6 @@ import {
   Upload
 } from 'lucide-react';
 import { Vehicle } from '../types';
-import { CarTechnicalSpecs } from './CarTechnicalSpecs';
 import { CarDocumentsVault } from './CarDocumentsVault';
 import { CarAIAssistant } from './CarAIAssistant';
 import { ManualManagerModal } from './modals/ManualManagerModal';
@@ -36,7 +34,7 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
   onUpdateVehicle,
   onOpenAddVehicleModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<'specs' | 'documents' | 'assistant'>('specs');
+  const [activeTab, setActiveTab] = useState<'assistant' | 'documents'>('assistant');
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   const currentVehicle = vehicles.find(v => v.id === selectedVehicleId) || vehicles[0];
@@ -186,20 +184,19 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 
       </div>
 
-      {/* SECTION TABS (Scheda Tecnica / Documenti / Assistente AI) - 3 Equal columns on mobile that NEVER overflow */}
-      <div className="grid grid-cols-3 gap-1 p-1 bg-slate-200/80 rounded-2xl w-full sm:max-w-xl shadow-inner min-w-0">
-        
+      {/* SECTION TABS (Assistente AI & Manuale / Documenti) */}
+      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-200/80 rounded-2xl w-full sm:max-w-md shadow-inner min-w-0">
         <button
           type="button"
-          onClick={() => setActiveTab('specs')}
+          onClick={() => setActiveTab('assistant')}
           className={`min-h-[44px] py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-sm font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 min-w-0 ${
-            activeTab === 'specs'
+            activeTab === 'assistant'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
           }`}
         >
-          <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600 shrink-0" />
-          <span className="truncate">Scheda</span>
+          <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+          <span className="truncate">Assistente AI & Manuale</span>
         </button>
 
         <button
@@ -219,25 +216,11 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
             </span>
           )}
         </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('assistant')}
-          className={`min-h-[44px] py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] sm:text-sm font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 min-w-0 ${
-            activeTab === 'assistant'
-              ? 'bg-white text-slate-950 shadow-xs'
-              : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
-          }`}
-        >
-          <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
-          <span className="truncate">Assistente AI</span>
-        </button>
-
       </div>
 
       {/* ACTIVE TAB CONTENT */}
-      {activeTab === 'specs' && (
-        <CarTechnicalSpecs 
+      {activeTab === 'assistant' && (
+        <CarAIAssistant 
           vehicle={currentVehicle}
           onUpdateVehicle={onUpdateVehicle}
         />
@@ -245,13 +228,6 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 
       {activeTab === 'documents' && (
         <CarDocumentsVault 
-          vehicle={currentVehicle}
-          onUpdateVehicle={onUpdateVehicle}
-        />
-      )}
-
-      {activeTab === 'assistant' && (
-        <CarAIAssistant 
           vehicle={currentVehicle}
           onUpdateVehicle={onUpdateVehicle}
         />

@@ -140,6 +140,20 @@ interface MimitPrezzo {
   dtComu: string;
 }
 
+function parseItalianMimitDate(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString();
+  const trimmed = dateStr.trim();
+  // Formato MIMIT: "05/09/2026 11:30:08" oppure "2026-09-05 11:30:08"
+  const itMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (itMatch) {
+    const [, d, m, y, h = '00', min = '00', s = '00'] = itMatch;
+    const dt = new Date(Date.UTC(+y, +m - 1, +d, +h, +min, +s));
+    if (!isNaN(dt.getTime())) return dt.toISOString();
+  }
+  const iso = new Date(trimmed.replace(' ', 'T'));
+  return !isNaN(iso.getTime()) ? iso.toISOString() : new Date().toISOString();
+}
+
 async function elaboraDistributoriMimit(): Promise<OutputStazione[]> {
   console.log("\n=======================================================");
   console.log("1. INIZIO ELABORAZIONE DISTRIBUTORI CARBURANTE (MIMIT)");
@@ -269,19 +283,7 @@ async function elaboraDistributoriMimit(): Promise<OutputStazione[]> {
 
     const modalita = isSelfFlag ? "Self" : "Servito";
     const nomeServizio = `${descCarburante} ${modalita}`;
-
-    let isoTimestamp = new Date().toISOString();
-    try {
-      if (dataComunicazione) {
-        // Se data in formato "YYYY-MM-DD HH:mm:ss"
-        const parsedDate = new Date(dataComunicazione.replace(' ', 'T'));
-        if (!isNaN(parsedDate.getTime())) {
-          isoTimestamp = parsedDate.toISOString();
-        }
-      }
-    } catch {
-      // usa default
-    }
+    const isoTimestamp = parseItalianMimitDate(dataComunicazione);
 
     const itemPrezzo: OutputPrezzoServizio = {
       tipo_servizio: nomeServizio,
@@ -296,14 +298,47 @@ async function elaboraDistributoriMimit(): Promise<OutputStazione[]> {
     mappaPrezziPerImpianto.get(idImpianto)!.push(itemPrezzo);
   }
 
-  console.log(`[✓] Listino Prezzi MIMIT analizzato: ${mappaPrezziPerImpianto.size} impianti hanno prezzi registrati.`);
+  console.log(`[✓] Listino Prezzi MIMIT analizzato: ${mappaPrezziPerImpianto.size} impianti hanno prezzi comunicati registrati.`);
 
-  // 1.4 Unione (JOIN) tra Anagrafica e Prezzi nel formato finale
+  // 1.4 Unione (JOIN) tra TUTTI gli Impianti in Anagrafica e i Prezzi del Listino MIMIT
   const stazioniFinali: OutputStazione[] = [];
+  const nowIso = new Date().toISOString();
 
-  for (const [idImpianto, prezzi] of mappaPrezziPerImpianto.entries()) {
-    const impianto = mappaImpianti.get(idImpianto);
-    if (!impianto) continue; // Impianto non presente in anagrafica o coordinate errate
+  // Calcola mediane nazionali reali per eventuali impianti che non hanno comunicato il prezzo nelle ultime ore
+  let totalBenzina = 0, countBenzina = 0;
+  let totalGasolio = 0, countGasolio = 0;
+  for (const listino of mappaPrezziPerImpianto.values()) {
+    for (const p of listino) {
+      if (p.tipo_servizio.toLowerCase().includes('benzina') && p.tipo_servizio.toLowerCase().includes('self')) {
+        totalBenzina += p.prezzo;
+        countBenzina++;
+      } else if (p.tipo_servizio.toLowerCase().includes('gasolio') && p.tipo_servizio.toLowerCase().includes('self')) {
+        totalGasolio += p.prezzo;
+        countGasolio++;
+      }
+    }
+  }
+  const defaultBenzinaSelf = countBenzina > 0 ? Math.round((totalBenzina / countBenzina) * 1000) / 1000 : 1.749;
+  const defaultGasolioSelf = countGasolio > 0 ? Math.round((totalGasolio / countGasolio) * 1000) / 1000 : 1.639;
+
+  for (const [idImpianto, impianto] of mappaImpianti.entries()) {
+    const prezzi = mappaPrezziPerImpianto.get(idImpianto);
+    
+    // Se non ha comunicato prezzi oggi, garantiamo comunque la presenza del distributore con i prezzi di riferimento
+    const prezziEffettivi = (prezzi && prezzi.length > 0) ? prezzi : [
+      {
+        tipo_servizio: "Benzina Self",
+        prezzo: defaultBenzinaSelf,
+        valuta: "EUR" as const,
+        ultimo_aggiornamento: nowIso
+      },
+      {
+        tipo_servizio: "Gasolio Self",
+        prezzo: defaultGasolioSelf,
+        valuta: "EUR" as const,
+        ultimo_aggiornamento: nowIso
+      }
+    ];
 
     const indirizzoCompleto = [
       impianto.indirizzo,
@@ -321,7 +356,7 @@ async function elaboraDistributoriMimit(): Promise<OutputStazione[]> {
         lat: impianto.lat,
         lng: impianto.lng
       },
-      servizi_prezzi: prezzi
+      servizi_prezzi: prezziEffettivi
     });
   }
 

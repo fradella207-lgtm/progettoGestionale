@@ -269,10 +269,10 @@ export default function App() {
     return vehicles.find(v => v.id === selectedCarId) || vehicles[0];
   }, [vehicles, selectedCarId]);
 
-  const [detailInitialTab, setDetailInitialTab] = useState<'overview' | 'specs' | 'documents' | 'ai'>('overview');
+  const [detailInitialTab, setDetailInitialTab] = useState<'overview' | 'documents' | 'ai'>('overview');
 
   // Handler: Select vehicle and navigate to detail with optional initial tab
-  const handleSelectVehicle = (vehicleId: string, tab: 'overview' | 'specs' | 'documents' | 'ai' = 'overview') => {
+  const handleSelectVehicle = (vehicleId: string, tab: 'overview' | 'documents' | 'ai' = 'overview') => {
     setSelectedCarId(vehicleId);
     setDetailInitialTab(tab);
     setCurrentView('detail');
@@ -348,44 +348,7 @@ export default function App() {
     }
   };
 
-  // Ensure all existing vehicles in the garage have their official manual fetched and indexed
-  useEffect(() => {
-    let isCancelled = false;
-    const checkAndFetchMissingManuals = async () => {
-      const carsNeedingManual = vehicles.filter(v => !v.manualInfo && v.brand && v.model);
-      if (carsNeedingManual.length === 0) return;
-
-      for (const car of carsNeedingManual) {
-        try {
-          const manual = await searchAndRetrieveCarManual({
-            brand: car.brand,
-            model: car.model,
-            year: car.registrationDate ? new Date(car.registrationDate).getFullYear() : 2018,
-            fuelType: car.fuelType,
-            motorization: car.motorization,
-            trimLevel: car.trimLevel
-          });
-          if (manual && !isCancelled) {
-            setVehicles(prev => prev.map(v => v.id === car.id ? {
-              ...v,
-              manualInfo: manual,
-              technicalSpecs: {
-                ...(v.technicalSpecs || {}),
-                manualInfo: manual
-              }
-            } : v));
-          }
-        } catch (e) {
-          console.debug('Background manual fetch error:', e);
-        }
-      }
-    };
-
-    checkAndFetchMissingManuals();
-    return () => { isCancelled = true; };
-  }, [vehicles.length]);
-
-  // Handler: Direct Vehicle Update (For Quattroruote specs, documents vault, AI chat)
+  // Handler: Direct Vehicle Update (For documents vault, AI chat, manual upload)
   const handleDirectUpdateVehicle = (updatedCar: Vehicle) => {
     const updatedList = vehicles.map(v => v.id === updatedCar.id ? updatedCar : v);
     setVehicles(updatedList);
