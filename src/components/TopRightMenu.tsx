@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Database,
-  LogOut
+  LogOut,
+  ExternalLink
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount } from '../types';
 
@@ -201,6 +202,30 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
             </button>
+
+            {/* 3B. LINK ESTERNO AL SITO DI PRESENTAZIONE PROGETTO */}
+            <a
+              id="menu-item-presentation-site"
+              href="/presentazione.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsOpen(false)}
+              className="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between group border border-slate-100"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                  <ExternalLink className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Sito del Progetto</span>
+                    <span className="text-[9px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full uppercase">Esterno ↗</span>
+                  </div>
+                  <p className="text-xs text-slate-500">Apri sito web di presentazione e screenshot</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            </a>
 
             {/* 4. DISCONNETTI */}
             {onLogout && (

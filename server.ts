@@ -2,14 +2,13 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import { sincronizzaMappaStazioni, OutputStazione } from "./scripts/sync_stations";
 import { SEED_STATIONS } from "./src/data/seedStations";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Directory sicura sia in sviluppo (tsx) che in produzione CommonJS (dist/server.cjs)
+const appDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 
 let genAIClient: GoogleGenAI | null = null;
 
@@ -1164,10 +1163,10 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       path.join(process.cwd(), 'dist', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'live_stations_output.json'),
-      path.join(__dirname, 'public', 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'live_stations_output.json'),
+      path.join(appDir, 'public', 'data', 'live_stations_output.json'),
+      path.join(appDir, 'src', 'data', 'live_stations_output.json'),
+      path.join(appDir, 'data', 'live_stations_output.json'),
+      path.join(appDir, 'live_stations_output.json'),
     ];
 
     let liveFilePath = '';
@@ -1221,10 +1220,10 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       path.join(process.cwd(), 'dist', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'src', 'data', 'live_stations_output.json'),
       path.join(process.cwd(), 'dist', 'live_stations_output.json'),
-      path.join(__dirname, 'public', 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'src', 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'data', 'live_stations_output.json'),
-      path.join(__dirname, 'live_stations_output.json'),
+      path.join(appDir, 'public', 'data', 'live_stations_output.json'),
+      path.join(appDir, 'src', 'data', 'live_stations_output.json'),
+      path.join(appDir, 'data', 'live_stations_output.json'),
+      path.join(appDir, 'live_stations_output.json'),
     ];
     let found = false;
     for (const p of candidatePaths) {
@@ -1688,6 +1687,20 @@ REGOLE DI OUTPUT:
         error: err?.message || "Errore elaborazione"
       });
     }
+  });
+
+  // Dedicated route for standalone presentation site (Sito esterno del progetto)
+  app.get(["/presentazione", "/presentazione.html", "/presentation", "/presentation.html"], (req, res) => {
+    const rootFile = path.join(process.cwd(), "presentazione.html");
+    if (fs.existsSync(rootFile)) {
+      return res.sendFile(rootFile);
+    }
+    const publicFile = path.join(process.cwd(), "public", "presentazione.html");
+    if (fs.existsSync(publicFile)) {
+      return res.sendFile(publicFile);
+    }
+    const distFile = path.join(process.cwd(), "dist", "presentazione.html");
+    return res.sendFile(distFile);
   });
 
   // Vite middleware for development

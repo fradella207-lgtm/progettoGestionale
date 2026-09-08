@@ -594,7 +594,10 @@ export default function App() {
         notifications={notifications}
         settings={settings}
         account={account}
-        onNavigateGarage={() => setCurrentView('garage')}
+        onNavigateGarage={() => {
+          setCurrentView('garage');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         onOpenAddCar={() => {
           setVehicleToEdit(null);
           setIsAddCarModalOpen(true);
@@ -611,7 +614,7 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL & CHARGING MAP) */}
+      {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL MAP) */}
       <main className="flex-1 flex flex-col pb-16">
         {currentView === 'stations' ? (
           <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2 animate-in fade-in duration-200">
