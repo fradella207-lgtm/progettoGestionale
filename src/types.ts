@@ -136,6 +136,9 @@ export interface VehicleTechnicalSpecs {
   ownersManualSource?: string;
   manualInfo?: VehicleManualInfo;
   summaryQuattroruote?: string;
+  finalDrive?: 'Catena' | 'Cardano' | 'Cinghia' | 'Variatore CVT' | string; // Catena con O-Ring/X-Ring, Cardano, Cinghia dentata
+  coolingType?: 'Liquido' | 'Aria' | 'Aria/Olio' | string;
+  engineArchitecture?: string; // Architettura motore es. Bicilindrico a V, Boxer, CP2/CP3, 4 in linea
 }
 
 export interface AIChatMessage {
@@ -150,11 +153,13 @@ export interface AIChatMessage {
 
 export interface Vehicle {
   id: string;
+  vehicleType?: 'car' | 'moto'; // Distinzione tra Auto e Moto / Scooter
   brand: string;
   model: string;
   trimLevel?: string; // Allestimento es. S-line, Lounge, Pop, GT Line, Titanium, M Sport
   generation?: string; // Generazione es. "Golf VII (2012-2020)"
   plate: string;
+  vin?: string; // Codice Telaio (Vehicle Identification Number - ISO 3779 standard a 17 caratteri)
   fuelType: FuelType;
   tankCapacity: number; // Liters for combustion/PHEV, or battery kWh for BEV
   batteryCapacity?: number; // kWh (for PHEV or BEV)
@@ -195,6 +200,8 @@ export interface AppNotification {
 }
 
 export type AppThemeColor = 'indigo' | 'blue' | 'emerald' | 'violet' | 'amber' | 'rose' | 'slate';
+export type AppThemeMode = 'light' | 'dark';
+export type AppLanguage = 'it' | 'en';
 
 export interface AppSettings {
   unitDistance: 'km' | 'mi';
@@ -204,6 +211,8 @@ export interface AppSettings {
   autoBackup: boolean;
   stationDisplayMode?: 'auto' | 'fuel_only' | 'ev_only' | 'all';
   themeColor?: AppThemeColor;
+  themeMode?: AppThemeMode;
+  language?: AppLanguage;
 }
 
 export type StationType = 'fuel' | 'ev' | 'both';

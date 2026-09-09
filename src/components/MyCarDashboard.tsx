@@ -12,12 +12,15 @@ import {
   Plus,
   ArrowRightLeft,
   BookOpen,
-  Upload
+  Upload,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Vehicle } from '../types';
 import { CarDocumentsVault } from './CarDocumentsVault';
 import { CarAIAssistant } from './CarAIAssistant';
 import { ManualManagerModal } from './modals/ManualManagerModal';
+import { formatVinForDisplay } from '../utils/vinValidator';
 
 interface MyCarDashboardProps {
   vehicles: Vehicle[];
@@ -36,6 +39,15 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'assistant' | 'documents'>('assistant');
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [copiedVin, setCopiedVin] = useState(false);
+
+  const handleCopyVin = (vinStr: string) => {
+    try {
+      navigator.clipboard?.writeText(vinStr);
+      setCopiedVin(true);
+      setTimeout(() => setCopiedVin(false), 2000);
+    } catch (e) {}
+  };
 
   const currentVehicle = vehicles.find(v => v.id === selectedVehicleId) || vehicles[0];
 
@@ -137,6 +149,25 @@ export const MyCarDashboard: React.FC<MyCarDashboardProps> = ({
                 <span className="text-[11px] text-slate-500 font-semibold truncate">
                   Immatr.: {currentVehicle.registrationDate ? new Date(currentVehicle.registrationDate).toLocaleDateString('it-IT') : 'N/D'}
                 </span>
+                {currentVehicle.vin && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyVin(currentVehicle.vin!)}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-md font-mono text-[10.5px] font-bold transition-all cursor-pointer border border-slate-200/80"
+                      title="Copia codice telaio (VIN)"
+                    >
+                      <span className="font-sans text-[9.5px] text-slate-400">VIN:</span>
+                      <span>{formatVinForDisplay(currentVehicle.vin)}</span>
+                      {copiedVin ? (
+                        <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                      ) : (
+                        <Copy className="w-2.5 h-2.5 text-slate-400" />
+                      )}
+                    </button>
+                  </>
+                )}
               </div>
               <h1 className="text-lg sm:text-2xl md:text-3xl font-black text-slate-950 tracking-tight mt-0.5 break-words">
                 {currentVehicle.brand} <span className="text-indigo-600">{currentVehicle.model}</span>

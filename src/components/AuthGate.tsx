@@ -216,22 +216,22 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Quick Demo Account Login
-  const handleQuickDemoLogin = () => {
-    const demoUser: UserAccount = {
-      id: 'user_demo_session',
-      name: 'Francesco Dell\'Aquila',
-      email: "francesco.dell'aquila@alessandrinimainardi.edu.it",
-      plan: 'Pro Garage Cloud (Demo)',
+  // Quick Master Account Login (Primary Project Account)
+  const handleQuickMasterLogin = () => {
+    const masterUser: UserAccount = {
+      id: 'user_master_my360garage',
+      name: 'MyGarage360 Admin',
+      email: 'my360garage@gmail.com',
+      plan: 'Pro Garage Cloud (Account Principale)',
       syncStatus: 'synced',
-      memberSince: 'Marzo 2024',
+      memberSince: 'Settembre 2026',
       provider: 'google',
       isLoggedIn: true
     };
-    setSuccessMessage('Accesso rapido effettuato con successo!');
+    setSuccessMessage('Accesso come Account Principale (my360garage@gmail.com) effettuato!');
     setTimeout(() => {
-      onLoginSuccess(demoUser);
-    }, 400);
+      onLoginSuccess(masterUser);
+    }, 350);
   };
 
   return (
@@ -307,6 +307,30 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
+          {/* PRIMARY MASTER ACCOUNT LOGIN (my360garage@gmail.com) */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/90 rounded-2xl p-4 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                <span className="text-xs font-black text-blue-900 uppercase tracking-wider">Account Principale Database</span>
+              </div>
+              <span className="text-[10px] font-extrabold bg-blue-600 text-white px-2 py-0.5 rounded-md">Firebase Master</span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Account principale configurato per la persistenza su database: <strong className="text-slate-900 font-bold">my360garage@gmail.com</strong>
+            </p>
+            <button
+              type="button"
+              id="btn-login-master-account"
+              onClick={handleQuickMasterLogin}
+              disabled={isLoading}
+              className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-extrabold text-xs py-2.5 px-4 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            >
+              <KeyRound className="w-4 h-4 text-blue-200" />
+              <span>Accedi con l'Account Principale (my360garage)</span>
+            </button>
+          </div>
+
           {/* GOOGLE SIGN-IN BUTTON */}
           <button
             type="button"
@@ -337,16 +361,28 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
           {authMode === 'login' ? (
             <form onSubmit={handleClassicLogin} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
-                  Indirizzo Email
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+                    Indirizzo Email
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('my360garage@gmail.com');
+                      setPassword('password123');
+                    }}
+                    className="text-[11px] text-[#2563eb] hover:underline font-bold"
+                  >
+                    Usa my360garage@gmail.com
+                  </button>
+                </div>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     id="input-login-email"
                     type="email"
                     required
-                    placeholder="nome@esempio.it"
+                    placeholder="my360garage@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-[#f8fafc] border border-[#cbd5e1] rounded-xl pl-10 pr-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb] focus:bg-white transition-colors"

@@ -244,14 +244,14 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
     }
   };
 
-  // Quick Demo Account Auto-Fill
+  // Quick Master Account Auto-Fill
   const handleFillDemo = (type: 'admin' | 'google') => {
     if (type === 'google') {
       handleGoogleLogin();
     } else {
-      setEmail('francesco.garage@alessandrini.it');
+      setEmail('my360garage@gmail.com');
       setPassword('password123');
-      setName('Francesco Dell\'Aquila');
+      setName('MyGarage360 Admin');
     }
   };
 
@@ -446,9 +446,9 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleFillDemo('admin')}
-                className="text-[11px] text-slate-500 hover:text-[#2563eb] underline"
+                className="text-[11px] font-bold text-[#2563eb] hover:underline"
               >
-                Riempi dati demo
+                Usa account master (my360garage)
               </button>
             </div>
 

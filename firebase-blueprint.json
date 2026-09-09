@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profilo utente e garage cloud MyGarage360",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Indirizzo email dell'utente o dell'account principale my360garage@gmail.com"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome dell'utente o proprietario del garage"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Piano di abbonamento o livello di accesso"
+        },
+        "isMasterAccount": {
+          "type": "boolean",
+          "description": "Flag per indicare l'account principale di gestione del database"
+        },
+        "vehicles": {
+          "type": "array",
+          "description": "Elenco dei veicoli, tagliandi, rifornimenti e documenti archiviati"
+        },
+        "settings": {
+          "type": "object",
+          "description": "Preferenze applicative dell'utente"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp ISO dell'ultimo salvataggio su database"
+        }
+      },
+      "required": ["email", "name", "vehicles"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Documento principale utente nel database Firestore per la persistenza del garage"
+    }
+  }
+}

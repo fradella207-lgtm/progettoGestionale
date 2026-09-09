@@ -22,9 +22,12 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
 }) => {
   const isEditing = !!editingMaintenance;
 
+  const isMoto = vehicle.vehicleType === 'moto';
+  const defaultCat = isMoto ? 'Tagliando Moto (Olio + Filtro)' : 'Tagliando Ordinario';
+
   const [date, setDate] = useState(editingMaintenance?.date || new Date().toISOString().split('T')[0]);
   const [km, setKm] = useState<number | ''>(editingMaintenance?.km ?? '');
-  const [category, setCategory] = useState(editingMaintenance?.category || 'Tagliando Ordinario');
+  const [category, setCategory] = useState(editingMaintenance?.category || defaultCat);
   const [cost, setCost] = useState<number | ''>(editingMaintenance?.cost ?? '');
   const [workshop, setWorkshop] = useState(editingMaintenance?.workshop || '');
   const [description, setDescription] = useState(editingMaintenance?.description || '');
@@ -142,15 +145,33 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
                 onChange={(e) => setCategory(e.target.value)}
                 className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669] bg-white"
               >
-                <option value="Tagliando Ordinario">Tagliando Ordinario</option>
-                <option value="Freni (Pastiglie/Dischi)">Freni (Pastiglie/Dischi)</option>
-                <option value="Pneumatici (Cambio/Inversione)">Pneumatici (Cambio/Inversione)</option>
-                <option value="Cinghia Distribuzione">Cinghia Distribuzione</option>
-                <option value="Batteria 12V / Trazione">Batteria 12V / Trazione</option>
-                <option value="FAP / DPF / Scarico">FAP / DPF / Scarico</option>
-                <option value="Revisione Ministeriale">Revisione Ministeriale</option>
-                <option value="Sospensioni e Assetto">Sospensioni e Assetto</option>
-                <option value="Altro Intervento">Altro Intervento</option>
+                {isMoto ? (
+                  <>
+                    <option value="Tagliando Moto (Olio + Filtro)">Tagliando Moto (Olio JASO MA2 + Filtro)</option>
+                    <option value="Trasmissione (Catena, Corona, Pignone)">Trasmissione (Kit Catena / Ingrassaggio / Cardano)</option>
+                    <option value="Freni Moto (Pastiglie/Dischi/Liquido)">Freni Moto (Pastiglie / Dischi / Spurgo DOT 4)</option>
+                    <option value="Pneumatici Moto (Anteriore/Posteriore)">Pneumatici Moto (Anteriore / Posteriore)</option>
+                    <option value="Forcelle e Sospensioni">Forcelle e Sospensioni (Paraoli / Olio / Mono)</option>
+                    <option value="Controllo Gioco Valvole">Controllo Gioco Valvole (Desmo / Distribuzione)</option>
+                    <option value="Candele d'accensione">Candele d'accensione</option>
+                    <option value="Batteria Moto (12V AGM / Litio)">Batteria Moto (12V AGM / Litio)</option>
+                    <option value="Cinghia & Variatore (Scooter)">Cinghia & Variatore (Scooter / CVT)</option>
+                    <option value="Revisione Ministeriale">Revisione Ministeriale</option>
+                    <option value="Altro Intervento">Altro Intervento</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Tagliando Ordinario">Tagliando Ordinario</option>
+                    <option value="Freni (Pastiglie/Dischi)">Freni (Pastiglie/Dischi)</option>
+                    <option value="Pneumatici (Cambio/Inversione)">Pneumatici (Cambio/Inversione)</option>
+                    <option value="Cinghia Distribuzione">Cinghia Distribuzione</option>
+                    <option value="Batteria 12V / Trazione">Batteria 12V / Trazione</option>
+                    <option value="FAP / DPF / Scarico">FAP / DPF / Scarico</option>
+                    <option value="Revisione Ministeriale">Revisione Ministeriale</option>
+                    <option value="Sospensioni e Assetto">Sospensioni e Assetto</option>
+                    <option value="Altro Intervento">Altro Intervento</option>
+                  </>
+                )}
               </select>
             </div>
 

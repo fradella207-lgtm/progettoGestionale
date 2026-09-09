@@ -1,17 +1,28 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profile matching uid
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Vehicles collection belonging to authenticated user
-    match /users/{userId}/vehicles/{vehicleId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // Helper function per verificare l'account principale di progetto
+    function isMasterAccount() {
+      return request.auth != null && request.auth.token.email == 'my360garage@gmail.com';
     }
 
-    // Public demo fallback if not logged in (allow read/write for guest sandbox)
+    // Profilo utente e dati del garage matching UID oppure account principale di progetto
+    match /users/{userId} {
+      allow read, write: if (request.auth != null && request.auth.uid == userId) || isMasterAccount();
+    }
+    
+    // Sub-collezione veicoli
+    match /users/{userId}/vehicles/{vehicleId} {
+      allow read, write: if (request.auth != null && request.auth.uid == userId) || isMasterAccount();
+    }
+
+    // Accesso sicuro per dati generali o backup del garage principale
+    match /garage_master/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isMasterAccount();
+    }
+
+    // Public demo fallback se ospite in locale
     match /guest_data/{document=**} {
       allow read, write: if true;
     }

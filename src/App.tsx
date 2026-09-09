@@ -65,6 +65,40 @@ function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[]
         read: false
       });
     }
+    // 3. Check document expirations (Assicurazione, Bollo, etc.)
+    if (car.documents && car.documents.length > 0) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      car.documents.forEach((doc) => {
+        if (!doc.expiryDate) return;
+        const expDate = new Date(doc.expiryDate);
+        expDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          list.push({
+            id: `exp_${car.id}_${doc.id}`,
+            carPlate: car.plate,
+            title: `Documento Scaduto: ${doc.title}`,
+            message: `Il documento "${doc.title}" di ${car.brand} ${car.model} è scaduto da ${Math.abs(diffDays)} giorni. Procedi al pagamento o rinnovo per metterti in regola.`,
+            type: 'alert',
+            date: new Date().toISOString().split('T')[0],
+            read: false
+          });
+        } else if (diffDays <= 30) {
+          list.push({
+            id: `warn_${car.id}_${doc.id}`,
+            carPlate: car.plate,
+            title: `Promemoria Pagamento: ${doc.title}`,
+            message: `Il documento "${doc.title}" scadrà il ${expDate.toLocaleDateString('it-IT')} (tra ${diffDays} giorni). Ricordati di effettuare il pagamento del rinnovo.`,
+            type: 'service',
+            date: new Date().toISOString().split('T')[0],
+            read: false
+          });
+        }
+      });
+    }
   });
 
   return list;
@@ -74,11 +108,15 @@ export default function App() {
   // 1. ALL VEHICLES IN GARAGE STATE (Initialized cleanly per-user)
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     const cachedUser = localStorage.getItem('garage_user_account');
-    let userId = '';
+    let userId = 'user_master_my360garage';
+    let isMaster = true;
     if (cachedUser) {
       try {
         const parsed = JSON.parse(cachedUser);
-        if (parsed.isLoggedIn && parsed.id) userId = parsed.id;
+        if (parsed.isLoggedIn && parsed.id) {
+          userId = parsed.id;
+          isMaster = parsed.email?.toLowerCase() === 'my360garage@gmail.com' || parsed.id === 'user_master_my360garage';
+        }
       } catch (e) {}
     }
     if (userId) {
@@ -86,9 +124,13 @@ export default function App() {
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         } catch (e) {}
       }
+    }
+    // Per l'account principale my360garage@gmail.com, se non ci sono ancora veicoli in cache, usiamo SEED_GARAGE di partenza
+    if (isMaster) {
+      return SEED_GARAGE;
     }
     return [];
   });
@@ -103,14 +145,31 @@ export default function App() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const cached = localStorage.getItem('garage_settings');
     if (cached) {
-      try { return JSON.parse(cached); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(cached);
+        return {
+          unitDistance: parsed.unitDistance || 'km',
+          currency: parsed.currency || '€',
+          fuelPriceAlerts: parsed.fuelPriceAlerts ?? true,
+          predictiveAlerts: parsed.predictiveAlerts ?? true,
+          autoBackup: parsed.autoBackup ?? true,
+          stationDisplayMode: parsed.stationDisplayMode || 'auto',
+          themeColor: parsed.themeColor || 'indigo',
+          themeMode: parsed.themeMode || 'light',
+          language: parsed.language || 'it'
+        };
+      } catch (e) {}
     }
     return {
       unitDistance: 'km',
       currency: '€',
       fuelPriceAlerts: true,
       predictiveAlerts: true,
-      autoBackup: true
+      autoBackup: true,
+      stationDisplayMode: 'auto',
+      themeColor: 'indigo',
+      themeMode: 'light',
+      language: 'it'
     };
   });
 
@@ -119,35 +178,50 @@ export default function App() {
     return generateVehicleNotifications(vehicles);
   });
 
-  // 5. ACCOUNT STATE
+  // 5. ACCOUNT STATE (Default: Primary Master Account my360garage@gmail.com)
   const [account, setAccount] = useState<UserAccount>(() => {
     const cached = localStorage.getItem('garage_user_account');
     if (cached) {
       try { 
         const parsed = JSON.parse(cached);
         if (parsed && parsed.email && parsed.isLoggedIn) {
+          // Se era un account precedente non aggiornato, migriamolo all'account principale
+          if (parsed.email.includes('alessandrini') || parsed.id === 'user_demo_session') {
+            return {
+              id: 'user_master_my360garage',
+              name: 'MyGarage360 Admin',
+              email: 'my360garage@gmail.com',
+              plan: 'Pro Garage Cloud (Account Principale)',
+              syncStatus: 'synced',
+              memberSince: 'Settembre 2026',
+              provider: 'google',
+              isLoggedIn: true
+            };
+          }
           return {
-            id: parsed.id || '',
-            name: parsed.name || 'Utente Garage',
-            email: parsed.email || '',
-            plan: parsed.plan || 'Pro Garage Cloud',
+            id: parsed.id || 'user_master_my360garage',
+            name: parsed.name || 'MyGarage360 Admin',
+            email: parsed.email || 'my360garage@gmail.com',
+            plan: parsed.email?.toLowerCase() === 'my360garage@gmail.com' ? 'Pro Garage Cloud (Account Principale)' : (parsed.plan || 'Pro Garage Cloud'),
             syncStatus: parsed.syncStatus || 'synced',
-            memberSince: parsed.memberSince || 'Agosto 2026',
+            memberSince: parsed.memberSince || 'Settembre 2026',
             provider: parsed.provider || 'google',
-            isLoggedIn: true
+            isLoggedIn: true,
+            avatarUrl: parsed.avatarUrl
           };
         }
       } catch (e) {}
     }
+    // Default master account: my360garage@gmail.com
     return {
-      id: '',
-      name: 'Utente Garage',
-      email: '',
-      plan: 'Pro Garage Cloud',
+      id: 'user_master_my360garage',
+      name: 'MyGarage360 Admin',
+      email: 'my360garage@gmail.com',
+      plan: 'Pro Garage Cloud (Account Principale)',
       syncStatus: 'synced',
-      memberSince: 'Agosto 2026',
+      memberSince: 'Settembre 2026',
       provider: 'google',
-      isLoggedIn: false
+      isLoggedIn: true
     };
   });
 
@@ -174,15 +248,38 @@ export default function App() {
   useEffect(() => {
     if (account.isLoggedIn && account.id) {
       localStorage.setItem(`garage_vehicles_${account.id}`, JSON.stringify(vehicles));
+      const isMaster = account.email?.toLowerCase() === 'my360garage@gmail.com' || account.id === 'user_master_my360garage';
+
       try {
         const userDocRef = doc(db, 'users', account.id);
-        setDoc(userDocRef, {
+        const payload = {
+          email: account.email,
+          name: account.name,
+          isMasterAccount: isMaster,
           vehicles,
           settings,
           updatedAt: new Date().toISOString()
-        }, { merge: true }).catch(err => {
+        };
+
+        setDoc(userDocRef, payload, { merge: true }).catch(err => {
           console.debug('Firestore sync notice:', err);
         });
+
+        // Se è l'account principale di progetto (my360garage@gmail.com), sincronizziamo anche i nodi master
+        if (isMaster) {
+          localStorage.setItem('garage_vehicles_user_master_my360garage', JSON.stringify(vehicles));
+          try {
+            const masterDocRef = doc(db, 'garage_master', 'main_garage');
+            setDoc(masterDocRef, payload, { merge: true }).catch(() => {});
+          } catch (e) {}
+
+          if (account.id !== 'user_master_my360garage') {
+            try {
+              const aliasDocRef = doc(db, 'users', 'user_master_my360garage');
+              setDoc(aliasDocRef, payload, { merge: true }).catch(() => {});
+            } catch (e) {}
+          }
+        }
       } catch (e) {
         console.debug('Firestore offline queue active');
       }
@@ -194,11 +291,34 @@ export default function App() {
     localStorage.setItem('garage_settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Apply theme color palette to HTML document root
+  // Apply theme color palette, Dark/Light Mode, and language to HTML document root
   useEffect(() => {
     const theme = settings.themeColor || 'indigo';
+    const isDark = settings.themeMode === 'dark';
+    const lang = settings.language || 'it';
+
     document.documentElement.setAttribute('data-theme', theme);
-  }, [settings.themeColor]);
+    document.documentElement.setAttribute('lang', lang);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.themeColor, settings.themeMode, settings.language]);
+
+  const handleToggleThemeMode = () => {
+    setSettings(prev => ({
+      ...prev,
+      themeMode: prev.themeMode === 'dark' ? 'light' : 'dark'
+    }));
+  };
+
+  const handleChangeLanguage = (lang: 'it' | 'en') => {
+    setSettings(prev => ({
+      ...prev,
+      language: lang
+    }));
+  };
 
   useEffect(() => {
     localStorage.setItem('garage_user_account', JSON.stringify(account));
@@ -211,7 +331,7 @@ export default function App() {
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0) {
             setVehicles(parsed);
             if (parsed.length > 0) setSelectedCarId(parsed[0].id);
           }
@@ -222,7 +342,7 @@ export default function App() {
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (data.vehicles && Array.isArray(data.vehicles)) {
+        if (data.vehicles && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
           setVehicles(data.vehicles);
           if (data.vehicles.length > 0) {
             setSelectedCarId(data.vehicles[0].id);
@@ -232,6 +352,20 @@ export default function App() {
         if (data.settings) {
           setSettings(data.settings);
         }
+      } else if (account.email?.toLowerCase() === 'my360garage@gmail.com' || userId === 'user_master_my360garage') {
+        // Fallback per l'account principale se accede su un nuovo dispositivo o nuovo login Google
+        try {
+          const masterDocRef = doc(db, 'garage_master', 'main_garage');
+          const masterSnap = await getDoc(masterDocRef);
+          if (masterSnap.exists()) {
+            const mData = masterSnap.data();
+            if (mData.vehicles && Array.isArray(mData.vehicles) && mData.vehicles.length > 0) {
+              setVehicles(mData.vehicles);
+              setSelectedCarId(mData.vehicles[0].id);
+              localStorage.setItem(`garage_vehicles_${userId}`, JSON.stringify(mData.vehicles));
+            }
+          }
+        } catch (e) {}
       }
     } catch (e) {
       console.debug('Firestore read exception:', e);
@@ -242,12 +376,13 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        const isMaster = firebaseUser.email?.toLowerCase() === 'my360garage@gmail.com';
         setAccount(prev => ({
           ...prev,
           id: firebaseUser.uid,
-          name: firebaseUser.displayName || prev.name,
+          name: firebaseUser.displayName || (isMaster ? 'MyGarage360 Admin' : prev.name),
           email: firebaseUser.email || prev.email,
-          plan: 'Pro Garage Cloud (Firebase)',
+          plan: isMaster ? 'Pro Garage Cloud (Account Principale)' : 'Pro Garage Cloud (Firebase)',
           syncStatus: 'synced',
           isLoggedIn: true,
           provider: firebaseUser.providerData[0]?.providerId.includes('google') ? 'google' : 'email',

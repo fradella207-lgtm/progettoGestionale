@@ -3,10 +3,14 @@ import {
   Car, 
   ArrowLeft, 
   Plus, 
-  Edit3
+  Edit3,
+  Sun,
+  Moon,
+  Globe
 } from 'lucide-react';
 import { Vehicle, AppNotification, AppSettings, UserAccount } from '../types';
 import { TopRightMenu } from './TopRightMenu';
+import { getTranslation } from '../i18n/translations';
 
 interface HeaderProps {
   currentView: 'garage' | 'detail' | 'stations' | 'my_car';
@@ -23,6 +27,8 @@ interface HeaderProps {
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
   onLogout: () => void;
+  onToggleThemeMode?: () => void;
+  onChangeLanguage?: (lang: 'it' | 'en') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,10 +45,15 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccount,
   onOpenAuthModal,
   onMarkAllNotificationsRead,
-  onLogout
+  onLogout,
+  onToggleThemeMode,
+  onChangeLanguage
 }) => {
+  const lang = settings.language || 'it';
+  const isDark = settings.themeMode === 'dark';
+
   return (
-    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 py-3 shadow-xs flex items-center justify-between transition-all">
+    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 shadow-xs flex items-center justify-between transition-all">
       {/* LEFT SECTION */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
         {currentView === 'detail' ? (
@@ -51,10 +62,10 @@ export const Header: React.FC<HeaderProps> = ({
               id="btn-back-to-garage"
               onClick={onNavigateGarage}
               className="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all border border-slate-200 cursor-pointer shadow-2xs group shrink-0"
-              title="Torna al Garage"
+              title={getTranslation(lang, 'btn_back_to_garage')}
             >
               <ArrowLeft className="w-4 h-4 text-theme-primary group-hover:-translate-x-0.5 transition-transform" />
-              <span className="text-xs sm:text-sm font-bold">Garage</span>
+              <span className="text-xs sm:text-sm font-bold">{getTranslation(lang, 'nav_garage')}</span>
             </button>
           </div>
         ) : currentView === 'stations' ? (
@@ -65,11 +76,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="min-w-0">
               <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-950 leading-tight truncate flex items-center gap-1.5">
-                <span>Distributori & EV</span>
+                <span>{getTranslation(lang, 'nav_stations')}</span>
                 <span className="text-[9.5px] bg-emerald-100 text-emerald-900 border border-emerald-300/80 font-black px-1.5 py-0.2 rounded-md">LIVE</span>
               </h1>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Prezzi carburanti MIMIT e colonnine elettriche
+                {getTranslation(lang, 'header_stations_subtitle')}
               </p>
             </div>
           </div>
@@ -81,11 +92,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="min-w-0">
               <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-950 leading-tight truncate flex items-center gap-1.5">
-                <span>La Mia Auto</span>
+                <span>{getTranslation(lang, 'nav_my_car')}</span>
                 <span className="text-[9.5px] bg-indigo-100 text-indigo-900 border border-indigo-200 font-black px-1.5 py-0.2 rounded-md">AI</span>
               </h1>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Scheda tecnica, documenti DUC e assistente di bordo
+                {getTranslation(lang, 'header_my_car_subtitle')}
               </p>
             </div>
           </div>
@@ -97,28 +108,61 @@ export const Header: React.FC<HeaderProps> = ({
 
             <div className="min-w-0">
               <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-950 leading-tight truncate">
-                Il Mio Garage
+                {getTranslation(lang, 'garage_title')}
               </h1>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
-                Gestione veicoli, consumi e scadenze
+                {getTranslation(lang, 'header_garage_subtitle')}
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* RIGHT SECTION: ACTIONS & UNIFIED TOP-RIGHT MENU */}
+      {/* RIGHT SECTION: ACTIONS & FAST TOGGLES */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        
+        {/* FAST THEME TOGGLE (LIGHT / DARK) */}
+        {onToggleThemeMode && (
+          <button
+            id="btn-header-theme-toggle"
+            type="button"
+            onClick={onToggleThemeMode}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 border border-slate-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+            title={isDark ? 'Passa a Tema Chiaro' : 'Passa a Tema Scuro'}
+            aria-label="Toggle tema chiaro/scuro"
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-200" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-200" />
+            )}
+          </button>
+        )}
+
+        {/* FAST LANGUAGE SWITCH (IT / EN) */}
+        {onChangeLanguage && (
+          <button
+            id="btn-header-lang-toggle"
+            type="button"
+            onClick={() => onChangeLanguage(lang === 'it' ? 'en' : 'it')}
+            className="h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 border border-slate-200 flex items-center gap-1 text-xs font-black transition-all cursor-pointer shadow-2xs"
+            title={lang === 'it' ? 'Switch to English' : 'Passa a Italiano'}
+            aria-label="Cambia lingua"
+          >
+            <span className="text-xs">{lang === 'it' ? '🇮🇹 IT' : '🇬🇧 EN'}</span>
+          </button>
+        )}
+
         {/* ADD VEHICLE BUTTON (in Garage View) */}
         {currentView === 'garage' && (
           <button 
             id="btn-add-vehicle-nav"
             onClick={onOpenAddCar}
-            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Aggiungi Veicolo</span>
-            <span className="sm:hidden text-xs">Aggiungi</span>
+            <span className="hidden md:inline">{getTranslation(lang, 'btn_add_vehicle')}</span>
+            <span className="md:hidden text-xs">{lang === 'en' ? 'Add' : 'Aggiungi'}</span>
           </button>
         )}
 
@@ -130,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 border border-slate-200 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Modifica</span>
+            <span className="hidden sm:inline">{getTranslation(lang, 'btn_edit_vehicle')}</span>
           </button>
         )}
 

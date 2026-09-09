@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Settings, Sliders, Database, Download, Upload, Trash2, RefreshCw, CheckCircle2, Car, Palette, Check } from 'lucide-react';
-import { AppSettings, Vehicle, AppThemeColor } from '../../types';
+import { 
+  X, 
+  ArrowLeft, 
+  Settings, 
+  Sliders, 
+  Database, 
+  Download, 
+  Upload, 
+  Trash2, 
+  RefreshCw, 
+  CheckCircle2, 
+  Car, 
+  Palette, 
+  Check,
+  Sun,
+  Moon,
+  Languages
+} from 'lucide-react';
+import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 import { 
   exportAllVehiclesToJSON, 
@@ -46,6 +63,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [autoBackup, setAutoBackup] = useState<boolean>(settings.autoBackup);
   const [stationDisplayMode, setStationDisplayMode] = useState<'auto' | 'fuel_only' | 'ev_only' | 'all'>(settings.stationDisplayMode || 'auto');
   const [themeColor, setThemeColor] = useState<AppThemeColor>(settings.themeColor || 'indigo');
+  const [themeMode, setThemeMode] = useState<AppThemeMode>(settings.themeMode || 'light');
+  const [language, setLanguage] = useState<AppLanguage>(settings.language || 'it');
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -62,14 +81,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setAutoBackup(settings.autoBackup);
       setStationDisplayMode(settings.stationDisplayMode || 'auto');
       setThemeColor(settings.themeColor || 'indigo');
+      setThemeMode(settings.themeMode || 'light');
+      setLanguage(settings.language || 'it');
     }
   }, [isOpen, settings]);
 
   if (!isOpen) return null;
 
-  const handleSelectTheme = (theme: AppThemeColor) => {
+  const handleSelectThemeColor = (theme: AppThemeColor) => {
     setThemeColor(theme);
     document.documentElement.setAttribute('data-theme', theme);
+  };
+
+  const handleSelectThemeMode = (mode: AppThemeMode) => {
+    setThemeMode(mode);
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const handleSelectLanguage = (lang: AppLanguage) => {
+    setLanguage(lang);
+    document.documentElement.setAttribute('lang', lang);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -81,7 +116,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       predictiveAlerts,
       autoBackup,
       stationDisplayMode,
-      themeColor
+      themeColor,
+      themeMode,
+      language
     });
     onClose();
   };
@@ -212,45 +249,139 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* SECTION 2: TEMA & COLORI APPLICAZIONE */}
-          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Tema & Colori Applicazione</span>
-              </h4>
-              <span className="text-[11px] font-bold text-slate-500">
-                {THEME_OPTIONS.find(t => t.id === themeColor)?.name}
-              </span>
+          {/* SECTION 2: TEMA APPLICAZIONE (CHIARO O SCURO) & LINGUA */}
+          <div className="flex flex-col gap-4 border-t border-[#e2e8f0] pt-4">
+            
+            {/* 2A. MODALITÀ TEMA: CHIARO O SCURO */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                  {themeMode === 'dark' ? (
+                    <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  ) : (
+                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                  )}
+                  <span>Tema dell'App</span>
+                </h4>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {themeMode === 'dark' ? 'Modalità Scura attiva' : 'Modalità Chiara attiva'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleSelectThemeMode('light')}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    themeMode === 'light'
+                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 ring-2 ring-indigo-600/20 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <Sun className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>Chiaro (Light)</span>
+                  {themeMode === 'light' && <Check className="w-3.5 h-3.5 text-indigo-600 ml-auto" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectThemeMode('dark')}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    themeMode === 'dark'
+                      ? 'border-indigo-500 bg-slate-900 text-white ring-2 ring-indigo-500/30 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <Moon className="w-4 h-4 text-indigo-300 shrink-0" />
+                  <span>Scuro (Dark)</span>
+                  {themeMode === 'dark' && <Check className="w-3.5 h-3.5 text-indigo-400 ml-auto" />}
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {THEME_OPTIONS.map((t) => {
-                const isSelected = themeColor === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => handleSelectTheme(t.id)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'border-slate-900 bg-slate-50 shadow-2xs ring-2 ring-slate-900/10 font-bold'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
-                    }`}
-                  >
-                    <span 
-                      className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white shadow-2xs"
-                      style={{ backgroundColor: t.hex }}
+            {/* 2B. SELETTORE LINGUA: ITALIANO O INGLESE */}
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                  <Languages className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Lingua / Language</span>
+                </h4>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {language === 'it' ? 'Italiano predefinito' : 'English active'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleSelectLanguage('it')}
+                  className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    language === 'it'
+                      ? 'border-blue-600 bg-blue-50/70 text-blue-950 ring-2 ring-blue-600/20 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span className="text-base leading-none">🇮🇹</span>
+                  <span>Italiano (IT)</span>
+                  {language === 'it' && <Check className="w-3.5 h-3.5 text-blue-600 ml-auto" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSelectLanguage('en')}
+                  className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                    language === 'en'
+                      ? 'border-blue-600 bg-blue-50/70 text-blue-950 ring-2 ring-blue-600/20 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span className="text-base leading-none">🇬🇧</span>
+                  <span>English (EN)</span>
+                  {language === 'en' && <Check className="w-3.5 h-3.5 text-blue-600 ml-auto" />}
+                </button>
+              </div>
+            </div>
+
+            {/* 2C. PALETTE COLORI ACCENTO */}
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Colore Accento</span>
+                </h4>
+                <span className="text-[11px] font-bold text-slate-500">
+                  {THEME_OPTIONS.find(t => t.id === themeColor)?.name}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {THEME_OPTIONS.map((t) => {
+                  const isSelected = themeColor === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => handleSelectThemeColor(t.id)}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-slate-900 bg-slate-50 shadow-2xs ring-2 ring-slate-900/10 font-bold'
+                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+                      }`}
                     >
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-slate-900 block truncate">{t.name}</span>
-                      <span className="text-[10px] text-slate-400 block truncate leading-tight">{t.desc.split(',')[0]}</span>
-                    </div>
-                  </button>
-                );
-              })}
+                      <span 
+                        className="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-white shadow-2xs"
+                        style={{ backgroundColor: t.hex }}
+                      >
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-slate-900 block truncate">{t.name}</span>
+                        <span className="text-[10px] text-slate-400 block truncate leading-tight">{t.desc.split(',')[0]}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
