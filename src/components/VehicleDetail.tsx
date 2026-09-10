@@ -41,6 +41,7 @@ interface VehicleDetailProps {
   onOpenAddMaintenance: () => void;
   onOpenEditMaintenance: (maint: MaintenanceRecord) => void;
   onOpenFixTank: () => void;
+  onOpenRecap?: (vehicleId?: string) => void;
 }
 
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({
@@ -53,7 +54,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenEditRefuel,
   onOpenAddMaintenance,
   onOpenEditMaintenance,
-  onOpenFixTank
+  onOpenFixTank,
+  onOpenRecap
 }) => {
   const [mainTab, setMainTab] = useState<'overview' | 'documents' | 'ai'>(
     (initialTab === 'overview' || initialTab === 'documents' || initialTab === 'ai') ? initialTab : 'overview'
@@ -271,6 +273,36 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       {mainTab === 'overview' && (
         <div className="flex flex-col gap-4 animate-in fade-in duration-150">
           
+          {/* BANNER RECAP MENSILE & ANNUALE (STORY CONDIVISIBILE) */}
+          {onOpenRecap && (
+            <button
+              id="btn-open-recap-detail-banner"
+              onClick={() => onOpenRecap(vehicle.id)}
+              className="w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 hover:from-slate-800 hover:via-indigo-900 hover:to-slate-800 text-white p-3.5 sm:p-4 rounded-3xl border border-indigo-500/30 flex items-center justify-between shadow-2xs transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-400/30 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base font-black tracking-tight text-white">Recap Mensile & Annuale</span>
+                    <span className="text-[10px] bg-indigo-500/40 text-indigo-200 px-2 py-0.5 rounded-full font-extrabold uppercase tracking-wider border border-indigo-400/30">
+                      Story Wrapped
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Chilometri, andamento spese, consumi e rinnovi in arrivo in stile Instagrammabile
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-extrabold text-indigo-300 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0">
+                <span className="hidden sm:inline">Apri Story</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </button>
+          )}
+
           {/* Pulsanti Azione Rapida */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button

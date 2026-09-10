@@ -23,6 +23,7 @@ interface GarageHomeProps {
   onOpenEditCar: (vehicle: Vehicle) => void;
   onDeleteVehicle: (vehicleId: string) => void;
   onImportVehicles?: (importedVehicles: Vehicle[]) => void;
+  onOpenRecap?: (vehicleId?: string) => void;
 }
 
 export const GarageHome: React.FC<GarageHomeProps> = ({
@@ -31,7 +32,8 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
   onSelectVehicle,
   onOpenAddCar,
   onOpenEditCar,
-  onDeleteVehicle
+  onDeleteVehicle,
+  onOpenRecap
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFuelCategory, setSelectedFuelCategory] = useState<string>('all');
@@ -156,6 +158,20 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                 {f.label}
               </button>
             ))}
+
+            {/* RECAP MENSILE & ANNUALE BUTTON */}
+            {onOpenRecap && (
+              <button
+                id="btn-open-recap-home"
+                type="button"
+                onClick={() => onOpenRecap()}
+                className="px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-900 border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
+                title="Visualizza e condividi il Recap Mensile e Annuale del Garage"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Recap Story</span>
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -241,14 +257,26 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                       </div>
                     </div>
 
-                    {/* Bottoni Modifica / Elimina */}
+                    {/* Bottoni Modifica / Elimina / Recap */}
                     <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
+                      {onOpenRecap && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenRecap(car.id);
+                          }}
+                          className="bg-white/90 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
+                          title="Vedi Recap Mensile & Annuale"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenEditCar(car);
                         }}
-                        className="bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-md shadow-2xs transition-all"
+                        className="bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
                         title="Modifica"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -260,7 +288,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                             onDeleteVehicle(car.id);
                           }
                         }}
-                        className="bg-white/90 hover:bg-red-50 hover:text-red-600 text-slate-700 p-1.5 rounded-md shadow-2xs transition-all"
+                        className="bg-white/90 hover:bg-red-50 hover:text-red-600 text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
                         title="Elimina"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

@@ -15,6 +15,7 @@ import { SettingsModal } from './components/modals/SettingsModal';
 import { NotificationsModal } from './components/modals/NotificationsModal';
 import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
+import { RecapStoryModal } from './components/modals/RecapStoryModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 
@@ -243,6 +244,13 @@ export default function App() {
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
+  const [recapInitialVehicleId, setRecapInitialVehicleId] = useState<string | undefined>(undefined);
+
+  const handleOpenRecap = (carId?: string) => {
+    setRecapInitialVehicleId(carId || selectedCarId);
+    setIsRecapModalOpen(true);
+  };
 
   // Sync to localStorage and Firestore
   useEffect(() => {
@@ -746,6 +754,7 @@ export default function App() {
         onOpenAccount={() => setIsAccountModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onMarkAllNotificationsRead={handleMarkAllNotificationsAsRead}
+        onOpenRecap={handleOpenRecap}
         onLogout={handleLogout}
       />
 
@@ -786,6 +795,7 @@ export default function App() {
             }}
             onDeleteVehicle={handleDeleteVehicle}
             onImportVehicles={handleImportVehicles}
+            onOpenRecap={handleOpenRecap}
           />
         ) : (
           selectedVehicle ? (
@@ -822,6 +832,7 @@ export default function App() {
                 setVehicleToEdit(selectedVehicle);
                 setIsAddCarModalOpen(true);
               }}
+              onOpenRecap={handleOpenRecap}
             />
           ) : (
             <div className="text-center py-20">
@@ -944,6 +955,14 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         currentAccount={account}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      <RecapStoryModal 
+        isOpen={isRecapModalOpen}
+        onClose={() => setIsRecapModalOpen(false)}
+        vehicles={vehicles}
+        currentVehicleId={recapInitialVehicleId || selectedCarId}
+        settings={settings}
       />
 
     </div>

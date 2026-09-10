@@ -6,7 +6,8 @@ import {
   Edit3,
   Sun,
   Moon,
-  Globe
+  Globe,
+  Sparkles
 } from 'lucide-react';
 import { Vehicle, AppNotification, AppSettings, UserAccount } from '../types';
 import { TopRightMenu } from './TopRightMenu';
@@ -26,6 +27,7 @@ interface HeaderProps {
   onOpenAccount: () => void;
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
+  onOpenRecap?: () => void;
   onLogout: () => void;
   onToggleThemeMode?: () => void;
   onChangeLanguage?: (lang: 'it' | 'en') => void;
@@ -45,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccount,
   onOpenAuthModal,
   onMarkAllNotificationsRead,
+  onOpenRecap,
   onLogout,
   onToggleThemeMode,
   onChangeLanguage
@@ -165,6 +168,20 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
+        {/* QUICK RECAP BUTTON */}
+        {onOpenRecap && (
+          <button
+            id="btn-header-recap"
+            type="button"
+            onClick={onOpenRecap}
+            className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 active:scale-95 text-indigo-900 border border-indigo-200/80 flex items-center gap-1.5 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
+            title="Visualizza Recap Mensile & Annuale"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="hidden md:inline">Recap</span>
+          </button>
+        )}
+
         {/* UNIFIED TOP-RIGHT BUTTON (Settings, Notifications, Account) */}
         <TopRightMenu 
           notifications={notifications}
@@ -175,6 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
           onOpenAccount={onOpenAccount}
           onOpenAuthModal={onOpenAuthModal}
           onMarkAllNotificationsRead={onMarkAllNotificationsRead}
+          onOpenRecap={onOpenRecap}
           onLogout={onLogout}
         />
       </div>

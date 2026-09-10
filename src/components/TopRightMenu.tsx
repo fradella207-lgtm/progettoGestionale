@@ -10,8 +10,7 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Database,
-  LogOut,
-  ExternalLink
+  LogOut
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount } from '../types';
 
@@ -24,6 +23,7 @@ interface TopRightMenuProps {
   onOpenAccount: () => void;
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
+  onOpenRecap?: () => void;
   onLogout?: () => void;
 }
 
@@ -36,6 +36,7 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onOpenAccount,
   onOpenAuthModal,
   onMarkAllNotificationsRead,
+  onOpenRecap,
   onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -130,9 +131,37 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
             </button>
           </div>
 
-          {/* MAIN 3 ACTIONS (NOTIFICHE, IMPOSTAZIONI, ACCOUNT) */}
+          {/* MAIN ACTIONS (RECAP, NOTIFICHE, IMPOSTAZIONI, ACCOUNT) */}
           <div className="p-2 flex flex-col gap-1">
             
+            {/* 0. RECAP MENSILE & ANNUALE (STORY WRAPPED) */}
+            {onOpenRecap && (
+              <button
+                id="menu-item-recap"
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenRecap();
+                }}
+                className="w-full text-left p-3 rounded-xl bg-gradient-to-r from-indigo-50/80 to-purple-50/60 hover:from-indigo-100/80 hover:to-purple-100/70 border border-indigo-100/80 transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-extrabold text-indigo-950">Recap Mese & Anno</span>
+                      <span className="bg-indigo-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                        Story
+                      </span>
+                    </div>
+                    <p className="text-xs text-indigo-700/80 font-medium">Km, spese e scadenze condivisibili</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-indigo-400 group-hover:text-indigo-700 transition-colors" />
+              </button>
+            )}
+
             {/* 1. NOTIFICHE */}
             <button
               id="menu-item-notifications"
@@ -203,29 +232,6 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
             </button>
 
-            {/* 3B. LINK ESTERNO AL SITO DI PRESENTAZIONE PROGETTO */}
-            <a
-              id="menu-item-presentation-site"
-              href="/presentazione.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsOpen(false)}
-              className="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between group border border-slate-100"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                  <ExternalLink className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Sito del Progetto</span>
-                    <span className="text-[9px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full uppercase">Esterno ↗</span>
-                  </div>
-                  <p className="text-xs text-slate-500">Sito informativo e guida al progetto</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-            </a>
 
             {/* 4. DISCONNETTI */}
             {onLogout && (

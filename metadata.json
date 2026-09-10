@@ -1,6 +1,6 @@
 {
-  "name": "MyGarage360",
-  "description": "Gestione semplice e completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, documenti digitali e mappa live carburanti.",
+  "name": "MyGarage",
+  "description": "Gestione semplice e completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, scadenze, recap mensile e annuale in stile story.",
   "requestFramePermissions": ["geolocation", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
