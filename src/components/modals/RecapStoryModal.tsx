@@ -17,11 +17,9 @@ import {
   Clock,
   CheckCircle2,
   Gauge,
-  Weight,
-  Flame,
   Sun,
   Moon,
-  Info
+  Coins
 } from 'lucide-react';
 import { Vehicle, AppSettings, RefuelRecord, MaintenanceRecord } from '../../types';
 
@@ -41,15 +39,6 @@ interface PersonaBadge {
   subtitle: string;
   emoji: string;
   badgeColor: string;
-}
-
-interface ScoreMetric {
-  title: string;
-  value: string;
-  score: number; // e.g. 9.3 out of 10
-  ratingText: string;
-  details: string;
-  icon: string;
 }
 
 export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
@@ -208,7 +197,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     const refuelStopsCount = currentRefuels.length;
     const costPerKm = totalKm > 0 ? (totalCost / totalKm).toFixed(2) : '0.00';
 
-    // 1. CALCOLO CONSUMI OTTENUTI & PUNTEGGIO
+    // Consumi medi reali (senza punteggi)
     const isElectric = singleVehicle?.fuelType?.includes('Elettrica') ?? false;
     let actualLPer100 = 0;
     let avgConsumptionStr = '';
@@ -217,12 +206,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     if (totalKm > 0 && totalVolume > 0) {
       actualLPer100 = Number(((totalVolume / totalKm) * 100).toFixed(1));
     } else {
-      // Fallback a media storica o dati veicolo
-      if (singleVehicle?.technicalSpecs?.dimensions?.curbWeightKg) {
-        actualLPer100 = isElectric ? 16.2 : 5.4;
-      } else {
-        actualLPer100 = isElectric ? 17.0 : 5.8;
-      }
+      actualLPer100 = isElectric ? 16.5 : 5.6;
     }
 
     if (isElectric) {
@@ -232,153 +216,6 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       avgConsumptionStr = `${actualLPer100} L/100km`;
       avgKmPerLStr = `${(100 / actualLPer100).toFixed(1)} km/L`;
     }
-
-    let consumptionScoreNum = 9.2;
-    let consumptionRating = 'Efficienza Ottimale';
-    if (isElectric) {
-      if (actualLPer100 <= 15.0) {
-        consumptionScoreNum = 9.8;
-        consumptionRating = 'Efficienza Record';
-      } else if (actualLPer100 <= 18.0) {
-        consumptionScoreNum = 9.3;
-        consumptionRating = 'Ottimizzato & Virtuoso';
-      } else {
-        consumptionScoreNum = 8.7;
-        consumptionRating = 'Dinamico & Veloce';
-      }
-    } else {
-      if (actualLPer100 <= 4.6) {
-        consumptionScoreNum = 9.7;
-        consumptionRating = 'Campione dei Consumi';
-      } else if (actualLPer100 <= 5.8) {
-        consumptionScoreNum = 9.3;
-        consumptionRating = 'Consumi Virtuosi';
-      } else if (actualLPer100 <= 7.2) {
-        consumptionScoreNum = 8.8;
-        consumptionRating = 'Efficienza Standard';
-      } else {
-        consumptionScoreNum = 8.1;
-        consumptionRating = 'Guida Sportiva';
-      }
-    }
-
-    const consumptionScore: ScoreMetric = {
-      title: 'Consumi Ottenuti',
-      value: avgConsumptionStr,
-      score: consumptionScoreNum,
-      ratingText: consumptionRating,
-      details: avgKmPerLStr,
-      icon: 'gauge'
-    };
-
-    // 2. CALCOLO STAZZA / PESO DELL'AUTO & PUNTEGGIO
-    let curbWeightKg = singleVehicle?.technicalSpecs?.dimensions?.curbWeightKg;
-    if (!curbWeightKg) {
-      if (singleVehicle?.vehicleType === 'moto') {
-        curbWeightKg = 210;
-      } else if (isElectric) {
-        curbWeightKg = 1830;
-      } else if (singleVehicle?.model?.toLowerCase().includes('giulia')) {
-        curbWeightKg = 1540;
-      } else if (singleVehicle?.model?.toLowerCase().includes('golf')) {
-        curbWeightKg = 1410;
-      } else {
-        curbWeightKg = 1450;
-      }
-    }
-
-    let stazzaScoreNum = 9.1;
-    let stazzaRating = 'Bilanciamento Ideale';
-    let stazzaCategory = 'Massa Media';
-
-    if (singleVehicle?.vehicleType === 'moto') {
-      stazzaScoreNum = 9.8;
-      stazzaRating = 'Agilità Piuma';
-      stazzaCategory = 'Ultra-leggera';
-    } else if (curbWeightKg < 1200) {
-      stazzaScoreNum = 9.5;
-      stazzaRating = 'Leggera & Reattiva';
-      stazzaCategory = 'Compatta Leggera';
-    } else if (curbWeightKg <= 1600) {
-      stazzaScoreNum = 9.2;
-      stazzaRating = 'Bilanciamento Ideale';
-      stazzaCategory = 'Assetto Equilibrato';
-    } else if (curbWeightKg <= 1900) {
-      stazzaScoreNum = 8.9;
-      stazzaRating = 'Solida & Confortevole';
-      stazzaCategory = 'Struttura Massiccia';
-    } else {
-      stazzaScoreNum = 8.6;
-      stazzaRating = 'Presenza & Sicurezza';
-      stazzaCategory = 'High Safety SUV';
-    }
-
-    const stazzaScore: ScoreMetric = {
-      title: 'Stazza & Peso',
-      value: `${curbWeightKg.toLocaleString('it-IT')} kg`,
-      score: stazzaScoreNum,
-      ratingText: stazzaRating,
-      details: stazzaCategory,
-      icon: 'weight'
-    };
-
-    // 3. CALCOLO POTENZA (CV & kW) & PUNTEGGIO
-    let cv = singleVehicle?.powerCv || singleVehicle?.technicalSpecs?.powerCv;
-    let kw = singleVehicle?.powerKw || singleVehicle?.technicalSpecs?.powerKw;
-
-    if (!cv && kw) {
-      cv = Math.round(kw * 1.36);
-    } else if (cv && !kw) {
-      kw = Math.round(cv / 1.36);
-    } else if (!cv && !kw) {
-      // Prova a recuperare da motorization
-      const match = singleVehicle?.motorization?.match(/(\d+)\s*(?:CV|cv|hp|HP)/);
-      if (match) {
-        cv = parseInt(match[1], 10);
-        kw = Math.round(cv / 1.36);
-      } else {
-        cv = 150;
-        kw = 110;
-      }
-    }
-
-    let powerScoreNum = 9.0;
-    let powerRating = 'Sprint Brillante';
-    if (singleVehicle?.vehicleType === 'moto') {
-      if (cv >= 90) {
-        powerScoreNum = 9.8;
-        powerRating = 'Pura Adrenalina';
-      } else {
-        powerScoreNum = 9.2;
-        powerRating = 'Coppia Elastica';
-      }
-    } else {
-      if (cv >= 240) {
-        powerScoreNum = 9.8;
-        powerRating = 'Pura Grinta & Cavalli';
-      } else if (cv >= 180) {
-        powerScoreNum = 9.4;
-        powerRating = 'Scatto & Dinamica Top';
-      } else if (cv >= 130) {
-        powerScoreNum = 9.1;
-        powerRating = 'Sprint & Brillantezza';
-      } else if (cv >= 90) {
-        powerScoreNum = 8.6;
-        powerRating = 'Fluida & Regolare';
-      } else {
-        powerScoreNum = 8.1;
-        powerRating = 'Docile & Risparmiosa';
-      }
-    }
-
-    const powerScore: ScoreMetric = {
-      title: 'Potenza Motore',
-      value: `${cv} CV (${kw} kW)`,
-      score: powerScoreNum,
-      ratingText: powerRating,
-      details: singleVehicle?.driveType || (cv >= 180 ? 'Alte Prestazioni' : 'Trazione Equilibrata'),
-      icon: 'flame'
-    };
 
     // Upcoming renewals / deadlines (next 60 days)
     const upcomingRenewals: Array<{ label: string; dateStr: string; daysLeft: number }> = [];
@@ -465,11 +302,6 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       };
     }
 
-    // Garage Health Index (su 100)
-    const overallScore = Math.round(
-      ((consumptionScore.score + stazzaScore.score + powerScore.score) / 3) * 10
-    );
-
     return {
       totalKm,
       kmTrendPercent,
@@ -479,12 +311,10 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       totalVolume,
       refuelStopsCount,
       costPerKm,
-      consumptionScore,
-      stazzaScore,
-      powerScore,
+      avgConsumptionStr,
+      avgKmPerLStr,
       upcomingRenewals,
       persona,
-      overallScore,
       targetMonth,
       targetYear
     };
@@ -663,63 +493,57 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     ctx.font = '500 22px "Plus Jakarta Sans", sans-serif';
     ctx.fillText(stats.persona.subtitle, 195, personaY + 86);
 
-    // 5. I TRE PUNTEGGI CHIAVE RICHIESTI: STAZZA, POTENZA E CONSUMI OTTENUTI
-    // Header Sezione
+    // 5. Schede di Efficienza & Dati di Guida (Senza punteggi fittizi)
     ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
     ctx.font = '800 22px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('SCHEDA TECNICA & PUNTEGGI OTTENUTI', 95, 785);
+    ctx.fillText('EFFICIENZA & DATI DEL PERIODO', 95, 785);
 
-    const scoresY = 805;
+    const factY = 810;
     const colW = 285;
     const colGap = 22;
 
-    const renderScoreBox = (x: number, title: string, value: string, score: number, rating: string, details: string, iconText: string) => {
+    const renderFactBox = (x: number, title: string, mainVal: string, subVal: string, badgeEmoji: string) => {
       ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
       ctx.beginPath();
-      ctx.roundRect(x, scoresY, colW, 280, 26);
+      ctx.roundRect(x, factY, colW, 230, 24);
       ctx.fill();
       ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Titolo colonna
+      // Intestazione colonna con emoji
       ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
-      ctx.font = '700 19px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(title.toUpperCase(), x + 24, scoresY + 44);
+      ctx.font = '700 18px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`${badgeEmoji}  ${title.toUpperCase()}`, x + 24, factY + 44);
 
-      // Punteggio (Voto su 10)
-      ctx.fillStyle = isDark ? '#38bdf8' : '#2563eb';
-      ctx.font = '900 48px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(`${score.toFixed(1)}`, x + 24, scoresY + 110);
-      ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
-      ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('/10', x + 125, scoresY + 110);
-
-      // Valore Reale (es. 1.540 kg o 190 CV o 5.2 L/100km)
+      // Valore Reale (es. 5.4 L/100km o € 0.15 o 3 soste)
       ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
-      ctx.font = '800 24px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(value, x + 24, scoresY + 165);
+      ctx.font = '900 32px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(mainVal, x + 24, factY + 115);
 
-      // Giudizio / Rating
-      ctx.fillStyle = isDark ? '#34d399' : '#059669';
+      // Dettaglio / Unità
+      ctx.fillStyle = isDark ? '#38bdf8' : '#2563eb';
       ctx.font = '700 20px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(rating, x + 24, scoresY + 208);
-
-      // Dettaglio / Categoria
-      ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
-      ctx.font = '500 18px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(details, x + 24, scoresY + 244);
+      ctx.fillText(subVal, x + 24, factY + 168);
     };
 
-    // Box 1: Stazza
-    renderScoreBox(90, 'Stazza & Peso', stats.stazzaScore.value, stats.stazzaScore.score, stats.stazzaScore.ratingText, stats.stazzaScore.details, '⚖️');
-    // Box 2: Potenza
-    renderScoreBox(90 + colW + colGap, 'Potenza Motore', stats.powerScore.value, stats.powerScore.score, stats.powerScore.ratingText, stats.powerScore.details, '⚡');
-    // Box 3: Consumi
-    renderScoreBox(90 + (colW + colGap) * 2, 'Consumi Ottenuti', stats.consumptionScore.value, stats.consumptionScore.score, stats.consumptionScore.ratingText, stats.consumptionScore.details, '⛽');
+    const volUnit = singleVehicle?.fuelType?.includes('Elettrica') ? 'kWh' : 'L';
+
+    // Box 1: Consumo Medio Reale
+    renderFactBox(90, 'Consumo Medio', stats.avgConsumptionStr, stats.avgKmPerLStr, '⛽');
+    // Box 2: Costo / Km
+    renderFactBox(90 + colW + colGap, 'Costo al Km', `${settings.currency} ${stats.costPerKm}`, '/ km percorso', '💳');
+    // Box 3: Soste & Volume
+    renderFactBox(
+      90 + (colW + colGap) * 2, 
+      'Rifornimenti', 
+      `${stats.refuelStopsCount} ${stats.refuelStopsCount === 1 ? 'sosta' : 'soste'}`, 
+      stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} ${volUnit} totali` : 'Nessun rifornimento',
+      '⚡'
+    );
 
     // 6. Blocco Metriche: Chilometri & Spesa (Due colonne)
-    const metricsY = 1115;
+    const metricsY = 1070;
     const halfW = 438;
 
     // KM Box
@@ -773,7 +597,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     ctx.fillText(`⛽ ${settings.currency} ${stats.fuelCost.toFixed(0)} | 🔧 ${settings.currency} ${stats.maintCost.toFixed(0)} • ${settings.currency} ${stats.costPerKm}/km`, 90 + halfW + 55, metricsY + 185);
 
     // 7. Scadenze in Arrivo (Next 60 days)
-    const deadY = 1375;
+    const deadY = 1335;
     ctx.fillStyle = isDark ? '#1e293b' : '#ffffff';
     ctx.beginPath();
     ctx.roundRect(90, deadY, 900, 240, 26);
@@ -805,7 +629,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     }
 
     // 8. Footer Watermark
-    const footY = 1720;
+    const footY = 1680;
     ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
     ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = 'center';
@@ -836,7 +660,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
         await navigator.share({
           files: [file],
           title: `Recap ${formattedPeriodLabel} - ${vehicleTitle}`,
-          text: `Ecco il mio Recap di ${formattedPeriodLabel}: ${stats.totalKm > 0 ? `${stats.totalKm} km` : 'in garage'}, Efficienza ${stats.consumptionScore.score}/10 con ${vehicleTitle}!`
+          text: `Ecco il mio Recap di ${formattedPeriodLabel}: ${stats.totalKm > 0 ? `${stats.totalKm.toLocaleString('it-IT')} km percorsi` : 'un mese in garage'} con ${vehicleTitle}!`
         });
         setStatusMessage('Immagine condivisa con successo!');
       } else {
@@ -889,12 +713,10 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 Veicolo: ${vehicleTitle} ${vehiclePlate ? `(${vehiclePlate})` : ''}
 👤 Mood: ${stats.persona.emoji} ${stats.persona.title}
 
-⚖️ Stazza: ${stats.stazzaScore.value} • Voto: ${stats.stazzaScore.score}/10 (${stats.stazzaScore.ratingText})
-⚡ Potenza: ${stats.powerScore.value} • Voto: ${stats.powerScore.score}/10 (${stats.powerScore.ratingText})
-⛽ Consumi ottenuti: ${stats.consumptionScore.value} • Voto: ${stats.consumptionScore.score}/10 (${stats.consumptionScore.ratingText})
-
-🛣️ Strada percorsa: ${stats.totalKm > 0 ? `${stats.totalKm.toLocaleString()} km` : '0 km'}
+🛣️ Strada percorsa: ${stats.totalKm > 0 ? `${stats.totalKm.toLocaleString('it-IT')} km` : '0 km'}${stats.kmTrendPercent !== 0 ? ` (${stats.kmTrendPercent > 0 ? '+' : ''}${stats.kmTrendPercent}% rispetto al periodo precedente)` : ''}
+⛽ Consumo medio reale: ${stats.avgConsumptionStr} (${stats.avgKmPerLStr})
 💳 Spesa complessiva: ${settings.currency} ${stats.totalCost.toFixed(0)} (${settings.currency} ${stats.costPerKm}/km)
+⛽ Rifornimenti: ${stats.refuelStopsCount} soste • ${stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} L erogati` : '0 L'}
 ${stats.upcomingRenewals.length > 0 ? `⏳ Prossime scadenze: ${stats.upcomingRenewals.map(r => `${r.label} (${r.dateStr})`).join(', ')}` : '✅ Nessuna scadenza urgente!'}
 
 Creato con MyGarage 🚗💨`;
@@ -925,7 +747,7 @@ Creato con MyGarage 🚗💨`;
                 </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Stazza, potenza, consumi reali e strada percorsa condivisibili
+                Consumi reali, spese, rinnovi e chilometri condivisibili in un tap
               </p>
             </div>
           </div>
@@ -1120,93 +942,70 @@ Creato con MyGarage 🚗💨`;
               </div>
             </div>
 
-            {/* I 3 PUNTEGGI CHIAVE RICHIESTI: STAZZA, POTENZA E CONSUMI OTTENUTI */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-extrabold uppercase tracking-wider ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Punteggi del Mezzo
-                </span>
-                <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
-                  Valutazione Globale: {stats.overallScore}/100
-                </span>
-              </div>
+            {/* 3 SCHEDE CHIAVE DI EFFICIENZA & DATI DEL PERIODO (Senza punteggi o voti) */}
+            <div className="flex flex-col gap-1.5">
+              <span className={`text-[10px] font-extrabold uppercase tracking-wider ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
+                Efficienza & Dati di Guida
+              </span>
 
               <div className="grid grid-cols-3 gap-2">
                 
-                {/* 1. STAZZA / PESO */}
+                {/* 1. CONSUMO MEDIO REALE */}
                 <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
-                      Stazza
+                      Consumo
                     </span>
-                    <Weight className="w-3 h-3 text-slate-400" />
+                    <Gauge className="w-3 h-3 text-indigo-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                      {stats.stazzaScore.score.toFixed(1)}
+                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                      {stats.avgConsumptionStr}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-bold ml-0.5">/10</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold block truncate text-slate-900 dark:text-white">
-                      {stats.stazzaScore.value}
-                    </span>
-                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold block truncate">
-                      {stats.stazzaScore.ratingText}
+                    <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold block truncate">
+                      {stats.avgKmPerLStr}
                     </span>
                   </div>
                 </div>
 
-                {/* 2. POTENZA MOTORE */}
+                {/* 2. COSTO CHILOMETRICO */}
                 <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
-                      Potenza
+                      Costo/Km
                     </span>
-                    <Flame className="w-3 h-3 text-amber-500" />
+                    <Coins className="w-3 h-3 text-emerald-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-lg font-black text-amber-600 dark:text-amber-400">
-                      {stats.powerScore.score.toFixed(1)}
+                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                      {settings.currency} {stats.costPerKm}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-bold ml-0.5">/10</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold block truncate text-slate-900 dark:text-white">
-                      {stats.powerScore.value}
-                    </span>
-                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold block truncate">
-                      {stats.powerScore.ratingText}
+                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
+                      al km percorso
                     </span>
                   </div>
                 </div>
 
-                {/* 3. CONSUMI OTTENUTI */}
+                {/* 3. SOSTE & RIFORNIMENTI */}
                 <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
-                      Consumi
+                      Soste
                     </span>
-                    <Gauge className="w-3 h-3 text-emerald-500" />
+                    <Fuel className="w-3 h-3 text-sky-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                      {stats.consumptionScore.score.toFixed(1)}
+                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                      {stats.refuelStopsCount} {stats.refuelStopsCount === 1 ? 'sosta' : 'soste'}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-bold ml-0.5">/10</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold block truncate text-slate-900 dark:text-white">
-                      {stats.consumptionScore.value}
-                    </span>
-                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold block truncate">
-                      {stats.consumptionScore.ratingText}
+                    <span className="text-[9px] text-sky-600 dark:text-sky-400 font-bold block truncate">
+                      {stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} ${singleVehicle?.fuelType?.includes('Elettrica') ? 'kWh' : 'L'}` : 'Nessuna sosta'}
                     </span>
                   </div>
                 </div>
