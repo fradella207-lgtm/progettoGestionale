@@ -221,7 +221,7 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
                     <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Sito del Progetto</span>
                     <span className="text-[9px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full uppercase">Esterno ↗</span>
                   </div>
-                  <p className="text-xs text-slate-500">Apri sito web di presentazione e screenshot</p>
+                  <p className="text-xs text-slate-500">Sito informativo e guida al progetto</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />

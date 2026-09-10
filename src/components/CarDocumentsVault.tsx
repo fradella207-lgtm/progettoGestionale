@@ -94,7 +94,7 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
       const perm = await Notification.requestPermission();
       if (perm === 'granted') {
         setNotificationsEnabled(true);
-        new Notification('MyGarage360: Notifiche Attive', {
+        new Notification('MyGarage: Notifiche Attive', {
           body: 'Riceverai promemoria automatici per le scadenze di Bollo e Assicurazione.',
           icon: '/favicon.ico'
         });

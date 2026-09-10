@@ -83,44 +83,34 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-5 font-['Plus_Jakarta_Sans',sans-serif]">
       
-      {/* 1. TESTATA COMPATTA & DIRETTA */}
-      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Il Tuo Garage
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Gestisci i tuoi veicoli, spese, rifornimenti, manutenzioni e documenti in un unico posto.
-          </p>
-        </div>
-
-        <button
-          onClick={onOpenAddCar}
-          className="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Aggiungi Veicolo</span>
-        </button>
+      {/* 1. TESTATA CENTRATA & MINIMAL */}
+      <section className="flex flex-col items-center justify-center text-center py-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Il Tuo Garage
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-lg mx-auto">
+          Gestisci i tuoi veicoli, spese, rifornimenti, manutenzioni e documenti in un unico posto.
+        </p>
       </section>
 
-      {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA) */}
+      {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA CENTRATA) */}
       {vehicles.length > 0 && (
-        <section className="grid grid-cols-3 gap-2.5 bg-white border border-slate-200/80 p-3 sm:p-4 rounded-2xl shadow-2xs">
-          <div className="flex flex-col">
+        <section className="grid grid-cols-3 gap-2 bg-white border border-slate-200/80 p-3 sm:p-4 rounded-2xl shadow-2xs text-center">
+          <div className="flex flex-col items-center justify-center">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Veicoli</span>
             <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
               {vehicles.length}
             </span>
           </div>
 
-          <div className="flex flex-col border-l border-slate-100 pl-3">
+          <div className="flex flex-col items-center justify-center border-l border-slate-100">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Totali</span>
             <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
               {fleetSummary.totalKm.toLocaleString('it-IT')} km
             </span>
           </div>
 
-          <div className="flex flex-col border-l border-slate-100 pl-3">
+          <div className="flex flex-col items-center justify-center border-l border-slate-100">
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Spesa Complessiva</span>
             <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
               {settings.currency} {fleetSummary.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -131,8 +121,8 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
 
       {/* 3. RICERCA E FILTRI VELOCI */}
       {vehicles.length > 0 && (
-        <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          <div className="relative flex-1 max-w-sm">
+        <section className="flex flex-col md:flex-row items-center justify-center gap-2.5">
+          <div className="relative w-full md:w-80">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
@@ -143,7 +133,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             />
           </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+          <div className="flex items-center justify-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full md:w-auto">
             {[
               { id: 'all', label: 'Tutti' },
               { id: 'cars', label: 'Auto' },
@@ -327,6 +317,18 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               </div>
             );
           })}
+
+          {/* Card Aggiungi Veicolo (opzionale alla fine della griglia) */}
+          <div
+            onClick={onOpenAddCar}
+            className="rounded-2xl border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/40 hover:bg-slate-50/90 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px]"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shadow-2xs group-hover:scale-105 group-hover:border-slate-400 transition-all mb-2.5">
+              <Plus className="w-5 h-5 text-slate-800" />
+            </div>
+            <span className="text-xs sm:text-sm font-bold text-slate-800">Aggiungi un veicolo</span>
+            <span className="text-[11px] text-slate-400 mt-0.5">Auto o moto</span>
+          </div>
         </section>
       )}
 

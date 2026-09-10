@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyGarage360 - La Gestione Completa della Tua Auto a 360°</title>
-  <meta name="description" content="Gestisci la tua auto a 360° senza stress: pieno al miglior prezzo con Open Data MIMIT, scadenze bollo e revisione, diagnosi spie con AI e documenti sempre con te su qualsiasi dispositivo." />
+  <title>MyGarage - Gestionale Semplice per Auto e Moto</title>
+  <meta name="description" content="Gestisci auto e moto senza stress: promemoria scadenze bollo e revisione, registro spese e rifornimenti, cassaforte documenti e prezzi carburanti." />
   
-  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   
-  <!-- Tailwind CSS Play CDN -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,1499 +19,361 @@
         extend: {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            display: ['"Outfit"', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#312e81',
-              950: '#0b0f19'
-            }
           }
         }
       }
     }
   </script>
-
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #0b0f19;
-      color: #f1f5f9;
-    }
-    h1, h2, h3, h4, .font-display {
-      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .hero-glow {
-      background: radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.22) 0%, rgba(11, 15, 25, 0) 70%);
-    }
-    .card-glass {
-      background: rgba(17, 24, 39, 0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.25s ease;
-    }
-    .card-glass:hover {
-      border-color: rgba(99, 102, 241, 0.45);
-      transform: translateY(-2px);
-    }
-    .badge-privacy {
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: #34d399;
-    }
-
-    /* MODALITÀ MODIFICA VISUALE */
-    body.editing-active [data-editable="true"] {
-      outline: 1px dashed rgba(99, 102, 241, 0.45);
-      border-radius: 4px;
-      transition: outline 0.15s ease, background 0.15s ease;
-      cursor: text;
-    }
-    body.editing-active [data-editable="true"]:hover {
-      outline: 2px dashed #818cf8;
-      background: rgba(99, 102, 241, 0.12);
-    }
-    body.editing-active [data-editable="true"]:focus {
-      outline: 2px solid #6366f1;
-      background: rgba(99, 102, 241, 0.2);
-    }
-
-    /* Immagini con overlay pulsante di modifica */
-    .image-edit-wrapper {
-      position: relative;
-    }
-    .image-edit-btn {
-      display: none;
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 30;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(99, 102, 241, 0.6);
-      backdrop-filter: blur(8px);
-      color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    body.editing-active .image-edit-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .image-edit-btn:hover {
-      background: #4f46e5;
-      border-color: #818cf8;
-      transform: scale(1.05);
-    }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white flex flex-col min-h-screen">
 
-  <!-- TOP HEADER -->
-  <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/90 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+  <!-- 1. NAVBAR FISSA E MINIMALE -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       
       <!-- LOGO -->
-      <a href="#hero" class="flex items-center gap-3 group cursor-pointer">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-transform">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <a href="#home" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-xs group-hover:scale-105 transition-transform">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
             <circle cx="7" cy="17" r="2"></circle>
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6"></path>
             <circle cx="17" cy="17" r="2"></circle>
           </svg>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-xl font-extrabold tracking-tight text-white font-display">MyGarage<span class="text-indigo-400">360</span></span>
-            <span class="badge-privacy text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"></path></svg>
-              Privacy & Targhe Protette
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 hidden sm:block">Per chi vuole vivere l'auto senza pensieri né spese inutili</p>
+        <div class="flex items-center gap-1.5">
+          <span class="text-base font-extrabold tracking-tight text-slate-900">MyGarage</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Auto & Moto</span>
         </div>
       </a>
 
-      <!-- NAV LINKS -->
-      <nav class="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-300">
-        <a href="#problema" class="hover:text-indigo-400 transition-colors">Perché Serve</a>
-        <a href="#a-360" class="hover:text-indigo-400 transition-colors flex items-center gap-1">
-          <span>A 360 Gradi</span>
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-        </a>
-        <a href="#dispositivi" class="hover:text-indigo-400 transition-colors">Dispositivi</a>
-        <a href="#screenshot" class="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
-          <span>Schermate</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </a>
-        <a href="#contatti" class="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
-          <span class="text-indigo-300">Contatti & Idee</span>
-        </a>
+      <!-- LINK DI NAVIGAZIONE CONVENZIONALI -->
+      <nav class="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
+        <a href="#home" class="hover:text-slate-900 transition-colors">Home</a>
+        <a href="#obiettivo" class="hover:text-slate-900 transition-colors">Obiettivo</a>
+        <a href="#funzionalita" class="hover:text-slate-900 transition-colors">Funzionalità</a>
+        <a href="#come-funziona" class="hover:text-slate-900 transition-colors">Come Funziona</a>
+        <a href="#contatti" class="hover:text-slate-900 transition-colors">Contatti</a>
       </nav>
 
-      <!-- BOTTONI AZIONE: PERSONALIZZA PAGINA + APRI APP -->
-      <div class="flex items-center gap-2.5">
-        <button 
-          id="btn-toggle-edit"
-          onclick="toggleEditMode()" 
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 active:scale-95 transition-all cursor-pointer shadow-sm"
-          title="Attiva la modalità modifica per cambiare testi, immagini e card del sito direttamente"
-        >
-          <span id="btn-toggle-edit-icon">✏️</span>
-          <span id="btn-toggle-edit-text">Personalizza</span>
-        </button>
-
-        <a 
-          href="/" 
-          class="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 active:scale-95 transition-all cursor-pointer border border-indigo-400/30"
-          title="Entra subito nell'applicazione"
-        >
-          <span>Usa l'App</span>
-          <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-          </svg>
-        </a>
-      </div>
+      <!-- CTA APRI APP -->
+      <a 
+        href="/" 
+        class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+      >
+        <span>Apri l'App</span>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+        </svg>
+      </a>
     </div>
   </header>
 
-  <!-- HERO SECTION: DIRETTA, UMANA E CON FOTO REALE -->
-  <section id="hero" class="relative hero-glow pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-slate-800/60">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-      
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1">
+
+    <!-- SEZIONE 1: HOME (HERO) -->
+    <section id="home" class="pt-12 pb-16 sm:pt-16 sm:pb-20 border-b border-slate-200/80 bg-white">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center">
         
-        <!-- TESTO HERO -->
-        <div class="lg:col-span-7 text-center lg:text-left">
-          
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-6">
-            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Gestionale Veicoli Semplice e Gratuito</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          La gestione del tuo veicolo, finalmente senza pensieri.
+        </h1>
+
+        <p class="mt-4 text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed">
+          Tieni sotto controllo scadenze di bollo e revisione, consumi reali, rifornimenti, tagliandi e documenti di auto e moto in un unico posto pulito e sicuro.
+        </p>
+
+        <!-- PULSANTI HERO -->
+        <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <a 
+            href="/" 
+            class="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>Inizia Subito</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
             </svg>
-            <span>Niente giri di parole: l'auto sotto controllo in 1 click</span>
-          </div>
+          </a>
 
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.15]">
-            Basta fogli sparsi, multe dimenticate e <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-indigo-200">soldi buttati</span> dal benzinaio.
-          </h1>
-
-          <p class="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed font-normal">
-            Siamo sinceri: gestire un'auto oggi è un incubo quotidiano tra scadenze del bollo, ricevute nei cassetti e prezzi del carburante alle stelle. 
-            <strong>MyGarage360</strong> è la soluzione pratica creata per te: controlli le spese, risparmi sul pieno con i dati ufficiali ministeriali e hai tutti i documenti sempre in tasca.
-          </p>
-
-          <!-- HIGHLIGHTS PRIVACY & DISPOSITIVI -->
-          <div class="mt-6 flex flex-wrap items-center gap-3 justify-center lg:justify-start text-xs font-semibold">
-            <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path></svg>
-              Qualsiasi Telefono, Tablet o PC
-            </span>
-            <span class="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m2.1-4.05a8.966 8.966 0 012.4 4.05c0 5.25-4.5 9-9 9s-9-3.75-9-9a8.966 8.966 0 012.4-4.05"></path></svg>
-              Privacy Totale: Zero Targhe in Chiaro
-            </span>
-            <span class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path></svg>
-              Funziona anche senza Connessione
-            </span>
-          </div>
-
-          <!-- BOTTONI AZIONE -->
-          <div class="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-            <a 
-              href="/" 
-              class="px-7 py-4 rounded-xl font-bold text-base text-white bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/30 transition-all flex items-center gap-2.5 active:scale-95 cursor-pointer"
-            >
-              <span>Accedi al Tuo Garage</span>
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-              </svg>
-            </a>
-            <a 
-              href="#screenshot" 
-              class="px-6 py-4 rounded-xl font-bold text-base text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700 transition-all flex items-center gap-2"
-            >
-              <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"></path>
-              </svg>
-              <span>Guarda le Schermate Reali</span>
-            </a>
-          </div>
-
+          <a 
+            href="#obiettivo" 
+            class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl transition-all"
+          >
+            Scopri l'Obiettivo
+          </a>
         </div>
 
-        <!-- IMMAGINE REALE HERO: GUIDATORE CON SMARTPHONE E CRUSCOTTO -->
-        <div class="lg:col-span-5">
-          <div class="relative group rounded-3xl overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl shadow-indigo-950/50">
-            <img 
-              src="/screenshots/driver_in_car.jpg" 
-              alt="Automobilista con smartphone e app di gestione auto a bordo" 
-              class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" 
-              loading="eager"
-            />
-            
-            <!-- OVERLAY INFORMATIVO SULL'IMMAGINE -->
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent flex flex-col justify-end p-6">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Esperienza Reale a Bordo</span>
-              </div>
-              <p class="text-sm font-bold text-white">Sempre a portata di mano: in macchina, dal meccanico o a casa.</p>
-              <p class="text-xs text-slate-300 mt-1">Nessuna targa esposta. Riservatezza assoluta garantita.</p>
-            </div>
+        <!-- 3 PUNTI CHIAVE SINTETICI -->
+        <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left pt-6 border-t border-slate-100">
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Promemoria Puntuali</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Avvisi automatici prima della scadenza di bollo, revisione e assicurazione.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Spese e Consumi Reali</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Calcolo immediato di costo al chilometro e consumo effettivo di carburante o kWh.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Sempre con Te</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Accessibile dal browser di qualsiasi smartphone o PC, senza app pesanti.</p>
           </div>
         </div>
 
       </div>
+    </section>
 
-    </div>
-  </section>
-
-  <!-- SEZIONE DIRETTA: COSA SUCCEDE DAVVERO A CHI GUIDA -->
-  <section id="problema" class="py-16 bg-slate-950 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-12">
-        <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Parliamoci chiaro</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-display mt-2">
-          Le 4 cose che fanno impazzire ogni automobilista
-        </h2>
-        <p class="text-base text-slate-400 mt-3">
-          Tutti noi amiamo guidare, ma nessuno sopporta la burocrazia e le brutte sorprese. Ecco cosa risolvi fin dal primo giorno:
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- SEZIONE 2: OBIETTIVO (IL PROBLEMA CHE RISOLVIAMO) -->
+    <section id="obiettivo" class="py-14 sm:py-18 border-b border-slate-200/80 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
         
-        <!-- CARD 1 -->
-        <div class="card-glass rounded-2xl p-6 border-slate-800">
-          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white font-display">1. "Quando scadeva la revisione?"</h3>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Spesso ti ricordi del bollo o della revisione solo quando vedi la paletta dei vigili o ti arriva la multa a casa con gli interessi. 
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Il Nostro Obiettivo
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Eliminare lo stress e le dimenticanze legate al mantenimento dei veicoli.
           </p>
-          <div class="mt-4 pt-3 border-t border-slate-800/80 text-xs font-bold text-amber-400 flex items-center gap-1.5">
-            <span>Risolto: Allarme 30 giorni prima</span>
-          </div>
         </div>
 
-        <!-- CARD 2 -->
-        <div class="card-glass rounded-2xl p-6 border-slate-800">
-          <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mb-4">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white font-display">2. Il panico da spia gialla</h3>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Si accende una spia mentre sei in autostrada. Posso continuare o sto fondendo il motore? Il libretto d'uso ha 500 pagine incomprensibili.
-          </p>
-          <div class="mt-4 pt-3 border-t border-slate-800/80 text-xs font-bold text-red-400 flex items-center gap-1.5">
-            <span>Risolto: Diagnosi IA in 3 secondi</span>
-          </div>
-        </div>
-
-        <!-- CARD 3 -->
-        <div class="card-glass rounded-2xl p-6 border-slate-800">
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v8.25m0 0h19.5m0 0v-8.25m0 0H21a.75.75 0 01-.75-.75V4.5m0 0H3.75"></path></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white font-display">3. 15€ sprecati ad ogni pieno</h3>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Fai benzina al primo distributore che trovi, per poi scoprire che a 800 metri costava 20 centesimi in meno. A fine anno sono centinaia di euro buttati.
-          </p>
-          <div class="mt-4 pt-3 border-t border-slate-800/80 text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-            <span>Risolto: Dati MIMIT ufficiali in mappa</span>
-          </div>
-        </div>
-
-        <!-- CARD 4 -->
-        <div class="card-glass rounded-2xl p-6 border-slate-800">
-          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path></svg>
-          </div>
-          <h3 class="text-lg font-bold text-white font-display">4. Documenti persi quando servono</h3>
-          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-            Ti fermano per un controllo o devi fare una constatazione amichevole: dov'è il tagliando dell'assicurazione? Dov'è la ricevuta dell'ultimo tagliando?
-          </p>
-          <div class="mt-4 pt-3 border-t border-slate-800/80 text-xs font-bold text-purple-400 flex items-center gap-1.5">
-            <span>Risolto: Cassaforte digitale offline</span>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SEZIONE: GESTIONE COMPLETA A 360 GRADI -->
-  <section id="a-360" class="py-20 bg-slate-900/60 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Panoramica Totale</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-display mt-2">
-          La Tua Auto a 360°: Tutto quello che conta, in un solo posto
-        </h2>
-        <p class="text-base text-slate-300 mt-4 leading-relaxed">
-          Non ti serve installare cinque app diverse per fare cinque cose semplici. Con MyGarage360 hai una visuale circolare completa su ogni aspetto della tua vettura:
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        <!-- CARD 1: CARBURANTI E RISPARMIO -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">⛽</span>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800">20.000+ Impianti MIMIT</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">1. Pieno Intelligente & Colonnine</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Mappa aggiornata quotidianamente con i prezzi ufficiali comunicati dai gestori al Ministero (MIMIT). Con un colpo d'occhio vedi chi fa il prezzo più basso vicino a te, risparmiando fino a <strong>300€ all'anno</strong>.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Supporta Benzina, Gasolio, GPL, Metano e ricariche elettriche EV.
-          </div>
-        </div>
-
-        <!-- CARD 2: TAGLIANDI E MANUTENZIONE -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">🔧</span>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800">+25% Valore Usato</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">2. Manutenzione & Storico Tagliandi</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Registra ogni cambio d'olio, pastiglie freni o gomme con chilometri e spesa. Quando vorrai vendere la tua auto, mostrerai un passaporto digitale verificato che fa salire subito il prezzo sul mercato.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Fatture e foto dei pezzi sostituiti memorizzate e condivisibili in PDF.
-          </div>
-        </div>
-
-        <!-- CARD 3: ASSISTENTE MECCANICO AI -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">🤖</span>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-800">Google Gemini AI</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">3. Meccanico Digitale H24</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Descrivi un rumore strano, chiedi la pressione corretta dei pneumatici o la viscosità dell'olio motore raccomandata. L'assistente analizza il tuo specifico modello di auto e ti dà consigli sicuri in italiano chiaro.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Spiegazione immediata delle spie rosse, gialle e verdi del cruscotto.
-          </div>
-        </div>
-
-        <!-- CARD 4: SCADENZE E REVISIONI -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">📅</span>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-800">Zero Sanzioni</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">4. Scadenziario Legale Attivo</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Bollo auto, revisione biennale della motorizzazione e rinnovo polizza RCA: imposti le date una sola volta e il sistema calcola i giorni rimanenti evidenziando in giallo e rosso le scadenze vicine.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Evita sequestri amministrativi del veicolo e multe da 173€ a 694€.
-          </div>
-        </div>
-
-        <!-- CARD 5: CASSAFORTE DIGITALE -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">🛡️</span>
-              <span class="badge-privacy text-[11px] font-bold px-2.5 py-1 rounded-md">100% Privacy Protetta</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">5. Cassaforte Documentale Sicura</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Scatta una foto al libretto di circolazione DUC o alla carta verde. Nessuna targa viene divulgata all'esterno: i dati restano tuoi e sono consultabili anche se sei senza connessione internet.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Pronto per i controlli delle forze dell'ordine e casi di sinistro.
-          </div>
-        </div>
-
-        <!-- CARD 6: FLOTTA MULTI-VEICOLO -->
-        <div class="card-glass rounded-2xl p-7 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-2xl">🚗🛵</span>
-              <span class="text-[11px] font-bold px-2.5 py-1 rounded-md bg-blue-950 text-blue-300 border border-blue-800">Tutta la Famiglia</span>
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">6. Gestione Multipla e Famiglia</h3>
-            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              Hai un'utilitaria per andare al lavoro, un SUV di famiglia o uno scooter? Passa da un mezzo all'altro in un istante con statistiche aggregate sui chilometri percorsi e le spese complessive del mese.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400">
-            Livello stimato serbatoio con calcolo autonomia rimanente.
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SEZIONE: COMPATIBILITÀ TOTALE SU QUALSIASI DISPOSITIVO -->
-  <section id="dispositivi" class="py-20 bg-slate-950 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        
-        <!-- IMMAGINE REALE MULTI-DEVICE -->
-        <div class="lg:col-span-6 order-2 lg:order-1">
-          <div class="group relative rounded-3xl overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl shadow-indigo-950/60">
-            <img 
-              src="/screenshots/multi_device_showcase.jpg" 
-              alt="MyGarage360 aperto su smartphone, tablet e computer laptop contemporaneamente" 
-              class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" 
-              loading="lazy"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent flex flex-col justify-end p-6">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-                <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Un solo account, tutti i tuoi schermi</span>
-              </div>
-              <p class="text-sm font-bold text-white">Nessuna installazione complessa dagli store: apri il link ed è pronta.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- TESTO DESCRITTIVO DISPOSITIVI -->
-        <div class="lg:col-span-6 order-1 lg:order-2 space-y-6">
-          <div>
-            <span class="text-xs font-black uppercase tracking-widest text-emerald-400">Zero Vincoli Tecnologici</span>
-            <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-display mt-2">
-              Perfetto su qualsiasi dispositivo.<br />
-              Dallo smartphone al computer.
-            </h2>
-            <p class="text-base text-slate-300 mt-4 leading-relaxed">
-              Non importa se usi un iPhone, un telefono Android, un tablet iPad o un PC da ufficio: l'interfaccia si adatta automaticamente per offrirti sempre la massima ergonomia.
-            </p>
-          </div>
-
-          <div class="space-y-4">
-            
-            <!-- SMARTPHONE -->
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-4">
-              <div class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 mt-0.5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"></path></svg>
-              </div>
-              <div>
-                <h4 class="text-base font-bold text-white">Su Smartphone (iOS & Android)</h4>
-                <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Navigazione ottimizzata a una sola mano per quando sei alla pompa di benzina o in movimento. Puoi salvarla sulla Home con un tocco (PWA) e usarla come un'applicazione nativa.
-                </p>
-              </div>
-            </div>
-
-            <!-- TABLET -->
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-4">
-              <div class="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0 mt-0.5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5h3m-6.75 2.25h10.5a2.25 2.25 0 002.25-2.25v-15a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 4.5v15a2.25 2.25 0 002.25 2.25z"></path></svg>
-              </div>
-              <div>
-                <h4 class="text-base font-bold text-white">Su Tablet (iPad & Android)</h4>
-                <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Ideale in officina o comodi sul divano per sfogliare a schermo intero il libretto di circolazione, le ricevute dei tagliandi e confrontare la mappa dei prezzi.
-                </p>
-              </div>
-            </div>
-
-            <!-- COMPUTER -->
-            <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-4">
-              <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3"></path></svg>
-              </div>
-              <div>
-                <h4 class="text-base font-bold text-white">Su PC & Mac (Desktop)</h4>
-                <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Visuale a cruscotto esteso: perfetta per caricare direttamente i file PDF dal computer e analizzare i grafici annuali di spesa della tua flotta.
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-300 flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-            <span><strong>Nessun download pesante da 300MB:</strong> occupa zero memoria sul tuo telefono e si apre istantaneamente da qualsiasi browser.</span>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SEZIONE: SCREENSHOT REALI CON PRIVACY & TARGHE ANONIMIZZATE -->
-  <section id="screenshot" class="py-20 bg-slate-900/40 border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-wider mb-3">
-          <span>Interfaccia Reale al 100%</span>
-        </div>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-display">
-          Guarda l'Applicazione in Azione
-        </h2>
-        <p class="text-base text-slate-400 mt-3 leading-relaxed">
-          Schermate autentiche catturate dall'uso reale di MyGarage360. Tutte le targhe e i dati personali sensibili sono <strong>rigorosamente protetti e anonimizzati</strong> a tutela della privacy.
-        </p>
-      </div>
-
-      <!-- GRID SCREENSHOT REALI -->
-      <div class="space-y-16">
-
-        <!-- 1. DASHBOARD GARAGE -->
-        <div class="card-glass rounded-3xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-7">
-            <div class="group relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-2xl cursor-pointer" onclick="openLightbox('/screenshots/garage_dashboard.jpg', 'Cruscotto Digitale e Garage Multi-Veicolo', 'Visualizzazione in tempo reale di tutte le auto nel garage, con km totali, spesa mensile, stato del serbatoio stimato e cronologia interventi.')">
-              <img 
-                src="/screenshots/garage_dashboard.jpg" 
-                alt="Screenshot del Cruscotto e Garage Multi-Veicolo" 
-                class="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-300" 
-                loading="lazy" 
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <span class="text-xs font-bold text-white bg-indigo-600/90 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
-                  Ingrandisci a Tutto Schermo
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="lg:col-span-5 space-y-4">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md bg-indigo-950 text-indigo-300 border border-indigo-800 text-[11px] font-black uppercase">Cruscotto Principale</span>
-              <span class="badge-privacy text-[11px] font-bold px-2 py-0.5 rounded-md">🔒 Targa Protetta</span>
-            </div>
-            <h3 class="text-2xl sm:text-3xl font-bold text-white font-display">Il tuo Garage sempre a vista</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Hai sott'occhio i chilometri attuali, la percentuale di carburante stimata nel serbatoio e quanto stai spendendo questo mese tra rifornimenti e officina.
-            </p>
-            <div class="pt-2 space-y-2 text-xs text-slate-300">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Stima automatica litri residui e autonomia</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Costo reale al chilometro per ogni tuo viaggio</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Passaggio rapido tra auto personale, familiare e scooter</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. MAPPA CARBURANTI MIMIT -->
-        <div class="card-glass rounded-3xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-5 order-2 lg:order-1 space-y-4">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800 text-[11px] font-black uppercase">Risparmio Reale</span>
-              <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px] font-bold">Dati Ministeriali</span>
-            </div>
-            <h3 class="text-2xl sm:text-3xl font-bold text-white font-display">Trova il distributore più economico</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Mappa interattiva collegata direttamente all'Osservatorio Prezzi del Ministero (MIMIT). Con un tocco vedi chi vende al prezzo più basso con indicazione chiara di quanti euro risparmi sul pieno.
-            </p>
-            <div class="pt-2 space-y-2 text-xs text-slate-300">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Prezzi Self-Service e Servito aggiornati ogni giorno</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Filtro rapido per Benzina, Diesel, GPL, Metano ed EV</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Orari di apertura e indicazioni stradali immediate</span>
-              </div>
-            </div>
-          </div>
-          <div class="lg:col-span-7 order-1 lg:order-2">
-            <div class="group relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-2xl cursor-pointer" onclick="openLightbox('/screenshots/fuel_map.jpg', 'Mappa Prezzi Carburanti MIMIT & Colonnine EV', 'Interfaccia con mappa georeferenziata, elenco distributori ordinati per prezzo crescente e dettaglio del risparmio rispetto alla media regionale.')">
-              <img 
-                src="/screenshots/fuel_map.jpg" 
-                alt="Screenshot della Mappa Prezzi Carburanti MIMIT" 
-                class="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-300" 
-                loading="lazy" 
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <span class="text-xs font-bold text-white bg-emerald-600/90 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
-                  Ingrandisci a Tutto Schermo
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. ASSISTENTE AI -->
-        <div class="card-glass rounded-3xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-7">
-            <div class="group relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-2xl cursor-pointer" onclick="openLightbox('/screenshots/ai_assistant.jpg', 'Assistente Tecnico AI & Manuale di Bordo', 'Interfaccia conversazionale specializzata sul modello di veicolo con riconoscimento spie, indicazioni fluido motore, reset TPMS e consigli di sicurezza.')">
-              <img 
-                src="/screenshots/ai_assistant.jpg" 
-                alt="Screenshot dell Assistente Tecnico AI" 
-                class="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-300" 
-                loading="lazy" 
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <span class="text-xs font-bold text-white bg-indigo-600/90 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
-                  Ingrandisci a Tutto Schermo
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="lg:col-span-5 space-y-4">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-800 text-[11px] font-black uppercase">Assistente Tecnico</span>
-              <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[11px] font-bold">Google Gemini</span>
-            </div>
-            <h3 class="text-2xl sm:text-3xl font-bold text-white font-display">Hai un dubbio? Chiedi e ti risponde</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Non serve essere meccanici. Se si accende una spia o vuoi sapere che olio comprare al supermercato per fare il rabbocco, l'assistente ti guida passo-passo.
-            </p>
-            <div class="pt-2 space-y-2 text-xs text-slate-300">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Capisci subito se puoi continuare il viaggio o fermarti</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Reset spia pressione gomme (TPMS) spiegato facile</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Zero gergo incomprensibile: spiegazioni chiare e umane</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. CASSAFORTE DOCUMENTALE -->
-        <div class="card-glass rounded-3xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div class="lg:col-span-5 order-2 lg:order-1 space-y-4">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-800 text-[11px] font-black uppercase">Documenti & Scadenze</span>
-              <span class="badge-privacy text-[11px] font-bold px-2 py-0.5 rounded-md">🔒 Nessun dato pubblico</span>
-            </div>
-            <h3 class="text-2xl sm:text-3xl font-bold text-white font-display">Tutto in regola, zero multe</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              I documenti importanti sono salvati sul tuo dispositivo e consultabili anche quando sei in galleria o in un parcheggio interrato senza campo telefonico.
-            </p>
-            <div class="pt-2 space-y-2 text-xs text-slate-300">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Promemoria anticipato prima che scada bollo o revisione</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Foto del libretto DUC e assicurazione sempre a portata</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path></svg>
-                <span>Targhe e dati personali protetti da crittografia locale</span>
-              </div>
-            </div>
-          </div>
-          <div class="lg:col-span-7 order-1 lg:order-2">
-            <div class="group relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shadow-2xl cursor-pointer" onclick="openLightbox('/screenshots/docs_vault.jpg', 'Cassaforte Documentale & Scadenziario', 'Gestione centralizzata dei documenti di bordo con scadenze evidenziate e stato di validità legale in tempo reale.')">
-              <img 
-                src="/screenshots/docs_vault.jpg" 
-                alt="Screenshot della Cassaforte Documentale" 
-                class="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-300" 
-                loading="lazy" 
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <span class="text-xs font-bold text-white bg-amber-600/90 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
-                  Ingrandisci a Tutto Schermo
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- SEZIONE: CONTATTI, MIGLIORAMENTI, ERRORI & COLLABORAZIONE -->
-  <section id="contatti" class="py-20 bg-slate-900/80 border-b border-slate-800/80 relative">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      <div class="text-center max-w-3xl mx-auto mb-14">
-        <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Comunità & Sviluppo Aperto</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-display mt-2">
-          Contatti, Idee e Segnalazioni
-        </h2>
-        <p class="text-base text-slate-300 mt-3 leading-relaxed">
-          MyGarage360 cresce grazie ai suggerimenti reali di chi guida ogni giorno. Vuoi proporre un miglioramento, segnalare un errore o costruire una collaborazione? Siamo qui per ascoltarti.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-        
-        <!-- 3 SCHEDE INFORMATIVE TEMATICHE -->
-        <div class="lg:col-span-5 space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           
-          <!-- SCHEDA 1: MIGLIORAMENTI -->
-          <div class="card-glass rounded-2xl p-5 border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer group" onclick="selectContactTopic('Miglioramento', 'Suggerimento per nuova funzionalità')">
-            <div class="flex items-start gap-3.5">
-              <div class="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                <span class="text-xl">💡</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-1">
-                  <h3 class="text-base font-bold text-white font-display">Miglioramenti & Idee</h3>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800/60">Proponi</span>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                  Hai in mente un calcolo utile per i consumi, una nuova spia cruscotto o un filtro speciale per i distributori di carburante?
-                </p>
-              </div>
+          <!-- PROBLEMA -->
+          <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-col gap-3">
+            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs">
+              ✕
             </div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+              I problemi di ogni giorno
+            </h3>
+            <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Scadenze dimenticate:</strong> multe salate per mancata revisione o ritardo nel pagamento del bollo.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Documenti sparsi:</strong> libretto a casa, polizza in email e scontrini sbiaditi nel cassetto portaoggetti.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Costi fuori controllo:</strong> nessuna idea chiara di quanto costi realmente mantenere l'auto o la moto ogni mese.</span>
+              </li>
+            </ul>
           </div>
 
-          <!-- SCHEDA 2: ERRORI & BUG REPORT -->
-          <div class="card-glass rounded-2xl p-5 border-slate-800 hover:border-red-500/50 transition-all cursor-pointer group" onclick="selectContactTopic('Errore / Bug', 'Segnalazione anomalia tecnica')">
-            <div class="flex items-start gap-3.5">
-              <div class="w-11 h-11 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                <span class="text-xl">🐛</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-1">
-                  <h3 class="text-base font-bold text-white font-display">Segnalazione Errori & Dati</h3>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-950 text-red-300 border border-red-800/60">Bug Report</span>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                  Un prezzo carburante MIMIT non coincide con il cartello o un pulsante non risponde sul tuo modello di telefono? Segnalacelo.
-                </p>
-              </div>
+          <!-- SOLUZIONE -->
+          <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-900 shadow-2xs flex flex-col gap-3">
+            <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+              ✓
             </div>
-          </div>
-
-          <!-- SCHEDA 3: COLLABORAZIONE & PARTNERSHIP -->
-          <div class="card-glass rounded-2xl p-5 border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer group" onclick="selectContactTopic('Collaborazione', 'Proposta di collaborazione o partnership')">
-            <div class="flex items-start gap-3.5">
-              <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
-                <span class="text-xl">🤝</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between mb-1">
-                  <h3 class="text-base font-bold text-white font-display">Collaborazione & Partner</h3>
-                  <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60">Aperto</span>
-                </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                  Sei un'officina, un perito assicurativo, una flotta aziendale o uno sviluppatore software? Valutiamo integrazioni e progetti congiunti.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- INFO DIRETTE -->
-          <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-400 space-y-2">
-            <div class="flex items-center gap-2 text-slate-300 font-semibold">
-              <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path></svg>
-              <span>Email diretta:</span>
-              <a href="mailto:my360garage@gmail.com" class="text-indigo-400 hover:underline">my360garage@gmail.com</a>
-            </div>
-            <p>Rispondiamo a tutte le comunicazioni entro 24-48 ore lavorative.</p>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+              La risposta di MyGarage
+            </h3>
+            <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Promemoria preventivi:</strong> notifiche chiare con largo anticipo per non rischiare mai sanzioni.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Cassaforte digitale:</strong> foto e dati del libretto sempre pronti dal tuo smartphone in caso di controlli.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Bilancio trasparente:</strong> storico completo di carburante, tagliandi e costo al chilometro con grafici immediati.</span>
+              </li>
+            </ul>
           </div>
 
         </div>
 
-        <!-- FORM INTERATTIVO DI CONTATTO -->
-        <div class="lg:col-span-7">
-          <div class="card-glass rounded-3xl p-6 sm:p-8 border border-slate-700 bg-slate-950/90 shadow-2xl">
-            <form id="contact-form" onsubmit="handleContactSubmit(event)" class="space-y-4">
-              
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Tipo di Messaggio *</label>
-                  <select id="contact-topic" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                    <option value="Miglioramento">💡 Proposta di Miglioramento</option>
-                    <option value="Errore / Bug">🐛 Segnalazione Errore / Bug</option>
-                    <option value="Collaborazione">🤝 Proposta di Collaborazione</option>
-                    <option value="Altro">💬 Domanda o Altro</option>
-                  </select>
-                </div>
+      </div>
+    </section>
 
-                <div>
-                  <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Il Tuo Nome / Nick *</label>
-                  <input type="text" id="contact-name" required placeholder="Es. Marco Rossi" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-                </div>
-              </div>
+    <!-- SEZIONE 3: FUNZIONALITÀ -->
+    <section id="funzionalita" class="py-14 sm:py-18 border-b border-slate-200/80 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Funzionalità Principali
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Strumenti concreti per risolvere le esigenze reali del guidatore.
+          </p>
+        </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">La Tua Email *</label>
-                  <input type="email" id="contact-email" required placeholder="nome@esempio.it" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-                </div>
-
-                <div>
-                  <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Oggetto Sintetico *</label>
-                  <input type="text" id="contact-subject" required placeholder="Es. Nuova funzione per storico revisioni" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Messaggio o Dettagli *</label>
-                <textarea id="contact-message" rows="4" required placeholder="Descrivi qui la tua idea, l'errore riscontrato (indicando modello veicolo o browser se utile) o la proposta di collaborazione..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-y"></textarea>
-              </div>
-
-              <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                <span class="text-xs text-slate-400 text-center sm:text-left">
-                  🔒 I tuoi dati non verranno ceduti a terzi nè usati per spam.
-                </span>
-                <button type="submit" id="contact-submit-btn" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer">
-                  <span>Invia Messaggio</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
-                </button>
-              </div>
-
-            </form>
-
-            <div id="contact-success-box" class="hidden mt-4 p-4 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs">
-              <div class="flex items-center gap-2 font-bold text-sm mb-1">
-                <span>✅ Messaggio Ricevuto con Successo!</span>
-              </div>
-              <p>Grazie per il tuo contributo! Il messaggio è stato registrato localmente e puoi anche inviarlo direttamente con il tuo client email:</p>
-              <div class="mt-2.5">
-                <a id="contact-mailto-link" href="#" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs transition-colors">
-                  <span>Apri Email Precompilata (Gmail / Outlook) ↗</span>
-                </a>
-              </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          
+          <!-- 1. Consumi & Rifornimenti -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              ⛽
             </div>
-
+            <h3 class="text-sm font-bold text-slate-900">Rifornimenti e Consumi Reali</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Traccia ogni pieno (benzina, diesel, GPL, metano o ricarica EV). L'app calcola in tempo reale la resa chilometrica e il costo al chilometro.
+            </p>
           </div>
+
+          <!-- 2. Scadenze Legali -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📅
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Scadenze e Revisione</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Calcolo automatico della revisione ministeriale in base all'anno di immatricolazione, promemoria bollo e scadenze polizza assicurativa.
+            </p>
+          </div>
+
+          <!-- 3. Cassaforte Documenti -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📁
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Cassaforte Documenti</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Salva copie digitali di libretto di circolazione, ricevute degli interventi e tagliandi per averli sempre a disposizione ovunque ti trovi.
+            </p>
+          </div>
+
+          <!-- 4. Mappa Carburanti MIMIT -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📍
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Mappa Prezzi Carburanti</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Confronta i distributori vicini a te con i dati ufficiali del Ministero delle Imprese (MIMIT) e scegli la pompa più conveniente per fare il pieno.
+            </p>
+          </div>
+
         </div>
 
       </div>
+    </section>
 
-    </div>
-  </section>
+    <!-- SEZIONE 4: COME FUNZIONA -->
+    <section id="come-funziona" class="py-14 sm:py-18 border-b border-slate-200/80 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Come Funziona
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Tre semplici passi per avere il controllo completo del tuo garage.
+          </p>
+        </div>
 
-  <!-- CTA FINALE SEMPLICE E DIRETTA -->
-  <section class="py-20 bg-gradient-to-b from-slate-950 to-indigo-950/40 relative overflow-hidden">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-      <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Gratuito e Subito Attivo</span>
-      <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white font-display mt-2">
-        Inizia a gestire la tua auto senza pensieri.
-      </h2>
-      <p class="mt-4 text-base sm:text-lg text-slate-300 max-w-xl mx-auto">
-        Entra subito nell'applicazione: aggiungi il tuo veicolo in 30 secondi e scopri quanto costa il carburante più vicino a te.
-      </p>
-      
-      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a 
-          href="/" 
-          class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-2xl shadow-indigo-600/50 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-indigo-400/40"
-        >
-          <span>Apri MyGarage360 Ora</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-          </svg>
-        </a>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- STEP 1 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              1
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Aggiungi il Veicolo</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Scegli tra auto o moto e inserisci la targa. Il sistema imposta automaticamente le prime scadenze e le specifiche di base.
+            </p>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              2
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Registra le Spese</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Quando fai il pieno o porti il veicolo dal meccanico, annota importo e chilometri in pochi secondi, anche dal telefono.
+            </p>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              3
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Tieni Tutto Sotto Controllo</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Consulta grafici di spesa, ricevi promemoria puntuali prima delle scadenze e trova le pompe di carburante più economiche.
+            </p>
+          </div>
+
+        </div>
+
       </div>
+    </section>
 
-      <p class="mt-4 text-xs text-slate-500">
-        Compatibile con Chrome, Safari, Edge, Firefox su smartphone, tablet e PC. Nessun abbonamento.
-      </p>
-    </div>
-  </section>
+    <!-- SEZIONE 5: CONTATTI -->
+    <section id="contatti" class="py-14 sm:py-18 bg-white">
+      <div class="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+        
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Contatti & Informazioni
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+          Progetto sviluppato per semplificare la gestione dei veicoli e rispondere alle necessità quotidiane di ogni guidatore.
+        </p>
+
+        <div class="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-bold">
+            ✉
+          </div>
+          <div>
+            <span class="text-xs font-bold text-slate-900 block">Hai suggerimenti o domande?</span>
+            <a 
+              href="mailto:francesco.dellaquila@alessandrinimainardi.edu.it" 
+              class="text-xs sm:text-sm font-mono text-indigo-600 hover:text-indigo-700 hover:underline font-bold mt-1 inline-block"
+            >
+              francesco.dellaquila@alessandrinimainardi.edu.it
+            </a>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            I.I.S. Alessandrini Mainardi • Privacy protetta e nessun dato ceduto a terzi
+          </p>
+
+          <a 
+            href="/" 
+            class="mt-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>Accedi all'Applicazione</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
 
   <!-- FOOTER -->
-  <footer class="bg-slate-950 border-t border-slate-800/80 py-10 text-slate-500 text-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-          M
-        </div>
-        <div>
-          <span class="font-bold text-slate-300">MyGarage360</span> — Progetto Automotive Smart Management
-        </div>
-      </div>
-      <div class="flex items-center gap-4">
-        <a href="#hero" class="hover:text-slate-300 transition-colors">Torna Su ↑</a>
+  <footer class="bg-slate-900 text-white py-6 border-t border-slate-800 text-xs">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white">MyGarage</span>
         <span>•</span>
-        <a href="#contatti" class="hover:text-slate-300 transition-colors">Contatti & Idee</a>
-        <span>•</span>
-        <button onclick="toggleEditMode()" class="text-amber-400 hover:text-amber-300 underline cursor-pointer">Personalizza Contenuti</button>
+        <span>Gestionale Auto & Moto</span>
       </div>
-      <div class="text-center md:text-right">
-        <p>Prezzi carburanti Open Data del Ministero delle Imprese e del Made in Italy (MIMIT).</p>
-        <p class="mt-1">Dati personali e targhe sempre protetti da anonimizzazione locale.</p>
+      <div class="flex items-center gap-4 text-[11px]">
+        <a href="#home" class="hover:text-white transition-colors">Home</a>
+        <a href="#obiettivo" class="hover:text-white transition-colors">Obiettivo</a>
+        <a href="#funzionalita" class="hover:text-white transition-colors">Funzionalità</a>
+        <a href="#come-funziona" class="hover:text-white transition-colors">Come Funziona</a>
+        <a href="#contatti" class="hover:text-white transition-colors">Contatti</a>
       </div>
     </div>
   </footer>
-
-  <!-- BARRA DEGLI STRUMENTI MODALITÀ MODIFICA (FLOATING BOTTOM BAR) -->
-  <div id="edit-toolbar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden bg-slate-900/95 border-2 border-indigo-500/80 backdrop-blur-xl px-4 sm:px-6 py-3.5 rounded-2xl shadow-2xl shadow-indigo-950/80 max-w-[95vw] sm:max-w-3xl w-full animate-in fade-in slide-in-from-bottom-6">
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-      <div class="flex items-center gap-2.5 text-slate-200">
-        <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center font-bold text-sm shrink-0">
-          ✏️
-        </div>
-        <div>
-          <span class="font-bold text-white block sm:inline">Modalità Modifica Attiva:</span>
-          <span class="text-slate-400 text-[11px]"> Clicca sui testi per riscriverli • Clicca "Cambia Foto" sulle immagini</span>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 flex-wrap justify-center shrink-0">
-        <button 
-          onclick="saveCustomSite()" 
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-95 transition-all cursor-pointer"
-          title="Salva tutte le modifiche apportate nel tuo browser"
-        >
-          <span>💾 Salva</span>
-        </button>
-
-        <button 
-          onclick="downloadCustomHtml()" 
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md active:scale-95 transition-all cursor-pointer"
-          title="Scarica il file HTML completo con tutte le tue modifiche per pubblicarlo o conservarlo"
-        >
-          <span>📥 Scarica HTML</span>
-        </button>
-
-        <button 
-          onclick="resetDefaultSite()" 
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium bg-slate-800 hover:bg-red-950/60 text-slate-300 hover:text-red-300 border border-slate-700 active:scale-95 transition-all cursor-pointer"
-          title="Ripristina i testi e le immagini originali"
-        >
-          <span>🔄 Reset</span>
-        </button>
-
-        <button 
-          onclick="toggleEditMode()" 
-          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 active:scale-95 transition-all cursor-pointer"
-          title="Termina le modifiche e visualizza il sito normalmente"
-        >
-          <span>✕ Chiudi</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CAMBIA IMMAGINE (UPLOAD FILE O URL O PRESET) -->
-  <div id="change-image-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeChangeImageModal(event)">
-    <div class="relative max-w-xl w-full bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
-        <div class="flex items-center gap-2">
-          <span class="text-base">📷</span>
-          <h4 class="text-base font-bold text-white font-display">Personalizza Immagine</h4>
-        </div>
-        <button onclick="closeChangeImageModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
-          ✕
-        </button>
-      </div>
-
-      <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-        
-        <!-- ANTEPRIMA ATTUALE -->
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Anteprima Immagine Corrente</label>
-          <div class="w-full h-40 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden p-1">
-            <img id="modal-preview-img" src="" alt="Anteprima" class="h-full w-auto object-contain rounded-lg" />
-          </div>
-        </div>
-
-        <!-- OPZIONE 1: CARICA DA COMPUTER O TELEFONO -->
-        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
-          <label class="block text-xs font-bold text-white mb-1 flex items-center gap-1.5">
-            <span>📁 1. Carica dal tuo Computer / Telefono</span>
-          </label>
-          <p class="text-[11px] text-slate-400 mb-3">Seleziona una tua foto o screenshot (JPG, PNG, WebP). Verrà caricata istantaneamente:</p>
-          <input 
-            type="file" 
-            id="image-file-input" 
-            accept="image/*" 
-            onchange="handleLocalImageUpload(event)"
-            class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer" 
-          />
-        </div>
-
-        <!-- OPZIONE 2: INSERISCI LINK ESTERNO -->
-        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
-          <label class="block text-xs font-bold text-white mb-1 flex items-center gap-1.5">
-            <span>🌐 2. Oppure Inserisci un Link Web (URL)</span>
-          </label>
-          <div class="flex gap-2 mt-2">
-            <input 
-              type="url" 
-              id="image-url-input" 
-              placeholder="https://esempio.com/foto.jpg" 
-              class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" 
-            />
-            <button 
-              type="button" 
-              onclick="applyImageUrlInput()" 
-              class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700"
-            >
-              Testa
-            </button>
-          </div>
-        </div>
-
-        <!-- OPZIONE 3: SCEGLI TRA I PRESET DEL PROGETTO -->
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">3. Oppure Scegli tra le Schermate Ufficiali</label>
-          <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
-            <div onclick="selectPresetImage('/screenshots/driver_in_car.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/driver_in_car.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Guidatore</span>
-            </div>
-            <div onclick="selectPresetImage('/screenshots/multi_device_showcase.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/multi_device_showcase.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Dispositivi</span>
-            </div>
-            <div onclick="selectPresetImage('/screenshots/garage_dashboard.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/garage_dashboard.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Garage</span>
-            </div>
-            <div onclick="selectPresetImage('/screenshots/fuel_map.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/fuel_map.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Carburanti</span>
-            </div>
-            <div onclick="selectPresetImage('/screenshots/ai_assistant.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/ai_assistant.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Assistente AI</span>
-            </div>
-            <div onclick="selectPresetImage('/screenshots/docs_vault.jpg')" class="cursor-pointer border border-slate-800 hover:border-indigo-500 rounded-xl p-1.5 bg-slate-950 hover:bg-slate-850 transition-all">
-              <img src="/screenshots/docs_vault.jpg" class="h-14 w-full object-cover rounded-md mb-1" />
-              <span class="text-slate-300 font-semibold truncate block">Cassaforte</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-end gap-3">
-        <button 
-          type="button" 
-          onclick="closeChangeImageModal()" 
-          class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white"
-        >
-          Annulla
-        </button>
-        <button 
-          type="button" 
-          onclick="applySelectedImage()" 
-          class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md"
-        >
-          Conferma & Applica
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="custom-toast" class="fixed top-6 right-6 z-50 hidden animate-in fade-in slide-in-from-top-4">
-    <div id="custom-toast-content" class="px-5 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 bg-slate-900 text-white border-slate-700">
-      <span id="custom-toast-icon">ℹ️</span>
-      <span id="custom-toast-text">Messaggio</span>
-    </div>
-  </div>
-
-  <!-- MODAL LIGHTBOX PER VISUALIZZARE GLI SCREENSHOT INGRANDITI -->
-  <div id="lightbox-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4" onclick="closeLightbox(event)">
-    <div class="relative max-w-5xl w-full bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950">
-        <div>
-          <h4 id="lightbox-title" class="text-base font-bold text-white font-display">Titolo Screenshot</h4>
-          <p id="lightbox-desc" class="text-xs text-slate-400 mt-0.5">Descrizione</p>
-        </div>
-        <button onclick="closeLightbox()" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="p-2 sm:p-4 bg-slate-950 flex items-center justify-center">
-        <img id="lightbox-img" src="" alt="Screenshot ingrandito" class="max-h-[75vh] w-auto rounded-lg object-contain shadow-md" />
-      </div>
-    </div>
-  </div>
-
-  <script>
-    /* =========================================================================
-       1. SISTEMA DI PERSONALIZZAZIONE INTERATTIVO (EDIT MODE)
-       ========================================================================= */
-    let isEditingMode = false;
-    let currentTargetImageElement = null;
-    let pendingImageUrl = '';
-
-    const STORAGE_KEY = 'mygarage360_site_custom_content_v1';
-
-    // Toast helper
-    function showToast(text, icon = 'ℹ️', isSuccess = true) {
-      const toast = document.getElementById('custom-toast');
-      const content = document.getElementById('custom-toast-content');
-      const iconEl = document.getElementById('custom-toast-icon');
-      const textEl = document.getElementById('custom-toast-text');
-
-      if (!toast) return;
-      iconEl.textContent = icon;
-      textEl.textContent = text;
-      
-      content.className = isSuccess 
-        ? "px-5 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 bg-slate-900 text-emerald-300 border-emerald-500/50"
-        : "px-5 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 bg-slate-900 text-amber-300 border-amber-500/50";
-
-      toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 3500);
-    }
-
-    // Toggle Modalità Modifica
-    function toggleEditMode() {
-      isEditingMode = !isEditingMode;
-      const body = document.body;
-      const toolbar = document.getElementById('edit-toolbar');
-      const btnIcon = document.getElementById('btn-toggle-edit-icon');
-      const btnText = document.getElementById('btn-toggle-edit-text');
-
-      if (isEditingMode) {
-        body.classList.add('editing-active');
-        toolbar.classList.remove('hidden');
-        if (btnIcon) btnIcon.textContent = '👁️';
-        if (btnText) btnText.textContent = 'Visualizza';
-        enableTextEditing(true);
-        showToast('Modalità Modifica Attiva! Clicca sui testi o sulle foto per personalizzarli.', '✏️');
-      } else {
-        body.classList.remove('editing-active');
-        toolbar.classList.add('hidden');
-        if (btnIcon) btnIcon.textContent = '✏️';
-        if (btnText) btnText.textContent = 'Personalizza';
-        enableTextEditing(false);
-        showToast('Modalità Anteprima ripristinata.', '👁️');
-      }
-    }
-
-    // Rendi i testi modificabili
-    function enableTextEditing(enable) {
-      const editableSelectors = [
-        'h1', 'h2', 'h3', 'h4', 'p', 'span.badge-privacy', 'span.badge-topic', 'li'
-      ];
-      
-      const elements = document.querySelectorAll(editableSelectors.join(','));
-      elements.forEach(el => {
-        // Non toccare i bottoni di controllo o le modali
-        if (el.closest('#edit-toolbar') || el.closest('#change-image-modal') || el.closest('#lightbox-modal') || el.closest('#contact-form')) {
-          return;
-        }
-        if (enable) {
-          el.setAttribute('contenteditable', 'true');
-          el.setAttribute('data-editable', 'true');
-        } else {
-          el.removeAttribute('contenteditable');
-          el.removeAttribute('data-editable');
-        }
-      });
-    }
-
-    // Configura bottoni di modifica su tutte le immagini del sito
-    function setupEditableImages() {
-      const images = document.querySelectorAll('img');
-      images.forEach((img, idx) => {
-        // Ignora icone o modali
-        if (img.closest('#edit-toolbar') || img.closest('#change-image-modal') || img.closest('#lightbox-modal')) return;
-
-        const parent = img.parentElement;
-        if (!parent.classList.contains('image-edit-wrapper')) {
-          parent.classList.add('image-edit-wrapper');
-          
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'image-edit-btn';
-          btn.innerHTML = '<span>📷 Cambia Foto</span>';
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            openChangeImageModal(img);
-          };
-          parent.appendChild(btn);
-        }
-      });
-    }
-
-    // Modal Cambia Immagine
-    function openChangeImageModal(targetImg) {
-      currentTargetImageElement = targetImg;
-      pendingImageUrl = targetImg.src;
-
-      const modal = document.getElementById('change-image-modal');
-      const preview = document.getElementById('modal-preview-img');
-      const urlInput = document.getElementById('image-url-input');
-      const fileInput = document.getElementById('image-file-input');
-
-      if (preview) preview.src = targetImg.src;
-      if (urlInput) urlInput.value = targetImg.src.startsWith('data:') ? '' : targetImg.src;
-      if (fileInput) fileInput.value = '';
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeChangeImageModal(e) {
-      const modal = document.getElementById('change-image-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      currentTargetImageElement = null;
-    }
-
-    function handleLocalImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        pendingImageUrl = e.target.result;
-        const preview = document.getElementById('modal-preview-img');
-        if (preview) preview.src = pendingImageUrl;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function applyImageUrlInput() {
-      const input = document.getElementById('image-url-input');
-      if (input && input.value.trim()) {
-        pendingImageUrl = input.value.trim();
-        const preview = document.getElementById('modal-preview-img');
-        if (preview) preview.src = pendingImageUrl;
-      }
-    }
-
-    function selectPresetImage(presetUrl) {
-      pendingImageUrl = presetUrl;
-      const preview = document.getElementById('modal-preview-img');
-      const urlInput = document.getElementById('image-url-input');
-      if (preview) preview.src = presetUrl;
-      if (urlInput) urlInput.value = presetUrl;
-    }
-
-    function applySelectedImage() {
-      if (currentTargetImageElement && pendingImageUrl) {
-        currentTargetImageElement.src = pendingImageUrl;
-        // Se l'elemento ha un onclick per lightbox, aggiorna anche quello se presente
-        const parentCard = currentTargetImageElement.closest('[onclick*="openLightbox"]');
-        if (parentCard) {
-          parentCard.setAttribute('onclick', `openLightbox('${pendingImageUrl}', 'Screenshot Personalizzato', 'Immagine personalizzata salvata dall\\'utente.')`);
-        }
-        showToast('Foto aggiornata! Ricordati di salvare.', '📸');
-      }
-      closeChangeImageModal();
-    }
-
-    // Salva nel Browser (LocalStorage)
-    function saveCustomSite() {
-      try {
-        const sectionsToSave = ['hero', 'problema', 'a-360', 'dispositivi', 'screenshot', 'contatti'];
-        const savedData = {};
-
-        sectionsToSave.forEach(id => {
-          const sec = document.getElementById(id);
-          if (sec) {
-            savedData[id] = sec.innerHTML;
-          }
-        });
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
-        showToast('Tutte le modifiche a testi e immagini sono state salvate!', '💾', true);
-      } catch (err) {
-        console.error('Errore durante il salvataggio:', err);
-        showToast('Attenzione: salvataggio fallito. Riprova.', '⚠️', false);
-      }
-    }
-
-    // Carica dal Browser (LocalStorage)
-    function loadCustomSite() {
-      try {
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          const savedData = JSON.parse(cached);
-          Object.keys(savedData).forEach(id => {
-            const sec = document.getElementById(id);
-            if (sec && savedData[id]) {
-              sec.innerHTML = savedData[id];
-            }
-          });
-          setupEditableImages();
-        }
-      } catch (e) {
-        console.warn('Nessun salvataggio precedente o errore nel parsing', e);
-      }
-    }
-
-    // Ripristina al Default Originale
-    function resetDefaultSite() {
-      if (confirm('Vuoi davvero ripristinare tutti i testi e le immagini alla versione originale? Le modifiche locali verranno cancellate.')) {
-        localStorage.removeItem(STORAGE_KEY);
-        location.reload();
-      }
-    }
-
-    // Scarica file HTML Completo con tutte le modifiche
-    function downloadCustomHtml() {
-      // Disattiva momentaneamente edit mode per esportare il codice pulito
-      const wasEditing = isEditingMode;
-      if (wasEditing) toggleEditMode();
-
-      setTimeout(() => {
-        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'presentazione_personalizzata.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        showToast('File HTML scaricato! Pronto all\'uso.', '📥');
-        if (wasEditing) toggleEditMode();
-      }, 100);
-    }
-
-    /* =========================================================================
-       2. GESTIONE MODULO CONTATTI & FEEDBACK
-       ========================================================================= */
-    function selectContactTopic(topic, subject) {
-      const topicSelect = document.getElementById('contact-topic');
-      const subjectInput = document.getElementById('contact-subject');
-      const messageInput = document.getElementById('contact-message');
-
-      if (topicSelect) topicSelect.value = topic;
-      if (subjectInput) subjectInput.value = subject;
-      
-      const formSection = document.getElementById('contatti');
-      if (formSection) {
-        formSection.scrollIntoView({ behavior: 'smooth' });
-      }
-      if (messageInput) {
-        setTimeout(() => messageInput.focus(), 400);
-      }
-    }
-
-    function handleContactSubmit(e) {
-      e.preventDefault();
-      const topic = document.getElementById('contact-topic').value;
-      const name = document.getElementById('contact-name').value;
-      const email = document.getElementById('contact-email').value;
-      const subject = document.getElementById('contact-subject').value;
-      const message = document.getElementById('contact-message').value;
-
-      // Salvataggio nel registro contatti locale
-      try {
-        const key = 'mygarage360_feedback_list';
-        const existing = JSON.parse(localStorage.getItem(key) || '[]');
-        existing.push({
-          date: new Date().toISOString(),
-          topic,
-          name,
-          email,
-          subject,
-          message
-        });
-        localStorage.setItem(key, JSON.stringify(existing));
-      } catch (err) {}
-
-      // Genera link mailto precompilato
-      const mailtoUrl = `mailto:my360garage@gmail.com?subject=${encodeURIComponent(`[${topic}] ${subject}`)}&body=${encodeURIComponent(`Ciao Team MyGarage360,\n\nMittente: ${name} (${email})\nTipo: ${topic}\n\nMessaggio:\n${message}\n\n---\nInviato da MyGarage360 Presentazione`)}`;
-      
-      const mailtoLink = document.getElementById('contact-mailto-link');
-      if (mailtoLink) {
-        mailtoLink.href = mailtoUrl;
-      }
-
-      // Mostra messaggio di successo
-      const successBox = document.getElementById('contact-success-box');
-      if (successBox) successBox.classList.remove('hidden');
-
-      showToast('Messaggio registrato con successo!', '✉️', true);
-    }
-
-    /* =========================================================================
-       3. LIGHTBOX PER VISUALIZZAZIONE SCHERMATE A TUTTO SCHERMO
-       ========================================================================= */
-    function openLightbox(imgSrc, title, desc) {
-      // Non aprire lightbox se l'utente sta cliccando per cambiare foto in edit mode
-      if (isEditingMode) return;
-
-      const modal = document.getElementById('lightbox-modal');
-      const img = document.getElementById('lightbox-img');
-      const titleEl = document.getElementById('lightbox-title');
-      const descEl = document.getElementById('lightbox-desc');
-
-      img.src = imgSrc;
-      titleEl.textContent = title;
-      descEl.textContent = desc;
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeLightbox(e) {
-      const modal = document.getElementById('lightbox-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      document.body.style.overflow = '';
-    }
-
-    // Inizializzazione al caricamento
-    document.addEventListener('DOMContentLoaded', function() {
-      loadCustomSite();
-      setupEditableImages();
-    });
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeLightbox();
-        closeChangeImageModal();
-      }
-    });
-  </script>
 
 </body>
 </html>

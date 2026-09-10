@@ -247,10 +247,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0f172a]">
-              MyGarage360
+              MyGarage
             </h1>
             <p className="text-xs sm:text-sm text-[#64748b] mt-1 max-w-md">
-              Gestione completa del veicolo a 360°: consumi, rifornimenti, ricariche elettriche e manutenzioni
+              Gestione semplice del veicolo: consumi, rifornimenti, manutenzioni e scadenze
             </p>
           </div>
         </div>

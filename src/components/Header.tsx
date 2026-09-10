@@ -153,19 +153,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* ADD VEHICLE BUTTON (in Garage View) */}
-        {currentView === 'garage' && (
-          <button 
-            id="btn-add-vehicle-nav"
-            onClick={onOpenAddCar}
-            className="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden md:inline">{getTranslation(lang, 'btn_add_vehicle')}</span>
-            <span className="md:hidden text-xs">{lang === 'en' ? 'Add' : 'Aggiungi'}</span>
-          </button>
-        )}
-
         {/* EDIT VEHICLE BUTTON (in Detail View) */}
         {currentView === 'detail' && onOpenEditCar && (
           <button 
