@@ -2,6 +2,32 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Suppress benign cross-origin frame SecurityErrors (such as reading '$$typeof' from parent/child Window)
+      window.addEventListener('error', function(event) {
+        if (
+          event &&
+          event.message &&
+          (event.message.indexOf('$$typeof') !== -1 ||
+           (event.message.indexOf('SecurityError') !== -1 && event.message.indexOf('cross-origin') !== -1))
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(event) {
+        if (
+          event &&
+          event.reason &&
+          event.reason.message &&
+          (event.reason.message.indexOf('$$typeof') !== -1 ||
+           (event.reason.message.indexOf('SecurityError') !== -1 && event.reason.message.indexOf('cross-origin') !== -1))
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>MyGarage</title>
     <meta name="description" content="Gestione semplice e completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, scadenze, recap mensile e annuale in stile story." />

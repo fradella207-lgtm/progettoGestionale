@@ -370,3 +370,306 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
     avgTripCost
   };
 }
+
+export interface RecapPeriodMetrics {
+  totalKm: number;
+  odometer: number;
+  kmTrendPercent: number;
+  fuelCost: number;
+  maintCost: number;
+  totalCost: number;
+  totalVolume: number;
+  refuelStopsCount: number;
+  costPerKm: string;
+  avgConsumptionStr: string;
+  avgKmPerLStr: string;
+  fuelUnit: string;
+}
+
+/**
+ * Calculates exact historical and periodic recap metrics for one or more vehicles.
+ * Period can be 'month' (YYYY-MM), 'year' (number), or 'all' (entire lifetime).
+ * Strictly calculates mathematically precise distance, costs, volumes, and consumptions
+ * without using arbitrary estimates or hardcoded fallbacks.
+ */
+export function calculateRecapMetrics(
+  vehicles: Vehicle[],
+  periodType: 'month' | 'year' | 'all',
+  targetMonth: string,
+  targetYear: number,
+  _currency = '€'
+): RecapPeriodMetrics {
+  if (!vehicles || vehicles.length === 0) {
+    return {
+      totalKm: 0,
+      odometer: 0,
+      kmTrendPercent: 0,
+      fuelCost: 0,
+      maintCost: 0,
+      totalCost: 0,
+      totalVolume: 0,
+      refuelStopsCount: 0,
+      costPerKm: '0.00',
+      avgConsumptionStr: '--',
+      avgKmPerLStr: '--',
+      fuelUnit: 'L'
+    };
+  }
+
+  // Determine previous month string (YYYY-MM)
+  let prevMonthStr = '';
+  if (periodType === 'month' && targetMonth) {
+    const [y, m] = targetMonth.split('-').map(Number);
+    const prevDate = new Date(y, m - 2, 1);
+    prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  let totalKmSum = 0;
+  let prevKmSum = 0;
+  let fuelCostSum = 0;
+  let maintCostSum = 0;
+  let totalVolumeSum = 0;
+  let refuelStopsSum = 0;
+  let maxOdometerFound = 0;
+
+  // Track primary unit (L, kWh, Kg)
+  const isSingle = vehicles.length === 1;
+  const singleVehicle = isSingle ? vehicles[0] : null;
+  const isBEV = singleVehicle ? (singleVehicle.fuelType.includes('Elettrica') || singleVehicle.fuelType.includes('BEV')) : false;
+  const isCNG = singleVehicle ? singleVehicle.fuelType.includes('Metano') : false;
+  const fuelUnit = isBEV ? 'kWh' : (isCNG ? 'Kg' : 'L');
+
+  // Pre-calculate full metrics per vehicle for lifetime reference
+  const fullMetricsMap = new Map<string, DetailedConsumptionMetrics>();
+  vehicles.forEach(v => {
+    fullMetricsMap.set(v.id, calculateVehicleConsumptionMetrics(v));
+  });
+
+  if (periodType === 'all') {
+    vehicles.forEach(v => {
+      const m = fullMetricsMap.get(v.id)!;
+      totalKmSum += m.totalDistance;
+      fuelCostSum += m.totalFuelSpent;
+      maintCostSum += m.totalMaintSpent;
+      totalVolumeSum += (m.totalThermalLiters || 0) + (m.totalElectricKwh || 0) + (m.totalGasQuantity || 0);
+      refuelStopsSum += v.refuels ? v.refuels.length : 0;
+      const vOdo = Math.max(v.initialKm || 0, ...(v.refuels?.map(r => r.km) || [0]), ...(v.maintenances?.map(maint => maint.km) || [0]));
+      maxOdometerFound = Math.max(maxOdometerFound, vOdo);
+    });
+
+    const totalCostSum = fuelCostSum + maintCostSum;
+    const costPerKm = totalKmSum > 0 ? (totalCostSum / totalKmSum).toFixed(2) : '0.00';
+
+    let avgConsumptionStr = '--';
+    let avgKmPerLStr = '--';
+
+    if (isSingle && singleVehicle) {
+      const m = fullMetricsMap.get(singleVehicle.id)!;
+      if (m.unitPer100Km !== '--') {
+        avgConsumptionStr = `${m.unitPer100Km} ${m.fuelUnit}/100km`;
+      }
+      if (m.kmPerUnit !== '--') {
+        avgKmPerLStr = `${m.kmPerUnit} km/${m.fuelUnit}`;
+      }
+    } else if (totalKmSum > 0 && totalVolumeSum > 0) {
+      const per100 = (totalVolumeSum / totalKmSum) * 100;
+      avgConsumptionStr = `${per100.toFixed(1)} L/100km`;
+      avgKmPerLStr = `${(100 / per100).toFixed(1)} km/L`;
+    }
+
+    return {
+      totalKm: totalKmSum,
+      odometer: maxOdometerFound,
+      kmTrendPercent: 0,
+      fuelCost: fuelCostSum,
+      maintCost: maintCostSum,
+      totalCost: totalCostSum,
+      totalVolume: totalVolumeSum,
+      refuelStopsCount: refuelStopsSum,
+      costPerKm,
+      avgConsumptionStr,
+      avgKmPerLStr,
+      fuelUnit
+    };
+  }
+
+  // Periodic calculation: 'month' or 'year'
+  vehicles.forEach(v => {
+    const rawRefuels = v.refuels || [];
+    const rawMaints = v.maintenances || [];
+    const vInitKm = Number(v.initialKm) || 0;
+
+    // Build complete event timeline
+    interface TimelineEvent {
+      date: string;
+      km: number;
+      type: 'refuel' | 'maintenance';
+      price: number;
+      quantity: number;
+    }
+
+    const events: TimelineEvent[] = [
+      ...rawRefuels.map(r => ({
+        date: r.date || '',
+        km: Number(r.km) || 0,
+        type: 'refuel' as const,
+        price: Number(r.price) || 0,
+        quantity: Number(r.quantity) || 0
+      })),
+      ...rawMaints.map(m => ({
+        date: m.date || '',
+        km: Number(m.km) || 0,
+        type: 'maintenance' as const,
+        price: Number(m.cost) || 0,
+        quantity: 0
+      }))
+    ].filter(e => e.date.length >= 7);
+
+    events.sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (diff !== 0) return diff;
+      return a.km - b.km;
+    });
+
+    const isCurrentPeriod = (d: string) => {
+      if (periodType === 'year') {
+        return d.startsWith(String(targetYear));
+      }
+      return d.startsWith(targetMonth);
+    };
+
+    const isPrevPeriod = (d: string) => {
+      if (periodType === 'year') {
+        return d.startsWith(String(targetYear - 1));
+      }
+      return prevMonthStr ? d.startsWith(prevMonthStr) : false;
+    };
+
+    const isUpToEndOfCurrent = (d: string) => {
+      if (periodType === 'year') {
+        const y = parseInt(d.split('-')[0], 10);
+        return !isNaN(y) && y <= targetYear;
+      }
+      return d.substring(0, 7) <= targetMonth;
+    };
+
+    const isBeforeCurrent = (d: string) => {
+      if (periodType === 'year') {
+        const y = parseInt(d.split('-')[0], 10);
+        return !isNaN(y) && y < targetYear;
+      }
+      return d.substring(0, 7) < targetMonth;
+    };
+
+    const isUpToEndOfPrev = (d: string) => {
+      if (periodType === 'year') {
+        const y = parseInt(d.split('-')[0], 10);
+        return !isNaN(y) && y <= targetYear - 1;
+      }
+      return prevMonthStr ? d.substring(0, 7) <= prevMonthStr : false;
+    };
+
+    const isBeforePrev = (d: string) => {
+      if (periodType === 'year') {
+        const y = parseInt(d.split('-')[0], 10);
+        return !isNaN(y) && y < targetYear - 1;
+      }
+      return prevMonthStr ? d.substring(0, 7) < prevMonthStr : false;
+    };
+
+    // Calculate vehicle distance in current period
+    const currentEvents = events.filter(e => isCurrentPeriod(e.date));
+    let vPeriodDistance = 0;
+    let vOdometer = vInitKm;
+
+    if (currentEvents.length > 0) {
+      const eventsUpToEnd = events.filter(e => isUpToEndOfCurrent(e.date));
+      const eventsBefore = events.filter(e => isBeforeCurrent(e.date));
+
+      const maxKmEnd = Math.max(vInitKm, ...eventsUpToEnd.map(e => e.km));
+      const maxKmBefore = eventsBefore.length > 0 
+        ? Math.max(vInitKm, ...eventsBefore.map(e => e.km))
+        : (vInitKm > 0 ? vInitKm : (currentEvents.length > 1 ? Math.min(...currentEvents.map(e => e.km)) : currentEvents[0].km));
+
+      vPeriodDistance = Math.max(0, maxKmEnd - maxKmBefore);
+      vOdometer = maxKmEnd;
+    } else {
+      // No events in this period; odometer is highest km up to this period
+      const eventsUpToEnd = events.filter(e => isUpToEndOfCurrent(e.date));
+      vOdometer = Math.max(vInitKm, ...eventsUpToEnd.map(e => e.km));
+    }
+
+    // Calculate vehicle distance in previous period for trend
+    const prevEvents = events.filter(e => isPrevPeriod(e.date));
+    let vPrevDistance = 0;
+    if (prevEvents.length > 0) {
+      const eventsUpToEndPrev = events.filter(e => isUpToEndOfPrev(e.date));
+      const eventsBeforePrev = events.filter(e => isBeforePrev(e.date));
+
+      const maxKmEndPrev = Math.max(vInitKm, ...eventsUpToEndPrev.map(e => e.km));
+      const maxKmBeforePrev = eventsBeforePrev.length > 0
+        ? Math.max(vInitKm, ...eventsBeforePrev.map(e => e.km))
+        : (vInitKm > 0 ? vInitKm : (prevEvents.length > 1 ? Math.min(...prevEvents.map(e => e.km)) : prevEvents[0].km));
+
+      vPrevDistance = Math.max(0, maxKmEndPrev - maxKmBeforePrev);
+    }
+
+    // Accumulate sums
+    totalKmSum += vPeriodDistance;
+    prevKmSum += vPrevDistance;
+    maxOdometerFound = Math.max(maxOdometerFound, vOdometer);
+
+    currentEvents.forEach(e => {
+      if (e.type === 'refuel') {
+        fuelCostSum += e.price;
+        totalVolumeSum += e.quantity;
+        refuelStopsSum += 1;
+      } else {
+        maintCostSum += e.price;
+      }
+    });
+  });
+
+  const totalCostSum = fuelCostSum + maintCostSum;
+  const costPerKm = totalKmSum > 0 ? (totalCostSum / totalKmSum).toFixed(2) : '0.00';
+
+  let kmTrendPercent = 0;
+  if (prevKmSum > 0 && totalKmSum > 0) {
+    kmTrendPercent = Math.round(((totalKmSum - prevKmSum) / prevKmSum) * 100);
+  }
+
+  // Exact period consumption calculation
+  let avgConsumptionStr = '--';
+  let avgKmPerLStr = '--';
+
+  if (totalKmSum > 0 && totalVolumeSum > 0) {
+    const lPer100 = (totalVolumeSum / totalKmSum) * 100;
+    avgConsumptionStr = `${lPer100.toFixed(1)} ${fuelUnit}/100km`;
+    avgKmPerLStr = `${(100 / lPer100).toFixed(1)} km/${fuelUnit}`;
+  } else if (isSingle && singleVehicle) {
+    // If no refuels or no km in this month, display certified lifetime average with clear note
+    const m = fullMetricsMap.get(singleVehicle.id)!;
+    if (m.unitPer100Km !== '--') {
+      avgConsumptionStr = `${m.unitPer100Km} ${m.fuelUnit}/100km (media)`;
+    }
+    if (m.kmPerUnit !== '--') {
+      avgKmPerLStr = `${m.kmPerUnit} km/${m.fuelUnit}`;
+    }
+  }
+
+  return {
+    totalKm: totalKmSum,
+    odometer: maxOdometerFound,
+    kmTrendPercent,
+    fuelCost: fuelCostSum,
+    maintCost: maintCostSum,
+    totalCost: totalCostSum,
+    totalVolume: totalVolumeSum,
+    refuelStopsCount: refuelStopsSum,
+    costPerKm,
+    avgConsumptionStr,
+    avgKmPerLStr,
+    fuelUnit
+  };
+}
+

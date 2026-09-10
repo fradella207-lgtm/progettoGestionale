@@ -21,7 +21,8 @@ import {
   Moon,
   Coins
 } from 'lucide-react';
-import { Vehicle, AppSettings, RefuelRecord, MaintenanceRecord } from '../../types';
+import { Vehicle, AppSettings } from '../../types';
+import { calculateRecapMetrics, RecapPeriodMetrics } from '../../utils/consumptionCalculator';
 
 interface RecapStoryModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ interface RecapStoryModalProps {
   settings: AppSettings;
 }
 
-type RecapPeriodType = 'month' | 'year';
+type RecapPeriodType = 'month' | 'year' | 'all';
 type CardTheme = 'light' | 'dark';
 
 interface PersonaBadge {
@@ -63,9 +64,6 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
   const currentMonthNum = now.getMonth() + 1;
   const currentMonthStr = `${currentYear}-${String(currentMonthNum).padStart(2, '0')}`;
 
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-
   // Sharing states
   const [copiedText, setCopiedText] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -81,15 +79,15 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 
   const singleVehicle = selectedVehicleId !== 'all' ? vehicles.find(v => v.id === selectedVehicleId) : null;
 
-  // Available months and years from data
-  const { availableMonths, availableYears } = useMemo(() => {
+  // Available months and years from data, and detect latest active month with real records
+  const { availableMonths, availableYears, latestActiveMonth, latestActiveYear } = useMemo(() => {
     const monthsSet = new Set<string>();
     const yearsSet = new Set<number>();
     yearsSet.add(currentYear);
     monthsSet.add(currentMonthStr);
 
     vehicles.forEach(v => {
-      v.refuels.forEach(r => {
+      v.refuels?.forEach(r => {
         if (r.date) {
           const y = parseInt(r.date.split('-')[0], 10);
           const m = r.date.substring(0, 7);
@@ -97,7 +95,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
           if (m && m.length === 7) monthsSet.add(m);
         }
       });
-      v.maintenances.forEach(m => {
+      v.maintenances?.forEach(m => {
         if (m.date) {
           const y = parseInt(m.date.split('-')[0], 10);
           const mo = m.date.substring(0, 7);
@@ -110,112 +108,51 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     const monthsArr = Array.from(monthsSet).sort().reverse();
     const yearsArr = Array.from(yearsSet).sort((a, b) => b - a);
 
-    return { availableMonths: monthsArr, availableYears: yearsArr };
+    // Pick the most recent month that actually has records
+    let foundMonth = currentMonthStr;
+    for (const m of monthsArr) {
+      const hasRecords = vehicles.some(v => 
+        (v.refuels && v.refuels.some(r => r.date && r.date.startsWith(m))) ||
+        (v.maintenances && v.maintenances.some(maint => maint.date && maint.date.startsWith(m)))
+      );
+      if (hasRecords) {
+        foundMonth = m;
+        break;
+      }
+    }
+
+    let foundYear = currentYear;
+    for (const y of yearsArr) {
+      const hasRecords = vehicles.some(v => 
+        (v.refuels && v.refuels.some(r => r.date && r.date.startsWith(String(y)))) ||
+        (v.maintenances && v.maintenances.some(maint => maint.date && maint.date.startsWith(String(y))))
+      );
+      if (hasRecords) {
+        foundYear = y;
+        break;
+      }
+    }
+
+    return { 
+      availableMonths: monthsArr, 
+      availableYears: yearsArr,
+      latestActiveMonth: foundMonth,
+      latestActiveYear: foundYear
+    };
   }, [vehicles, currentYear, currentMonthStr]);
 
-  // Compute stats, vehicle attributes (stazza, potenza, consumi) and scores
+  const [selectedMonth, setSelectedMonth] = useState<string>(latestActiveMonth);
+  const [selectedYear, setSelectedYear] = useState<number>(latestActiveYear);
+
+  // Compute stats strictly with calculateRecapMetrics (single source of truth)
   const stats = useMemo(() => {
-    const isMonthly = periodType === 'month';
-    const targetMonth = selectedMonth; // "YYYY-MM"
-    const targetYear = isMonthly ? parseInt(selectedMonth.split('-')[0], 10) : selectedYear;
-
-    let prevPeriodRefuels: RefuelRecord[] = [];
-    let currentRefuels: RefuelRecord[] = [];
-    let currentMaintenances: MaintenanceRecord[] = [];
-
-    let prevMonthStr = '';
-    if (isMonthly) {
-      const [y, m] = targetMonth.split('-').map(Number);
-      const prevDate = new Date(y, m - 2, 1);
-      prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-    }
-
-    activeVehicles.forEach(v => {
-      v.refuels.forEach(r => {
-        if (!r.date) return;
-        if (isMonthly) {
-          if (r.date.startsWith(targetMonth)) {
-            currentRefuels.push(r);
-          } else if (r.date.startsWith(prevMonthStr)) {
-            prevPeriodRefuels.push(r);
-          }
-        } else {
-          const rYear = parseInt(r.date.split('-')[0], 10);
-          if (rYear === targetYear) {
-            currentRefuels.push(r);
-          } else if (rYear === targetYear - 1) {
-            prevPeriodRefuels.push(r);
-          }
-        }
-      });
-
-      v.maintenances.forEach(m => {
-        if (!m.date) return;
-        if (isMonthly) {
-          if (m.date.startsWith(targetMonth)) {
-            currentMaintenances.push(m);
-          }
-        } else {
-          const mYear = parseInt(m.date.split('-')[0], 10);
-          if (mYear === targetYear) {
-            currentMaintenances.push(m);
-          }
-        }
-      });
-    });
-
-    currentRefuels.sort((a, b) => (a.km || 0) - (b.km || 0));
-    prevPeriodRefuels.sort((a, b) => (a.km || 0) - (b.km || 0));
-
-    // Distance calculation
-    let totalKm = 0;
-    if (currentRefuels.length >= 2) {
-      totalKm = currentRefuels[currentRefuels.length - 1].km - currentRefuels[0].km;
-    } else if (currentRefuels.length === 1) {
-      totalKm = 420; // estimate for active month with 1 full tank
-    } else {
-      totalKm = 0;
-    }
-
-    let prevKm = 0;
-    if (prevPeriodRefuels.length >= 2) {
-      prevKm = prevPeriodRefuels[prevPeriodRefuels.length - 1].km - prevPeriodRefuels[0].km;
-    }
-
-    let kmTrendPercent = 0;
-    if (prevKm > 0 && totalKm > 0) {
-      kmTrendPercent = Math.round(((totalKm - prevKm) / prevKm) * 100);
-    }
-
-    // Costs
-    const fuelCost = currentRefuels.reduce((acc, r) => acc + (Number(r.price) || 0), 0);
-    const maintCost = currentMaintenances.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
-    const totalCost = fuelCost + maintCost;
-
-    // Fuel/energy volume
-    const totalVolume = currentRefuels.reduce((acc, r) => acc + (Number(r.quantity) || 0), 0);
-    const refuelStopsCount = currentRefuels.length;
-    const costPerKm = totalKm > 0 ? (totalCost / totalKm).toFixed(2) : '0.00';
-
-    // Consumi medi reali (senza punteggi)
-    const isElectric = singleVehicle?.fuelType?.includes('Elettrica') ?? false;
-    let actualLPer100 = 0;
-    let avgConsumptionStr = '';
-    let avgKmPerLStr = '';
-
-    if (totalKm > 0 && totalVolume > 0) {
-      actualLPer100 = Number(((totalVolume / totalKm) * 100).toFixed(1));
-    } else {
-      actualLPer100 = isElectric ? 16.5 : 5.6;
-    }
-
-    if (isElectric) {
-      avgConsumptionStr = `${actualLPer100} kWh/100km`;
-      avgKmPerLStr = `${(100 / actualLPer100).toFixed(1)} km/kWh`;
-    } else {
-      avgConsumptionStr = `${actualLPer100} L/100km`;
-      avgKmPerLStr = `${(100 / actualLPer100).toFixed(1)} km/L`;
-    }
+    const rawMetrics: RecapPeriodMetrics = calculateRecapMetrics(
+      activeVehicles,
+      periodType,
+      selectedMonth,
+      selectedYear,
+      settings.currency
+    );
 
     // Upcoming renewals / deadlines (next 60 days)
     const upcomingRenewals: Array<{ label: string; dateStr: string; daysLeft: number }> = [];
@@ -257,71 +194,74 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       }
     });
 
-    // Determine Driver Persona Badge
+    // Driver Persona Badge derived dynamically from verified real stats
     let persona: PersonaBadge = {
       title: 'Pilota Consapevole',
-      subtitle: 'Guida regolare e controllo attento dei costi',
+      subtitle: `${rawMetrics.totalKm.toLocaleString('it-IT')} km percorsi nel periodo`,
       emoji: '⭐',
       badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
     };
 
-    if (totalKm > 1500) {
+    const isElectric = singleVehicle?.fuelType?.includes('Elettrica') || singleVehicle?.fuelType?.includes('BEV') || false;
+
+    if (rawMetrics.totalKm >= 2000) {
       persona = {
-        title: 'Road Tripper Inarrestabile',
-        subtitle: `Oltre ${totalKm.toLocaleString()} km macinati con sicurezza`,
+        title: 'Macinatore di Chilometri',
+        subtitle: `${rawMetrics.totalKm.toLocaleString('it-IT')} km percorsi ad alto ritmo`,
         emoji: '🛣️',
         badgeColor: 'bg-blue-50 text-blue-700 border-blue-200'
       };
     } else if (singleVehicle?.vehicleType === 'moto') {
       persona = {
         title: 'Spirito Libero su 2 Ruote',
-        subtitle: 'Puro piacere di guida ad ogni curva',
+        subtitle: `${rawMetrics.totalKm.toLocaleString('it-IT')} km su due ruote`,
         emoji: '🏍️',
         badgeColor: 'bg-rose-50 text-rose-700 border-rose-200'
       };
     } else if (isElectric || singleVehicle?.fuelType?.includes('Hybrid')) {
       persona = {
         title: 'Maestro dell\'Efficienza',
-        subtitle: 'Mobilità sostenibile e ottimi consumi energetici',
+        subtitle: `${rawMetrics.totalKm.toLocaleString('it-IT')} km in mobilità elettrificata`,
         emoji: '⚡',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
       };
-    } else if (maintCost > 180) {
+    } else if (rawMetrics.maintCost > 150) {
       persona = {
-        title: 'Custode Perfetto del Mezzo',
-        subtitle: 'Manutenzione impeccabile per massima affidabilità',
+        title: 'Custode del Garage',
+        subtitle: `${settings.currency} ${rawMetrics.maintCost.toFixed(0)} investiti nella cura del mezzo`,
         emoji: '🛠️',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
       };
-    } else if (totalCost < 80 && totalKm > 0) {
+    } else if (rawMetrics.totalKm > 0) {
       persona = {
-        title: 'Re del Risparmio Smart',
-        subtitle: 'Costi contenuti al massimo con zero sprechi',
-        emoji: '🎯',
+        title: 'Guida Regolare & Precisa',
+        subtitle: `${rawMetrics.totalKm.toLocaleString('it-IT')} km con massima precisione`,
+        emoji: '🏙️',
         badgeColor: 'bg-teal-50 text-teal-700 border-teal-200'
+      };
+    } else {
+      persona = {
+        title: 'Veicolo al Sicuro',
+        subtitle: 'Mezzo custodito in garage e pronto all\'uso',
+        emoji: '🛡️',
+        badgeColor: 'bg-slate-100 text-slate-700 border-slate-200'
       };
     }
 
     return {
-      totalKm,
-      kmTrendPercent,
-      fuelCost,
-      maintCost,
-      totalCost,
-      totalVolume,
-      refuelStopsCount,
-      costPerKm,
-      avgConsumptionStr,
-      avgKmPerLStr,
+      ...rawMetrics,
       upcomingRenewals,
       persona,
-      targetMonth,
-      targetYear
+      targetMonth: selectedMonth,
+      targetYear: selectedYear
     };
-  }, [activeVehicles, periodType, selectedMonth, selectedYear, singleVehicle, currentYear]);
+  }, [activeVehicles, periodType, selectedMonth, selectedYear, singleVehicle, currentYear, settings.currency]);
 
   // Formatted Label for period
   const formattedPeriodLabel = useMemo(() => {
+    if (periodType === 'all') {
+      return 'Storico Completo';
+    }
     if (periodType === 'year') {
       return `Anno ${stats.targetYear}`;
     }
@@ -333,7 +273,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
   // Car Title & Plate
   const vehicleTitle = singleVehicle 
     ? `${singleVehicle.brand} ${singleVehicle.model}` 
-    : 'Tutto il Garage';
+    : `Garage Completo (${vehicles.length} veicoli)`;
   const vehiclePlate = singleVehicle?.plate || '';
   const vehiclePhoto = singleVehicle?.photoUrl;
 
@@ -394,12 +334,12 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     // Pill Periodo
     ctx.fillStyle = isDark ? '#1e293b' : '#e0e7ff';
     ctx.beginPath();
-    ctx.roundRect(710, 85, 280, 56, 28);
+    ctx.roundRect(690, 85, 300, 56, 28);
     ctx.fill();
     ctx.fillStyle = isDark ? '#60a5fa' : '#3730a3';
     ctx.font = '800 24px "Plus Jakarta Sans", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(formattedPeriodLabel.toUpperCase(), 850, 122);
+    ctx.fillText(formattedPeriodLabel.toUpperCase(), 840, 122);
     ctx.textAlign = 'left';
 
     // 3. Immagine dell'Auto (Hero Showcase)
@@ -527,7 +467,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       ctx.fillText(subVal, x + 24, factY + 168);
     };
 
-    const volUnit = singleVehicle?.fuelType?.includes('Elettrica') ? 'kWh' : 'L';
+    const volUnit = stats.fuelUnit;
 
     // Box 1: Consumo Medio Reale
     renderFactBox(90, 'Consumo Medio', stats.avgConsumptionStr, stats.avgKmPerLStr, '⛽');
@@ -538,7 +478,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       90 + (colW + colGap) * 2, 
       'Rifornimenti', 
       `${stats.refuelStopsCount} ${stats.refuelStopsCount === 1 ? 'sosta' : 'soste'}`, 
-      stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} ${volUnit} totali` : 'Nessun rifornimento',
+      stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(1)} ${volUnit} totali` : 'Nessun rifornimento',
       '⚡'
     );
 
@@ -570,6 +510,10 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       ctx.fillStyle = isUp ? '#059669' : '#0284c7';
       ctx.font = '700 22px "Plus Jakarta Sans", sans-serif';
       ctx.fillText(`${isUp ? '↑ +' : '↓ '}${stats.kmTrendPercent}% rispetto al periodo precedente`, 125, metricsY + 185);
+    } else if (stats.odometer > 0) {
+      ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+      ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(`Orometro attuale: ${stats.odometer.toLocaleString('it-IT')} km`, 125, metricsY + 185);
     } else {
       ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
       ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
@@ -590,7 +534,10 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 
     ctx.fillStyle = isDark ? '#38bdf8' : '#2563eb';
     ctx.font = '900 64px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(`${settings.currency} ${stats.totalCost.toFixed(0)}`, 90 + halfW + 55, metricsY + 130);
+    const totalCostStr = stats.totalCost < 1000 
+      ? `${settings.currency} ${stats.totalCost.toFixed(2)}` 
+      : `${settings.currency} ${stats.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    ctx.fillText(totalCostStr, 90 + halfW + 55, metricsY + 130);
 
     ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
     ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
@@ -764,14 +711,14 @@ Creato con MyGarage 🚗💨`;
         {/* CONTROLLI DI FILTRO (PERIODO, VEICOLO & TEMA CARD) */}
         <div className="px-4 py-3 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
           
-          {/* Switch Mese / Anno */}
+          {/* Switch Mese / Anno / Tutto */}
           <div className="inline-flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 font-bold shadow-2xs">
             <button
               onClick={() => setPeriodType('month')}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 periodType === 'month' 
                   ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Mese
@@ -781,16 +728,26 @@ Creato con MyGarage 🚗💨`;
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 periodType === 'year' 
                   ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Anno
+            </button>
+            <button
+              onClick={() => setPeriodType('all')}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                periodType === 'all' 
+                  ? 'bg-indigo-600 text-white shadow-xs' 
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Tutto
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             {/* Selettore Mese / Anno */}
-            {periodType === 'month' ? (
+            {periodType === 'month' && (
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -807,7 +764,9 @@ Creato con MyGarage 🚗💨`;
                   );
                 })}
               </select>
-            ) : (
+            )}
+
+            {periodType === 'year' && (
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
@@ -900,11 +859,11 @@ Creato con MyGarage 🚗💨`;
                     <h3 className="text-base font-black tracking-tight leading-tight drop-shadow-sm">
                       {vehicleTitle}
                     </h3>
-                    {vehiclePlate && (
-                      <span className="font-mono text-[10px] text-slate-300 font-semibold">
-                        TARGA {vehiclePlate}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 font-mono text-[10px] text-slate-300 font-semibold">
+                      {vehiclePlate && <span>TARGA {vehiclePlate}</span>}
+                      {vehiclePlate && stats.odometer > 0 && <span>•</span>}
+                      {stats.odometer > 0 && <span>ODO {stats.odometer.toLocaleString('it-IT')} KM</span>}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -915,11 +874,11 @@ Creato con MyGarage 🚗💨`;
                   <h3 className="text-sm font-black text-slate-800 dark:text-white">
                     {vehicleTitle}
                   </h3>
-                  {vehiclePlate && (
-                    <span className="font-mono text-[10px] text-slate-400 font-semibold">
-                      {vehiclePlate}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 font-mono text-[10px] text-slate-400 font-semibold mt-0.5">
+                    {vehiclePlate && <span>{vehiclePlate}</span>}
+                    {vehiclePlate && stats.odometer > 0 && <span>•</span>}
+                    {stats.odometer > 0 && <span>{stats.odometer.toLocaleString('it-IT')} km</span>}
+                  </div>
                 </div>
               )}
             </div>
@@ -1005,7 +964,7 @@ Creato con MyGarage 🚗💨`;
                       {stats.refuelStopsCount} {stats.refuelStopsCount === 1 ? 'sosta' : 'soste'}
                     </span>
                     <span className="text-[9px] text-sky-600 dark:text-sky-400 font-bold block truncate">
-                      {stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} ${singleVehicle?.fuelType?.includes('Elettrica') ? 'kWh' : 'L'}` : 'Nessuna sosta'}
+                      {stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(1)} ${stats.fuelUnit}` : 'Nessuna sosta'}
                     </span>
                   </div>
                 </div>
@@ -1029,12 +988,20 @@ Creato con MyGarage 🚗💨`;
                   </span>
                   <span className="text-xs font-bold text-slate-500">km</span>
                 </div>
-                {stats.kmTrendPercent !== 0 && (
+                {stats.kmTrendPercent !== 0 ? (
                   <span className={`text-[9px] font-bold flex items-center gap-0.5 ${
                     stats.kmTrendPercent > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-sky-600 dark:text-sky-400'
                   }`}>
                     {stats.kmTrendPercent > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                     <span>{stats.kmTrendPercent > 0 ? `+${stats.kmTrendPercent}%` : `${stats.kmTrendPercent}%`}</span>
+                  </span>
+                ) : stats.odometer > 0 ? (
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium block truncate">
+                    Odo: {stats.odometer.toLocaleString('it-IT')} km
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-slate-400 font-medium block">
+                    Costante
                   </span>
                 )}
               </div>
@@ -1047,10 +1014,10 @@ Creato con MyGarage 🚗💨`;
                   Spesa Totale
                 </span>
                 <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 my-0.5 block">
-                  {settings.currency} {stats.totalCost.toFixed(0)}
+                  {settings.currency} {stats.totalCost < 1000 ? stats.totalCost.toFixed(2) : stats.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
                 <span className="text-[9px] text-slate-500 dark:text-slate-400 block truncate">
-                  ⛽ {settings.currency} {stats.fuelCost.toFixed(0)} • {settings.currency} {stats.costPerKm}/km
+                  ⛽ {settings.currency} {stats.fuelCost.toFixed(0)} • 🔧 {settings.currency} {stats.maintCost.toFixed(0)}
                 </span>
               </div>
 

@@ -712,11 +712,24 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
                   className="max-h-[55vh] max-w-full object-contain rounded-xl shadow-md"
                 />
               ) : selectedDocForPreview.fileData && selectedDocForPreview.fileData.startsWith('data:application/pdf') ? (
-                <iframe
-                  src={selectedDocForPreview.fileData}
-                  title={selectedDocForPreview.title}
+                <object
+                  data={selectedDocForPreview.fileData}
+                  type="application/pdf"
                   className="w-full h-[50vh] rounded-xl border border-slate-200"
-                />
+                  aria-label={selectedDocForPreview.title}
+                >
+                  <div className="text-center p-6 space-y-2">
+                    <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+                    <span className="text-xs font-bold text-slate-700 block">{selectedDocForPreview.fileName}</span>
+                    <a
+                      href={selectedDocForPreview.fileData}
+                      download={selectedDocForPreview.fileName}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Scarica documento PDF
+                    </a>
+                  </div>
+                </object>
               ) : (
                 <div className="text-center p-6 space-y-2">
                   <FileText className="w-10 h-10 text-slate-400 mx-auto" />
