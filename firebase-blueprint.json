@@ -35,12 +35,68 @@
         }
       },
       "required": ["email", "name", "vehicles"]
+    },
+    "SharedGarage": {
+      "title": "SharedGarage",
+      "description": "Sincronizzazione veicolo multi-account per coppie o famiglie (funzionalità PRO)",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Codice monouso o persistente di condivisione garage es. GARAGE-8K2M"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Identificativo UID dell'utente PRO che ha generato la condivisione"
+        },
+        "ownerName": {
+          "type": "string",
+          "description": "Nome visualizzato del proprietario del veicolo"
+        },
+        "ownerEmail": {
+          "type": "string",
+          "description": "Email del proprietario del veicolo"
+        },
+        "vehicleId": {
+          "type": "string",
+          "description": "ID del veicolo condiviso"
+        },
+        "vehicle": {
+          "type": "object",
+          "description": "Oggetto completo del veicolo con rifornimenti, manutenzioni e documenti"
+        },
+        "members": {
+          "type": "array",
+          "description": "Elenco account collegati e sincronizzati con ruoli e timestamp"
+        },
+        "allowedUids": {
+          "type": "array",
+          "description": "Lista di UID abilitati alla lettura e scrittura sincronizzata"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Data ISO di creazione del codice di condivisione"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Data ISO dell'ultimo aggiornamento bidirezionale"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Stato attivo o revocato della condivisione"
+        }
+      },
+      "required": ["code", "ownerId", "vehicleId", "vehicle", "active"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "Documento principale utente nel database Firestore per la persistenza del garage"
+    },
+    "/shared_garages/{shareId}": {
+      "schema": "SharedGarage",
+      "description": "Collezione per la sincronizzazione veicoli e spese tra più account abilitati"
     }
   }
 }

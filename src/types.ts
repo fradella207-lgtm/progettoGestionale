@@ -179,6 +179,38 @@ export interface Vehicle {
   manualInfo?: VehicleManualInfo;
   aiChatHistory?: AIChatMessage[];
   tripUsages?: Record<string, string>; // Maps tripId to classification tag (e.g. "Lavoro", "Viaggio", "Città")
+  // Multi-Account / Shared Garage Sync (PRO Feature)
+  isShared?: boolean;
+  sharedGarageCode?: string;
+  sharedOwnerName?: string;
+  sharedOwnerEmail?: string;
+  sharedRole?: 'owner' | 'member';
+  sharedMembersCount?: number;
+  lastSyncTimestamp?: string;
+}
+
+export interface SharedGarageMember {
+  uid: string;
+  name: string;
+  email: string;
+  role: 'owner' | 'member';
+  joinedAt: string;
+}
+
+export interface SharedGarage {
+  id: string; // matches share code, e.g. "GARAGE-7K9M2"
+  code: string;
+  ownerId: string;
+  ownerName: string;
+  ownerEmail: string;
+  vehicleId: string;
+  vehicleName: string;
+  vehicle: Vehicle;
+  members: SharedGarageMember[];
+  allowedUids: string[];
+  createdAt: string;
+  updatedAt: string;
+  active: boolean;
 }
 
 export interface AIAdvice {
@@ -265,4 +297,31 @@ export interface UserAccount {
   provider: 'google' | 'email' | 'guest';
   avatarUrl?: string;
   isLoggedIn: boolean;
+  tier?: UserTier;
+}
+
+export type UserTier = 'FREE' | 'PRO';
+
+export type ProFeatureName = 
+  | 'multi_vehicle' 
+  | 'unlimited_garage'
+  | 'ai_assistant' 
+  | 'export_pdf' 
+  | 'export_csv'
+  | 'cloud_sync' 
+  | 'cloud_backup'
+  | 'shared_garage'
+  | 'multi_account_sync'
+  | 'fuel_alerts';
+
+export interface ProPricingOption {
+  id: 'annual' | 'lifetime';
+  name: string;
+  price: string;
+  numericPrice: number;
+  period: string;
+  highlight?: boolean;
+  badge?: string;
+  description: string;
+  savings?: string;
 }

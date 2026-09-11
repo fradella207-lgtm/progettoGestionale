@@ -15,9 +15,16 @@ import {
   Check,
   Sun,
   Moon,
-  Languages
+  Languages,
+  Crown,
+  Shield,
+  FileSpreadsheet,
+  Printer,
+  Sparkles,
+  Bell,
+  Cloud
 } from 'lucide-react';
-import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage } from '../../types';
+import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage, UserTier, ProFeatureName } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 import { 
   exportAllVehiclesToJSON, 
@@ -26,6 +33,8 @@ import {
   sanitizeImportedGarage, 
   sanitizeImportedVehicle 
 } from '../../utils/vehicleExportImport';
+import { ProBadge } from '../common/ProBadge';
+import { exportVehiclePassportCSV, openPrintableDigitalPassport } from '../../utils/digitalPassportExport';
 
 const THEME_OPTIONS: { id: AppThemeColor; name: string; hex: string; bgClass: string; borderClass: string; desc: string }[] = [
   { id: 'indigo', name: 'Indaco Elegante', hex: '#4f46e5', bgClass: 'bg-indigo-600', borderClass: 'border-indigo-600', desc: 'Predefinito, sobrio e raffinato' },
@@ -42,9 +51,12 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: AppSettings;
   vehicles: Vehicle[];
+  userTier?: UserTier;
   onSaveSettings: (newSettings: AppSettings) => void;
   onResetGarage: () => void;
   onImportGarage: (importedVehicles: Vehicle[]) => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
+  onToggleUserTier?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -52,9 +64,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   vehicles,
+  userTier = 'FREE',
   onSaveSettings,
   onResetGarage,
-  onImportGarage
+  onImportGarage,
+  onOpenUpgradeModal,
+  onToggleUserTier
 }) => {
   const [unitDistance, setUnitDistance] = useState<'km' | 'mi'>(settings.unitDistance);
   const [currency, setCurrency] = useState<'€' | '$' | '£'>(settings.currency);
@@ -411,12 +426,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* SECTION 3: AI & NOTIFICATIONS PREFERENCES */}
           <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Funzionalità Smart</h4>
+            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center justify-between">
+              <span>Funzionalità Smart & Notifiche</span>
+              {userTier === 'FREE' && <ProBadge variant="pill" />}
+            </h4>
             
             <label className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:bg-white transition-colors cursor-pointer">
               <div>
-                <span className="text-sm font-bold text-[#0f172a] block">Avvisi Manutenzione Predittiva AI</span>
-                <span className="text-xs text-[#64748b]">Suggerimenti automatici basati su età veicolo, carburante e chilometri</span>
+                <span className="text-sm font-bold text-[#0f172a] block">Avvisi Manutenzione Predittiva</span>
+                <span className="text-xs text-[#64748b]">Suggerimenti basati su età veicolo, carburante e chilometri</span>
               </div>
               <input 
                 type="checkbox" 
@@ -429,7 +447,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:bg-white transition-colors cursor-pointer">
               <div>
                 <span className="text-sm font-bold text-[#0f172a] block">Notifiche Scadenze e Tagliandi</span>
-                <span className="text-xs text-[#64748b]">Avvisi su revisione, filtri, cinghie e controllo liquidi</span>
+                <span className="text-xs text-[#64748b]">Avvisi su revisione, bollo, assicurazione e controllo liquidi</span>
               </div>
               <input 
                 type="checkbox" 
@@ -438,12 +456,148 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="w-4 h-4 text-[#2563eb] rounded-sm focus:ring-[#2563eb]"
               />
             </label>
+
+            {/* PRO FEATURE: Avvisi Prezzi Carburante di Zona */}
+            <div 
+              onClick={() => {
+                if (userTier === 'FREE') {
+                  onOpenUpgradeModal?.('fuel_alerts');
+                }
+              }}
+              className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${
+                userTier === 'FREE' 
+                  ? 'border-amber-200 bg-amber-50/50 hover:bg-amber-50 cursor-pointer' 
+                  : 'border-slate-200 bg-slate-50'
+              }`}
+            >
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-slate-900 block">Avvisi Prezzi Carburante di Zona</span>
+                  {userTier === 'FREE' ? <ProBadge variant="lock" /> : <ProBadge variant="mini" />}
+                </div>
+                <span className="text-xs text-slate-600">
+                  Notifica automatica quando i distributori vicini abbassano i prezzi sotto la media
+                </span>
+              </div>
+              <div>
+                {userTier === 'FREE' ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenUpgradeModal?.('fuel_alerts');
+                    }}
+                    className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Sblocca
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    Attivo
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* SECTION 2: BACKUP & GARAGE DATA */}
+          {/* SECTION 4: DATI, BACKUP & PASSAPORTO DIGITALE */}
           <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Dati & Backup Garage</h4>
+            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Dati, Backup & Passaporto</h4>
             
+            {/* Cloud Backup (PRO vs Local FREE) */}
+            <div className={`p-3 rounded-xl border ${userTier === 'FREE' ? 'border-indigo-100 bg-indigo-50/40' : 'border-emerald-200 bg-emerald-50/50'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Cloud className={`w-4 h-4 ${userTier === 'FREE' ? 'text-indigo-600' : 'text-emerald-600'}`} />
+                  <span className="text-xs font-bold text-slate-900">
+                    {userTier === 'FREE' ? 'Salvataggio Dati Locale (FREE)' : 'Cloud Backup & Sincronizzazione (PRO)'}
+                  </span>
+                </div>
+                {userTier === 'FREE' ? (
+                  <button
+                    type="button"
+                    onClick={() => onOpenUpgradeModal?.('cloud_backup')}
+                    className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Attiva Cloud PRO
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Sincronizzato
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-600 mt-1">
+                {userTier === 'FREE' 
+                  ? 'I tuoi dati sono memorizzati in locale su questo dispositivo. Passa a PRO per backup su cloud e sync automatico.'
+                  : 'I tuoi veicoli e registri sono salvati in sicurezza e sincronizzati su tutti i tuoi dispositivi.'}
+              </p>
+            </div>
+
+            {/* Passaporto Digitale Certificato (PRO Feature: PDF / CSV) */}
+            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-indigo-600" />
+                  <span className="text-xs font-bold text-slate-900">Passaporto Digitale (PDF & CSV)</span>
+                  {userTier === 'FREE' && <ProBadge variant="mini" />}
+                </div>
+                {userTier === 'FREE' && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenUpgradeModal?.('export_pdf')}
+                    className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md hover:bg-amber-200 cursor-pointer"
+                  >
+                    Solo PRO
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Esporta lo storico completo del veicolo certificato per compravendita, assicurazione o contabilità personale.
+              </p>
+
+              {vehicles.length > 0 && (
+                <div className="flex flex-col gap-1.5 pt-1">
+                  {vehicles.map(v => (
+                    <div key={v.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200 text-xs">
+                      <span className="font-bold text-slate-800 truncate">{v.brand} {v.model} ({v.plate})</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (userTier === 'FREE') {
+                              onOpenUpgradeModal?.('export_pdf');
+                            } else {
+                              openPrintableDigitalPassport(v);
+                            }
+                          }}
+                          className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Printer className="w-3 h-3 text-indigo-600" />
+                          <span>PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (userTier === 'FREE') {
+                              onOpenUpgradeModal?.('export_csv');
+                            } else {
+                              exportVehiclePassportCSV(v);
+                            }
+                          }}
+                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+                          <span>CSV</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Esportazione / Importazione standard JSON */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
@@ -451,7 +605,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer"
               >
                 <Download className="w-4 h-4 text-[#2563eb]" />
-                <span>Esporta Garage ({vehicles.length})</span>
+                <span>Esporta Garage JSON ({vehicles.length})</span>
               </button>
 
               <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer">
@@ -466,26 +620,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </label>
             </div>
 
-            {/* Singoli Veicoli Esportabili */}
-            {vehicles.length > 0 && (
-              <div className="flex flex-col gap-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
-                <span className="text-[10.5px] font-extrabold text-slate-500 uppercase tracking-wider">Esporta singolo veicolo:</span>
-                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                  {vehicles.map(v => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => exportVehicleToJSON(v)}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-white hover:bg-indigo-50 text-slate-800 hover:text-indigo-700 text-xs font-bold rounded-lg border border-slate-200 hover:border-indigo-200 transition-all active:scale-95 cursor-pointer shadow-2xs"
-                      title={`Esporta dati completi di ${v.brand} ${v.model} in JSON`}
-                    >
-                      <Download className="w-3 h-3 text-indigo-600" />
-                      <span>{v.brand} {v.model} ({v.plate})</span>
-                    </button>
-                  ))}
+            {/* DEV MODE: SWITCH USER TIER (FREE <-> PRO) */}
+            <div className="mt-2 p-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                    Stato Account: <span className={userTier === 'PRO' ? 'text-amber-600' : 'text-slate-600'}>{userTier}</span>
+                  </span>
                 </div>
+                <span className="text-[10px] font-mono text-slate-400">DEV MODE</span>
               </div>
-            )}
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-600">
+                  {userTier === 'FREE' 
+                    ? 'Attualmente su piano FREE (max 1 veicolo). Puoi simulare il passaggio a PRO.' 
+                    : 'Attualmente su piano PRO (Garage illimitato, AI, PDF/CSV). Puoi testare il piano FREE.'}
+                </span>
+
+                <button
+                  type="button"
+                  id="btn-dev-toggle-tier"
+                  onClick={onToggleUserTier}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs ${
+                    userTier === 'FREE'
+                      ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                      : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                  }`}
+                >
+                  {userTier === 'FREE' ? '⚡ Simula Upgrade a PRO' : '↩ Torna a Piano FREE'}
+                </button>
+              </div>
+            </div>
 
             <button
               type="button"

@@ -11,29 +11,36 @@ import {
   FileText, 
   Zap, 
   Sparkles,
-  ArrowUpRight
+  ArrowUpRight,
+  Crown,
+  Lock
 } from 'lucide-react';
-import { Vehicle, AppSettings } from '../types';
+import { Vehicle, AppSettings, UserTier, ProFeatureName } from '../types';
+import { ProBadge } from './common/ProBadge';
 
 interface GarageHomeProps {
   vehicles: Vehicle[];
   settings: AppSettings;
+  userTier?: UserTier;
   onSelectVehicle: (vehicleId: string, tab?: 'overview' | 'specs' | 'documents' | 'ai') => void;
   onOpenAddCar: () => void;
   onOpenEditCar: (vehicle: Vehicle) => void;
   onDeleteVehicle: (vehicleId: string) => void;
   onImportVehicles?: (importedVehicles: Vehicle[]) => void;
   onOpenRecap?: (vehicleId?: string) => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
 }
 
 export const GarageHome: React.FC<GarageHomeProps> = ({
   vehicles,
   settings,
+  userTier = 'FREE',
   onSelectVehicle,
   onOpenAddCar,
   onOpenEditCar,
   onDeleteVehicle,
-  onOpenRecap
+  onOpenRecap,
+  onOpenUpgradeModal
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFuelCategory, setSelectedFuelCategory] = useState<string>('all');
@@ -108,27 +115,58 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
 
       {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA CENTRATA) */}
       {vehicles.length > 0 && (
-        <section className="grid grid-cols-3 gap-2 bg-white border border-slate-200/80 p-3 sm:p-4 rounded-2xl shadow-2xs text-center">
-          <div className="flex flex-col items-center justify-center">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Veicoli</span>
-            <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-              {vehicles.length}
-            </span>
+        <section className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-3 gap-2 bg-white border border-slate-200/80 p-3 sm:p-4 rounded-2xl shadow-2xs text-center">
+            <div className="flex flex-col items-center justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Veicoli</span>
+              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+                {vehicles.length}
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center border-l border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Registrati</span>
+              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
+                {fleetSummary.recordedKm.toLocaleString('it-IT')} km
+              </span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center border-l border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Spesa Complessiva</span>
+              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
+                {settings.currency} {fleetSummary.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center border-l border-slate-100">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Registrati</span>
-            <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
-              {fleetSummary.recordedKm.toLocaleString('it-IT')} km
-            </span>
-          </div>
+          {/* BANNER INFORMATIVO PIANO FREE */}
+          {userTier === 'FREE' && vehicles.length >= 1 && (
+            <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-300/60 rounded-2xl px-3.5 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-2xs">
+                  <Crown className="w-4 h-4 fill-slate-950" />
+                </div>
+                <div>
+                  <span className="text-xs font-black text-slate-900 block leading-tight">
+                    Piano FREE: 1/1 veicolo utilizzato
+                  </span>
+                  <span className="text-[11px] text-slate-600">
+                    Sblocca il Garage Illimitato (2+ auto/moto), l&apos;Assistente AI e il Passaporto Digitale.
+                  </span>
+                </div>
+              </div>
 
-          <div className="flex flex-col items-center justify-center border-l border-slate-100">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Spesa Complessiva</span>
-            <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
-              {settings.currency} {fleetSummary.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-            </span>
-          </div>
+              <button
+                type="button"
+                id="btn-upgrade-garage-banner"
+                onClick={() => onOpenUpgradeModal?.('multi_vehicle')}
+                className="self-end sm:self-auto px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-slate-950 text-xs font-black rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <span>Passa a PRO</span>
+                <Crown className="w-3.5 h-3.5 fill-slate-950" />
+              </button>
+            </div>
+          )}
         </section>
       )}
 
@@ -147,6 +185,21 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
           </div>
 
           <div className="flex items-center justify-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full md:w-auto">
+            {/* PULSANTE AGGIUNGI VEICOLO DIRETTO */}
+            <button
+              type="button"
+              id="btn-add-vehicle-home-strip"
+              onClick={onOpenAddCar}
+              className="px-3 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1.5 shadow-2xs active:scale-95"
+              title={userTier === 'FREE' && vehicles.length >= 1 ? 'Sblocca veicoli illimitati con MyGarage360 PRO' : 'Aggiungi un nuovo veicolo'}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Aggiungi</span>
+              {userTier === 'FREE' && vehicles.length >= 1 && (
+                <ProBadge variant="mini" />
+              )}
+            </button>
+
             {[
               { id: 'all', label: 'Tutti' },
               { id: 'cars', label: 'Auto' },
@@ -360,13 +413,27 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
           {/* Card Aggiungi Veicolo (opzionale alla fine della griglia) */}
           <div
             onClick={onOpenAddCar}
-            className="rounded-2xl border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/40 hover:bg-slate-50/90 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px]"
+            className="rounded-2xl border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/40 hover:bg-slate-50/90 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px] relative"
           >
+            {userTier === 'FREE' && vehicles.length >= 1 && (
+              <div className="absolute top-3.5 right-3.5">
+                <ProBadge variant="lock" />
+              </div>
+            )}
             <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-700 flex items-center justify-center shadow-2xs group-hover:scale-105 group-hover:border-slate-400 transition-all mb-2.5">
               <Plus className="w-5 h-5 text-slate-800" />
             </div>
-            <span className="text-xs sm:text-sm font-bold text-slate-800">Aggiungi un veicolo</span>
-            <span className="text-[11px] text-slate-400 mt-0.5">Auto o moto</span>
+            <div className="flex items-center gap-1.5 justify-center">
+              <span className="text-xs sm:text-sm font-bold text-slate-800">Aggiungi un veicolo</span>
+              {userTier === 'FREE' && vehicles.length >= 1 && (
+                <ProBadge variant="mini" />
+              )}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-0.5">
+              {userTier === 'FREE' && vehicles.length >= 1 
+                ? 'Passa a PRO per aggiungere 2 o più veicoli' 
+                : 'Auto o moto'}
+            </span>
           </div>
         </section>
       )}

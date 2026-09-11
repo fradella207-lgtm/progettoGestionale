@@ -13,18 +13,22 @@ import {
   Globe,
   LogIn,
   LogOut,
-  Sparkles
+  Sparkles,
+  Crown
 } from 'lucide-react';
-import { UserAccount } from '../../types';
+import { UserAccount, UserTier, ProFeatureName } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
+import { ProBadge } from '../common/ProBadge';
 
 interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   account: UserAccount;
   vehiclesCount: number;
+  userTier?: UserTier;
   onSaveAccount: (account: UserAccount) => void;
   onOpenAuthModal: () => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onLogout: () => void;
 }
 
@@ -33,8 +37,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   onClose,
   account,
   vehiclesCount,
+  userTier = 'FREE',
   onSaveAccount,
   onOpenAuthModal,
+  onOpenUpgradeModal,
   onLogout
 }) => {
   const [name, setName] = useState(account.name);
@@ -116,11 +122,30 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               {name ? name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="text-base font-extrabold text-[#0f172a]">{name || 'Utente Garage'}</h4>
-                <span className="text-[10px] font-extrabold text-[#059669] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md uppercase">
-                  {account.plan}
-                </span>
+                {userTier === 'PRO' ? (
+                  <span className="text-[10px] font-extrabold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md uppercase inline-flex items-center gap-1">
+                    <Crown className="w-3 h-3 text-amber-600" /> PRO ACCOUNT
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-extrabold text-slate-700 bg-slate-200 px-2 py-0.5 rounded-md uppercase">
+                      PIANO FREE
+                    </span>
+                    <button
+                      type="button"
+                      id="btn-account-upgrade-pro"
+                      onClick={() => {
+                        onClose();
+                        onOpenUpgradeModal?.();
+                      }}
+                      className="text-[10px] font-black text-amber-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 px-2 py-0.5 rounded-md transition-transform active:scale-95 shadow-2xs cursor-pointer"
+                    >
+                      ★ Passa a PRO
+                    </button>
+                  </div>
+                )}
               </div>
               <p className="text-xs text-[#64748b]">{email}</p>
               <div className="flex items-center gap-2 mt-1">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Vehicle, RefuelRecord, MaintenanceRecord, AppNotification, AppSettings, UserAccount, EnergySourceType, Station } from './types';
+import { Vehicle, RefuelRecord, MaintenanceRecord, AppNotification, AppSettings, UserAccount, EnergySourceType, Station, UserTier, ProFeatureName } from './types';
 import { SEED_GARAGE } from './data/seedGarage';
 import { Header } from './components/Header';
 import { GarageHome } from './components/GarageHome';
@@ -16,8 +16,10 @@ import { NotificationsModal } from './components/modals/NotificationsModal';
 import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { RecapStoryModal } from './components/modals/RecapStoryModal';
+import { PaywallModal } from './components/modals/PaywallModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
+import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
 function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
@@ -247,6 +249,30 @@ export default function App() {
   const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
   const [recapInitialVehicleId, setRecapInitialVehicleId] = useState<string | undefined>(undefined);
 
+  // 8. USER TIER & PAYWALL STATE (FREEMIUM: FREE vs PRO)
+  const [userTier, setUserTier] = useState<UserTier>(() => getStoredUserTier());
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [paywallTargetFeature, setPaywallTargetFeature] = useState<ProFeatureName | undefined>(undefined);
+
+  const handleOpenUpgradeModal = (feature?: ProFeatureName) => {
+    setPaywallTargetFeature(feature);
+    setIsPaywallOpen(true);
+  };
+
+  const handleUpgradeSuccess = (optionId: string) => {
+    const newTier = simulateUpgradeToPro();
+    setUserTier(newTier);
+    setIsPaywallOpen(false);
+    showToast('🎉 Benvenuto in MyGarage360 PRO! Tutte le funzionalità sono ora sbloccate.', 'success');
+  };
+
+  const handleToggleUserTier = () => {
+    const nextTier: UserTier = userTier === 'PRO' ? 'FREE' : 'PRO';
+    saveUserTier(nextTier);
+    setUserTier(nextTier);
+    showToast(`Modalità Account cambiata a: ${nextTier}`, 'info');
+  };
+
   const handleOpenRecap = (carId?: string) => {
     setRecapInitialVehicleId(carId || selectedCarId);
     setIsRecapModalOpen(true);
@@ -422,8 +448,24 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handler: Open Add Car with Freemium Gate (1 vehicle max on FREE)
+  const handleOpenAddCarRequest = () => {
+    if (userTier === 'FREE' && vehicles.length >= 1) {
+      handleOpenUpgradeModal('unlimited_garage');
+      return;
+    }
+    setVehicleToEdit(null);
+    setIsAddCarModalOpen(true);
+  };
+
   // Handler: Save vehicle (Create or Update)
   const handleSaveVehicle = async (vehicleData: Partial<Vehicle>) => {
+    // Piano FREE: Enforce 1 vehicle maximum
+    if (!vehicleToEdit && vehicles.length >= 1 && userTier === 'FREE') {
+      setIsAddCarModalOpen(false);
+      handleOpenUpgradeModal('unlimited_garage');
+      return;
+    }
     let manualData = vehicleData.manualInfo || vehicleData.technicalSpecs?.manualInfo;
     if (!manualData && vehicleData.brand && vehicleData.model) {
       try {
@@ -737,14 +779,12 @@ export default function App() {
         notifications={notifications}
         settings={settings}
         account={account}
+        userTier={userTier}
         onNavigateGarage={() => {
           setCurrentView('garage');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onOpenAddCar={() => {
-          setVehicleToEdit(null);
-          setIsAddCarModalOpen(true);
-        }}
+        onOpenAddCar={handleOpenAddCarRequest}
         onOpenEditCar={() => {
           setVehicleToEdit(selectedVehicle);
           setIsAddCarModalOpen(true);
@@ -755,6 +795,7 @@ export default function App() {
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onMarkAllNotificationsRead={handleMarkAllNotificationsAsRead}
         onOpenRecap={handleOpenRecap}
+        onOpenUpgradeModal={handleOpenUpgradeModal}
         onLogout={handleLogout}
       />
 
@@ -766,6 +807,8 @@ export default function App() {
               vehicles={vehicles}
               selectedVehicle={selectedVehicle}
               settings={settings}
+              userTier={userTier}
+              onOpenUpgradeModal={handleOpenUpgradeModal}
               onOpenRefuelWithStation={handleOpenRefuelWithStation}
             />
           </div>
@@ -775,20 +818,15 @@ export default function App() {
             selectedVehicleId={selectedCarId}
             onSelectVehicle={(id) => setSelectedCarId(id)}
             onUpdateVehicle={handleDirectUpdateVehicle}
-            onOpenAddVehicleModal={() => {
-              setVehicleToEdit(null);
-              setIsAddCarModalOpen(true);
-            }}
+            onOpenAddVehicleModal={handleOpenAddCarRequest}
           />
         ) : currentView === 'garage' ? (
           <GarageHome 
             vehicles={vehicles}
             settings={settings}
+            userTier={userTier}
             onSelectVehicle={handleSelectVehicle}
-            onOpenAddCar={() => {
-              setVehicleToEdit(null);
-              setIsAddCarModalOpen(true);
-            }}
+            onOpenAddCar={handleOpenAddCarRequest}
             onOpenEditCar={(car) => {
               setVehicleToEdit(car);
               setIsAddCarModalOpen(true);
@@ -796,6 +834,7 @@ export default function App() {
             onDeleteVehicle={handleDeleteVehicle}
             onImportVehicles={handleImportVehicles}
             onOpenRecap={handleOpenRecap}
+            onOpenUpgradeModal={handleOpenUpgradeModal}
           />
         ) : (
           selectedVehicle ? (
@@ -803,6 +842,7 @@ export default function App() {
               vehicle={selectedVehicle}
               vehicles={vehicles}
               settings={settings}
+              userTier={userTier}
               initialTab={detailInitialTab}
               onSelectVehicle={(id) => setSelectedCarId(id)}
               onBackToGarage={() => setCurrentView('garage')}
@@ -833,6 +873,7 @@ export default function App() {
                 setIsAddCarModalOpen(true);
               }}
               onOpenRecap={handleOpenRecap}
+              onOpenUpgradeModal={handleOpenUpgradeModal}
             />
           ) : (
             <div className="text-center py-20">
@@ -920,12 +961,15 @@ export default function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         vehicles={vehicles}
+        userTier={userTier}
         onSaveSettings={(newSettings) => {
           setSettings(newSettings);
           showToast('Impostazioni salvate con successo!', 'success');
         }}
         onResetGarage={handleResetGarage}
         onImportGarage={handleImportGarage}
+        onOpenUpgradeModal={handleOpenUpgradeModal}
+        onToggleUserTier={handleToggleUserTier}
       />
 
       <NotificationsModal 
@@ -942,11 +986,13 @@ export default function App() {
         onClose={() => setIsAccountModalOpen(false)}
         account={account}
         vehiclesCount={vehicles.length}
+        userTier={userTier}
         onSaveAccount={(newAccount) => {
           setAccount(newAccount);
           showToast('Profilo utente aggiornato!', 'success');
         }}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenUpgradeModal={handleOpenUpgradeModal}
         onLogout={handleLogout}
       />
 
@@ -963,6 +1009,13 @@ export default function App() {
         vehicles={vehicles}
         currentVehicleId={recapInitialVehicleId || selectedCarId}
         settings={settings}
+      />
+
+      <PaywallModal 
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        targetFeature={paywallTargetFeature}
+        onUpgradeSuccess={handleUpgradeSuccess}
       />
 
     </div>

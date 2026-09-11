@@ -27,21 +27,26 @@ import {
   Lock,
   Search,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Crown
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { Vehicle, AIChatMessage } from '../types';
+import { Vehicle, AIChatMessage, UserTier, ProFeatureName } from '../types';
 import { ManualManagerModal } from './modals/ManualManagerModal';
 import { searchAndRetrieveCarManual } from '../utils/carManualService';
 
 interface CarAIAssistantProps {
   vehicle: Vehicle;
   onUpdateVehicle: (updated: Vehicle) => void;
+  userTier?: UserTier;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
 }
 
 export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   vehicle,
   onUpdateVehicle,
+  userTier = 'FREE',
+  onOpenUpgradeModal
 }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -433,6 +438,89 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   };
 
   const activeCategory = promptCategories.find(c => c.id === activeModalTab) || promptCategories[0];
+
+  // =========================================================================
+  // IF USER IS FREE: DISPLAY EXCLUSIVE PRO PAYWALL GATE
+  // =========================================================================
+  if (userTier === 'FREE') {
+    return (
+      <div className="w-full max-w-full min-w-0 bg-white border border-slate-200/90 rounded-3xl shadow-xs overflow-hidden flex flex-col p-6 sm:p-10 items-center justify-center text-center font-['Plus_Jakarta_Sans',sans-serif]">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 flex items-center justify-center mb-4 shadow-md shadow-amber-500/20">
+          <Crown className="w-8 h-8 fill-slate-950" />
+        </div>
+
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-300 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
+          <span>Funzionalità Esclusiva PRO</span>
+        </div>
+
+        <h3 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight max-w-md">
+          Assistente Meccanico AI Illimitato
+        </h3>
+
+        <p className="text-xs sm:text-sm text-slate-600 max-w-lg mt-2 leading-relaxed">
+          Ottieni supporto diagnostico intelligente 24/7 per <strong>{vehicle.brand} {vehicle.model}</strong>: decodifica codici di errore OBD2, spiegazione spie cruscotto, manutenzione preventiva e consultazione contestuale del manuale di bordo.
+        </p>
+
+        {/* Feature grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl w-full my-6 text-left">
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+            <div className="flex items-center gap-2 font-extrabold text-xs text-slate-900 mb-1">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span>Diagnostica Errori OBD2</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Inserisci i codici guasto e scopri gravità, possibili cause e soluzioni consigliate.
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+            <div className="flex items-center gap-2 font-extrabold text-xs text-slate-900 mb-1">
+              <BookOpen className="w-4 h-4 text-indigo-600" />
+              <span>Manuale di Bordo Digitale</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Fai qualsiasi domanda e ottieni risposte con le pagine e specifiche esatte del veicolo.
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+            <div className="flex items-center gap-2 font-extrabold text-xs text-slate-900 mb-1">
+              <Wrench className="w-4 h-4 text-emerald-600" />
+              <span>Piani Manutenzione Predittivi</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Intervalli consigliati per oli, cinghie, candele, filtri e pastiglie freni.
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+            <div className="flex items-center gap-2 font-extrabold text-xs text-slate-900 mb-1">
+              <Bot className="w-4 h-4 text-blue-600" />
+              <span>Chat Illimitata 24/7</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Chiedi consigli su consumi, rumori anomali, pressione gomme e rodaggio.
+            </p>
+          </div>
+        </div>
+
+        {/* CTA Button */}
+        <button
+          type="button"
+          id="btn-unlock-ai-assistant-pro"
+          onClick={() => onOpenUpgradeModal?.('ai_assistant')}
+          className="px-6 py-3.5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-500 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-slate-950 font-black text-sm rounded-2xl shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <Crown className="w-4 h-4 fill-slate-950" />
+          <span>Passa a MyGarage360 PRO per Sbloccare</span>
+        </button>
+
+        <span className="text-[11px] text-slate-400 mt-2 font-medium">
+          A partire da 3,99 €/anno oppure 11,99 € Una Tantum a vita
+        </span>
+      </div>
+    );
+  }
 
   // =========================================================================
   // IF MANUAL IS NOT ATTACHED: DISPLAY MANDATORY MANUAL ONBOARDING GATE

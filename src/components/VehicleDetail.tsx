@@ -15,9 +15,14 @@ import {
   FileText, 
   Check, 
   Copy,
-  AlertTriangle
+  AlertTriangle,
+  Shield,
+  FileSpreadsheet,
+  Printer,
+  Download,
+  Crown
 } from 'lucide-react';
-import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType } from '../types';
+import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType, UserTier, ProFeatureName } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
 import { BoardTripsModal } from './modals/BoardTripsModal';
 import { RefuelsRegistryModal } from './modals/RefuelsRegistryModal';
@@ -26,11 +31,14 @@ import { calculateVehicleConsumptionMetrics } from '../utils/consumptionCalculat
 import { CarDocumentsVault } from './CarDocumentsVault';
 import { CarAIAssistant } from './CarAIAssistant';
 import { formatVinForDisplay } from '../utils/vinValidator';
+import { exportVehiclePassportCSV, openPrintableDigitalPassport } from '../utils/digitalPassportExport';
+import { ProBadge } from './common/ProBadge';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
   vehicles?: Vehicle[];
   settings: AppSettings;
+  userTier?: UserTier;
   initialTab?: 'overview' | 'documents' | 'ai';
   onSelectVehicle?: (vehicleId: string) => void;
   onBackToGarage?: () => void;
@@ -42,11 +50,13 @@ interface VehicleDetailProps {
   onOpenEditMaintenance: (maint: MaintenanceRecord) => void;
   onOpenFixTank: () => void;
   onOpenRecap?: (vehicleId?: string) => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
 }
 
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   vehicle,
   settings,
+  userTier = 'FREE',
   initialTab = 'overview',
   onUpdateVehicle,
   onOpenEditCar,
@@ -55,7 +65,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenAddMaintenance,
   onOpenEditMaintenance,
   onOpenFixTank,
-  onOpenRecap
+  onOpenRecap,
+  onOpenUpgradeModal
 }) => {
   const [mainTab, setMainTab] = useState<'overview' | 'documents' | 'ai'>(
     (initialTab === 'overview' || initialTab === 'documents' || initialTab === 'ai') ? initialTab : 'overview'
@@ -73,6 +84,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const [isRefuelsRegistryOpen, setIsRefuelsRegistryOpen] = useState(false);
   const [isMaintenancesRegistryOpen, setIsMaintenancesRegistryOpen] = useState(false);
   const [copiedVin, setCopiedVin] = useState(false);
+  const [showPassportMenu, setShowPassportMenu] = useState(false);
 
   const handleCopyVin = (vinStr: string) => {
     try {
@@ -193,6 +205,73 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   {copiedVin ? <Check className="w-3 h-3 text-emerald-600 stroke-[3]" /> : <Copy className="w-3 h-3 text-slate-400" />}
                 </button>
               )}
+
+              {/* Passaporto Digitale Button (PDF/CSV PRO) */}
+              <div className="relative">
+                <button
+                  type="button"
+                  id="btn-digital-passport-trigger"
+                  onClick={() => {
+                    if (userTier === 'FREE') {
+                      onOpenUpgradeModal?.('export_pdf');
+                    } else {
+                      setShowPassportMenu(prev => !prev);
+                    }
+                  }}
+                  className="bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  title="Esporta Passaporto Digitale del veicolo (PDF / CSV)"
+                >
+                  <Shield className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Passaporto Digitale</span>
+                  {userTier === 'FREE' ? (
+                    <ProBadge variant="lock" />
+                  ) : (
+                    <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.2 rounded-md uppercase">
+                      PRO
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown menu for PRO users */}
+                {showPassportMenu && userTier === 'PRO' && (
+                  <div 
+                    className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 z-30 flex flex-col gap-1 font-sans text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      id="btn-print-passport-pdf"
+                      onClick={() => {
+                        setShowPassportMenu(false);
+                        openPrintableDigitalPassport(vehicle);
+                      }}
+                      className="w-full text-left p-2 rounded-lg hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 transition-colors flex items-center gap-2 font-bold cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <div>
+                        <span className="block font-bold">Stampa / Salva in PDF</span>
+                        <span className="text-[10px] text-slate-500 font-normal">Report certificato con grafici e scadenze</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="btn-export-passport-csv"
+                      onClick={() => {
+                        setShowPassportMenu(false);
+                        exportVehiclePassportCSV(vehicle);
+                      }}
+                      className="w-full text-left p-2 rounded-lg hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 transition-colors flex items-center gap-2 font-bold cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="block font-bold">Scarica Tabella Dati (CSV)</span>
+                        <span className="text-[10px] text-slate-500 font-normal">Foglio di calcolo compatibile Excel</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -257,7 +336,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
         <button
           type="button"
-          onClick={() => setMainTab('ai')}
+          onClick={() => {
+            if (userTier === 'FREE') {
+              onOpenUpgradeModal?.('ai_assistant');
+            } else {
+              setMainTab('ai');
+            }
+          }}
           className={`flex-1 py-2 px-3 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             mainTab === 'ai'
               ? 'bg-white text-slate-900 shadow-xs'
@@ -266,6 +351,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-500" />
           <span>Assistente & Manuale</span>
+          {userTier === 'FREE' ? (
+            <ProBadge variant="mini" />
+          ) : (
+            <span className="text-[9px] bg-amber-100 text-amber-900 font-black px-1.5 py-0.2 rounded-md">
+              PRO
+            </span>
+          )}
         </button>
       </section>
 
@@ -551,6 +643,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
           <CarAIAssistant 
             vehicle={vehicle} 
+            userTier={userTier}
+            onOpenUpgradeModal={onOpenUpgradeModal}
             onUpdateVehicle={onUpdateVehicle || (() => {})} 
           />
         </div>

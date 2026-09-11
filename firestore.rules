@@ -22,6 +22,11 @@ service cloud.firestore {
       allow write: if isMasterAccount();
     }
 
+    // Garage Condiviso per sincronizzazione multi-account (Coppia / Famiglia - Funzione PRO)
+    match /shared_garages/{shareId} {
+      allow read, write: if true;
+    }
+
     // Public demo fallback se ospite in locale
     match /guest_data/{document=**} {
       allow read, write: if true;

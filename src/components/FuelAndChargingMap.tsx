@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
-import { Station, FuelType, Vehicle, EnergySourceType, AppSettings } from '../types';
+import { Station, FuelType, Vehicle, EnergySourceType, AppSettings, UserTier, ProFeatureName } from '../types';
 import { SEED_STATIONS, calculateDistanceKm } from '../data/seedStations';
+import { ProBadge } from './common/ProBadge';
 import { 
   Fuel, 
   Zap, 
@@ -27,13 +28,17 @@ import {
   X,
   Copy,
   CheckCheck,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  Crown
 } from 'lucide-react';
 
 interface FuelAndChargingMapProps {
   vehicles: Vehicle[];
   selectedVehicle?: Vehicle;
   settings?: AppSettings;
+  userTier?: UserTier;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onOpenRefuelWithStation?: (station: Station, fuelOrPlug: { price: number; type: EnergySourceType; name: string }) => void;
 }
 
@@ -41,6 +46,8 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   vehicles,
   selectedVehicle,
   settings,
+  userTier = 'FREE',
+  onOpenUpgradeModal,
   onOpenRefuelWithStation
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -1216,6 +1223,35 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncingLive ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* FUEL PRICE ALERTS BUTTON (PRO FEATURE) */}
+          <button
+            type="button"
+            id="btn-fuel-price-alerts"
+            onClick={() => {
+              if (userTier === 'FREE') {
+                onOpenUpgradeModal?.('fuel_alerts');
+              } else {
+                alert('🔔 Avvisi Prezzi Carburante di Zona: ATTIVI!\nRiceverai notifiche quando i distributori attorno alla tua posizione o nelle città salvate riducono i prezzi sotto la media regionale.');
+              }
+            }}
+            title={userTier === 'PRO' ? "Avvisi Prezzi di Zona Attivi" : "Avvisi Prezzi Carburante di Zona (Disponibile in PRO)"}
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+              userTier === 'PRO'
+                ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100'
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Bell className="w-4 h-4 text-amber-600" />
+            <span className="hidden md:inline text-xs font-bold">Avvisi Prezzi</span>
+            {userTier === 'FREE' ? (
+              <ProBadge variant="lock" />
+            ) : (
+              <span className="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">
+                PRO
+              </span>
+            )}
           </button>
 
         </div>

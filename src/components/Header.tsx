@@ -7,9 +7,10 @@ import {
   Sun,
   Moon,
   Globe,
-  Sparkles
+  Sparkles,
+  Crown
 } from 'lucide-react';
-import { Vehicle, AppNotification, AppSettings, UserAccount } from '../types';
+import { Vehicle, AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 import { TopRightMenu } from './TopRightMenu';
 import { getTranslation } from '../i18n/translations';
 
@@ -19,6 +20,7 @@ interface HeaderProps {
   notifications: AppNotification[];
   settings: AppSettings;
   account: UserAccount;
+  userTier?: UserTier;
   onNavigateGarage: () => void;
   onOpenAddCar: () => void;
   onOpenEditCar?: () => void;
@@ -28,6 +30,7 @@ interface HeaderProps {
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
   onOpenRecap?: () => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onLogout: () => void;
   onToggleThemeMode?: () => void;
   onChangeLanguage?: (lang: 'it' | 'en') => void;
@@ -39,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   notifications,
   settings,
   account,
+  userTier = 'FREE',
   onNavigateGarage,
   onOpenAddCar,
   onOpenEditCar,
@@ -48,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAuthModal,
   onMarkAllNotificationsRead,
   onOpenRecap,
+  onOpenUpgradeModal,
   onLogout,
   onToggleThemeMode,
   onChangeLanguage
@@ -182,17 +187,42 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
+        {/* PRO BADGE / UPGRADE CTA */}
+        {userTier === 'FREE' ? (
+          <button
+            id="btn-header-upgrade-pro"
+            type="button"
+            onClick={() => onOpenUpgradeModal?.()}
+            className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 active:scale-95 text-slate-950 flex items-center gap-1.5 text-xs font-black transition-all cursor-pointer shadow-xs shadow-amber-500/20 shrink-0"
+            title="Sblocca MyGarage360 PRO: Garage illimitato, AI e Passaporto Digitale"
+          >
+            <Crown className="w-3.5 h-3.5 fill-slate-950" />
+            <span className="hidden sm:inline">Passa a PRO</span>
+            <span className="sm:hidden">PRO</span>
+          </button>
+        ) : (
+          <div 
+            className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-slate-900 to-indigo-950 text-amber-300 border border-amber-500/30 flex items-center gap-1 text-xs font-black shadow-xs cursor-default select-none shrink-0"
+            title="Account MyGarage360 PRO Attivo"
+          >
+            <Crown className="w-3.5 h-3.5 fill-amber-300" />
+            <span>PRO</span>
+          </div>
+        )}
+
         {/* UNIFIED TOP-RIGHT BUTTON (Settings, Notifications, Account) */}
         <TopRightMenu 
           notifications={notifications}
           settings={settings}
           account={account}
+          userTier={userTier}
           onOpenSettings={onOpenSettings}
           onOpenNotifications={onOpenNotifications}
           onOpenAccount={onOpenAccount}
           onOpenAuthModal={onOpenAuthModal}
           onMarkAllNotificationsRead={onMarkAllNotificationsRead}
           onOpenRecap={onOpenRecap}
+          onOpenUpgradeModal={onOpenUpgradeModal}
           onLogout={onLogout}
         />
       </div>

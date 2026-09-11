@@ -10,20 +10,23 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Database,
-  LogOut
+  LogOut,
+  Crown
 } from 'lucide-react';
-import { AppNotification, AppSettings, UserAccount } from '../types';
+import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
 interface TopRightMenuProps {
   notifications: AppNotification[];
   settings: AppSettings;
   account: UserAccount;
+  userTier?: UserTier;
   onOpenSettings: () => void;
   onOpenNotifications: () => void;
   onOpenAccount: () => void;
   onOpenAuthModal: () => void;
   onMarkAllNotificationsRead: () => void;
   onOpenRecap?: () => void;
+  onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onLogout?: () => void;
 }
 
@@ -31,12 +34,14 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   notifications,
   settings,
   account,
+  userTier = 'FREE',
   onOpenSettings,
   onOpenNotifications,
   onOpenAccount,
   onOpenAuthModal,
   onMarkAllNotificationsRead,
   onOpenRecap,
+  onOpenUpgradeModal,
   onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -107,10 +112,43 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
                 <p className="text-xs text-[#64748b] truncate max-w-[160px]">{account.email}</p>
               </div>
             </div>
-            <span className="text-[10px] font-extrabold text-[#059669] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md uppercase">
-              {account.plan}
-            </span>
+            {userTier === 'PRO' ? (
+              <span className="text-[10px] font-black text-amber-900 bg-gradient-to-r from-amber-300 to-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1 shadow-2xs">
+                <Crown className="w-3 h-3 fill-amber-900" />
+                <span>PRO</span>
+              </span>
+            ) : (
+              <span className="text-[10px] font-extrabold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md uppercase">
+                FREE
+              </span>
+            )}
           </div>
+
+          {/* UPGRADE PRO BANNER FOR FREE USERS */}
+          {userTier === 'FREE' && (
+            <div className="p-3 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-indigo-50 border-b border-amber-200 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-2xs shrink-0">
+                  <Crown className="w-4 h-4 fill-slate-950" />
+                </div>
+                <div>
+                  <span className="text-xs font-black text-slate-900 block leading-tight">MyGarage360 PRO</span>
+                  <span className="text-[10px] text-slate-600 font-medium">3,99 €/anno o 11,99 € a vita</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="btn-dropdown-upgrade-pro"
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenUpgradeModal?.();
+                }}
+                className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-[11px] rounded-lg shadow-2xs hover:brightness-105 active:scale-95 cursor-pointer shrink-0"
+              >
+                Passa a PRO
+              </button>
+            </div>
+          )}
 
           {/* QUICK AUTH BAR */}
           <div className="px-3 py-2 bg-blue-50/50 border-b border-blue-100/60 flex items-center justify-between">
@@ -188,6 +226,40 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
+            </button>
+
+            {/* 1.5 PIANO & UPGRADE PRO */}
+            <button
+              id="menu-item-upgrade-pro"
+              onClick={() => {
+                setIsOpen(false);
+                onOpenUpgradeModal?.();
+              }}
+              className="w-full text-left p-3 rounded-xl hover:bg-amber-50/60 transition-colors flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200 group-hover:bg-amber-100 transition-colors">
+                  <Crown className="w-4 h-4 fill-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-[#0f172a]">Piano MyGarage360</span>
+                    {userTier === 'PRO' ? (
+                      <span className="text-[9px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded uppercase">
+                        PRO ATTIVO
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-black text-slate-700 bg-slate-100 px-1.5 py-0.2 rounded uppercase">
+                        FREE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#64748b]">
+                    {userTier === 'PRO' ? 'Gestisci o vedi dettagli del tuo piano PRO' : 'Scopri i vantaggi di MyGarage360 PRO'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-700 transition-colors" />
             </button>
 
             {/* 2. IMPOSTAZIONI GENERALI */}
