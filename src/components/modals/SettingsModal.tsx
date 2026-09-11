@@ -440,7 +440,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </label>
           </div>
 
-          {/* SECTION 3: BACKUP & GARAGE DATA */}
+          {/* SECTION 2: BACKUP & GARAGE DATA */}
           <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
             <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Dati & Backup Garage</h4>
             

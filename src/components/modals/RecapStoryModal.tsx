@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   X, 
   Share2, 
@@ -53,10 +53,21 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 
   // Selection states
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(
-    currentVehicleId || (vehicles[0]?.id ?? 'all')
+    currentVehicleId || (vehicles.length === 1 ? vehicles[0]?.id : 'all')
   );
   const [periodType, setPeriodType] = useState<RecapPeriodType>('month');
   const [cardTheme, setCardTheme] = useState<CardTheme>('light'); // Default light, perfectly consistent with app
+
+  // Sincronizza il veicolo selezionato quando si apre il modale o cambia il veicolo corrente
+  useEffect(() => {
+    if (isOpen) {
+      if (currentVehicleId && vehicles.some(v => v.id === currentVehicleId)) {
+        setSelectedVehicleId(currentVehicleId);
+      } else if (!selectedVehicleId || (!vehicles.some(v => v.id === selectedVehicleId) && selectedVehicleId !== 'all')) {
+        setSelectedVehicleId(vehicles.length === 1 ? vehicles[0].id : 'all');
+      }
+    }
+  }, [isOpen, currentVehicleId, vehicles]);
 
   // Month selection: YYYY-MM
   const now = new Date();
@@ -274,18 +285,33 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
   const vehicleTitle = singleVehicle 
     ? `${singleVehicle.brand} ${singleVehicle.model}` 
     : `Garage Completo (${vehicles.length} veicoli)`;
-  const vehiclePlate = singleVehicle?.plate || '';
-  const vehiclePhoto = singleVehicle?.photoUrl;
+  const vehiclePlate = singleVehicle?.plate || (vehicles.length > 1 ? `${vehicles.length} Veicoli` : '');
+
+  // Lista veicoli attivi con dati strutturati per il rendering (Card & Canvas)
+  const displayVehicles = useMemo(() => {
+    return activeVehicles.map(v => ({
+      id: v.id,
+      brand: v.brand,
+      model: v.model,
+      title: `${v.brand} ${v.model}`,
+      plate: v.plate || '',
+      photoUrl: v.photoUrl,
+      vehicleType: v.vehicleType || 'car',
+      odometer: Math.max(v.initialKm || 0, ...(v.refuels?.map(r => Number(r.km) || 0) || []))
+    }));
+  }, [activeVehicles]);
 
   // Helper: Carica immagine in modo asincrono con gestione CORS o fallback
   const loadCarImage = (url?: string): Promise<HTMLImageElement | null> => {
     if (!url) return Promise.resolve(null);
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!url.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
       img.onload = () => resolve(img);
       img.onerror = () => {
-        console.warn('Vehicle image could not be loaded with CORS, using graphic emblem fallback.');
+        console.warn('Vehicle image could not be loaded via CORS for canvas export:', url);
         resolve(null);
       };
       img.src = url;
@@ -342,74 +368,164 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     ctx.fillText(formattedPeriodLabel.toUpperCase(), 840, 122);
     ctx.textAlign = 'left';
 
-    // 3. Immagine dell'Auto (Hero Showcase)
-    const carImg = await loadCarImage(vehiclePhoto);
-    const photoY = 175;
-    const photoH = 430;
-    const photoW = 900;
-    const photoX = 90;
+    // 3. Immagini dell'Auto / Flotta (Hero Showcase multi-veicolo preservando il layout matematico)
+    const heroX = 90;
+    const heroY = 175;
+    const heroW = 900;
+    const heroH = 430;
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(photoX, photoY, photoH ? photoW : 900, photoH, 32);
-    ctx.clip();
+    // Caricamento asincrono di tutte le immagini dei veicoli attivi
+    const carImages = await Promise.all(
+      displayVehicles.slice(0, 4).map(v => loadCarImage(v.photoUrl))
+    );
 
-    if (carImg) {
-      // Disegna l'immagine dell'auto (cover object-fit)
-      const hRatio = photoW / carImg.width;
-      const vRatio = photoH / carImg.height;
-      const ratio = Math.max(hRatio, vRatio);
-      const centerShiftX = (photoW - carImg.width * ratio) / 2;
-      const centerShiftY = (photoH - carImg.height * ratio) / 2;
-      ctx.drawImage(
-        carImg,
-        0, 0, carImg.width, carImg.height,
-        photoX + centerShiftX, photoY + centerShiftY, carImg.width * ratio, carImg.height * ratio
+    // Helper per disegnare la singola scheda veicolo o cella con rapporto d'aspetto perfetto
+    const drawVehicleHeroCard = (
+      vx: number,
+      vy: number,
+      vw: number,
+      vh: number,
+      radius: number,
+      item: { brand: string; model: string; title: string; plate?: string; vehicleType: string; odometer: number },
+      carImage: HTMLImageElement | null,
+      isCompact: boolean = false,
+      extraBadgeText?: string
+    ) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(vx, vy, vw, vh, radius);
+      ctx.clip();
+
+      if (carImage) {
+        const hRatio = vw / carImage.width;
+        const vRatio = vh / carImage.height;
+        const ratio = Math.max(hRatio, vRatio);
+        const centerShiftX = (vw - carImage.width * ratio) / 2;
+        const centerShiftY = (vh - carImage.height * ratio) / 2;
+        ctx.drawImage(
+          carImage,
+          0, 0, carImage.width, carImage.height,
+          vx + centerShiftX, vy + centerShiftY, carImage.width * ratio, carImage.height * ratio
+        );
+
+        // Sfumatura elegante per proteggere la leggibilità del testo
+        const shadowGrad = ctx.createLinearGradient(0, vy + vh * 0.45, 0, vy + vh);
+        shadowGrad.addColorStop(0, 'rgba(15, 23, 42, 0)');
+        shadowGrad.addColorStop(0.65, 'rgba(15, 23, 42, 0.75)');
+        shadowGrad.addColorStop(1, 'rgba(15, 23, 42, 0.95)');
+        ctx.fillStyle = shadowGrad;
+        ctx.fillRect(vx, vy, vw, vh);
+      } else {
+        // Fallback elegante se l'auto non ha foto
+        const bannerGrad = ctx.createLinearGradient(vx, vy, vx + vw, vy + vh);
+        bannerGrad.addColorStop(0, isDark ? '#1e293b' : '#3b82f6');
+        bannerGrad.addColorStop(1, isDark ? '#0f172a' : '#1d4ed8');
+        ctx.fillStyle = bannerGrad;
+        ctx.fillRect(vx, vy, vw, vh);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.min(vh * 0.35, 70)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(item.vehicleType === 'moto' ? '🏍️' : '🚗', vx + vw / 2, vy + vh * 0.5);
+        ctx.textAlign = 'left';
+      }
+
+      // Se presente badge di overflow (es. "+2 altri")
+      if (extraBadgeText) {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(vx, vy, vw, vh);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 28px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(extraBadgeText, vx + vw / 2, vy + vh / 2 + 10);
+        ctx.textAlign = 'left';
+        ctx.restore();
+        return;
+      }
+
+      // Testo veicolo & targa con dimensionamento proporzionale
+      ctx.fillStyle = '#ffffff';
+      if (!isCompact) {
+        // Singolo veicolo a tutta larghezza
+        ctx.font = '900 46px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(item.title, vx + 35, vy + vh - 55);
+
+        if (item.plate) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.font = '700 22px monospace';
+          const odoStr = item.odometer > 0 ? ` • ${item.odometer.toLocaleString('it-IT')} KM` : '';
+          ctx.fillText(`TARGA: ${item.plate}${odoStr}`, vx + 35, vy + vh - 22);
+        }
+      } else if (vw > 350) {
+        // Vista a 2 colonne o celle 2x2
+        ctx.font = '900 30px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(item.title, vx + 22, vy + vh - 42);
+
+        if (item.plate) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.font = '700 18px monospace';
+          ctx.fillText(item.plate, vx + 22, vy + vh - 18);
+        }
+      } else {
+        // Vista a 3 colonne
+        ctx.font = '900 24px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(item.brand, vx + 16, vy + vh - 56);
+        ctx.font = '700 19px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(item.model, vx + 16, vy + vh - 34);
+
+        if (item.plate) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.font = '700 15px monospace';
+          ctx.fillText(item.plate, vx + 16, vy + vh - 14);
+        }
+      }
+
+      ctx.restore();
+    };
+
+    // Disegno dei veicoli in base al numero, mantenendo esattamente i 430px di altezza totale
+    if (displayVehicles.length <= 1) {
+      const v = displayVehicles[0] || {
+        brand: 'MyGarage',
+        model: 'Veicolo',
+        title: vehicleTitle,
+        plate: vehiclePlate,
+        vehicleType: 'car',
+        odometer: stats.odometer
+      };
+      drawVehicleHeroCard(heroX, heroY, heroW, heroH, 32, v, carImages[0], false);
+    } else if (displayVehicles.length === 2) {
+      const gap = 16;
+      const colW = (heroW - gap) / 2; // 442px
+      drawVehicleHeroCard(heroX, heroY, colW, heroH, 28, displayVehicles[0], carImages[0], true);
+      drawVehicleHeroCard(heroX + colW + gap, heroY, colW, heroH, 28, displayVehicles[1], carImages[1], true);
+    } else if (displayVehicles.length === 3) {
+      const gap = 16;
+      const colW = (heroW - 2 * gap) / 3; // 289px
+      drawVehicleHeroCard(heroX, heroY, colW, heroH, 24, displayVehicles[0], carImages[0], true);
+      drawVehicleHeroCard(heroX + colW + gap, heroY, colW, heroH, 24, displayVehicles[1], carImages[1], true);
+      drawVehicleHeroCard(heroX + 2 * (colW + gap), heroY, colW, heroH, 24, displayVehicles[2], carImages[2], true);
+    } else {
+      // 4 o più veicoli: griglia 2x2 compatta
+      const gap = 16;
+      const colW = (heroW - gap) / 2;
+      const rowH = (heroH - gap) / 2;
+      drawVehicleHeroCard(heroX, heroY, colW, rowH, 22, displayVehicles[0], carImages[0], true);
+      drawVehicleHeroCard(heroX + colW + gap, heroY, colW, rowH, 22, displayVehicles[1], carImages[1], true);
+      drawVehicleHeroCard(heroX, heroY + rowH + gap, colW, rowH, 22, displayVehicles[2], carImages[2], true);
+
+      const extraCount = displayVehicles.length - 4;
+      drawVehicleHeroCard(
+        heroX + colW + gap,
+        heroY + rowH + gap,
+        colW,
+        rowH,
+        22,
+        displayVehicles[3],
+        carImages[3],
+        true,
+        extraCount > 0 ? `+${extraCount + 1} ALTRI MEZZI` : undefined
       );
-
-      // Sfumatura elegante alla base della foto per leggibilità testo
-      const shadowGrad = ctx.createLinearGradient(0, photoY + 240, 0, photoY + photoH);
-      shadowGrad.addColorStop(0, 'rgba(15, 23, 42, 0)');
-      shadowGrad.addColorStop(1, 'rgba(15, 23, 42, 0.85)');
-      ctx.fillStyle = shadowGrad;
-      ctx.fillRect(photoX, photoY, photoW, photoH);
-    } else {
-      // Fallback elegante se l'auto non ha foto caricata
-      const bannerGrad = ctx.createLinearGradient(photoX, photoY, photoX + photoW, photoY + photoH);
-      bannerGrad.addColorStop(0, isDark ? '#1e293b' : '#3b82f6');
-      bannerGrad.addColorStop(1, isDark ? '#0f172a' : '#1d4ed8');
-      ctx.fillStyle = bannerGrad;
-      ctx.fillRect(photoX, photoY, photoW, photoH);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '80px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(singleVehicle?.vehicleType === 'moto' ? '🏍️' : '🚗', 540, photoY + 220);
-      ctx.textAlign = 'left';
-    }
-    ctx.restore();
-
-    // Dettaglio Targa & Nome veicolo sovrimpresso / sottostante
-    if (carImg) {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '900 48px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(vehicleTitle, photoX + 35, photoY + photoH - 55);
-
-      if (vehiclePlate) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.font = '700 24px monospace';
-        ctx.fillText(`TARGA: ${vehiclePlate}`, photoX + 35, photoY + photoH - 22);
-      }
-    } else {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '900 44px "Plus Jakarta Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(vehicleTitle, 540, photoY + 330);
-      if (vehiclePlate) {
-        ctx.font = '700 24px monospace';
-        ctx.fillText(`TARGA: ${vehiclePlate}`, 540, photoY + 380);
-      }
-      ctx.textAlign = 'left';
     }
 
     // 4. Badge Persona Mood
@@ -472,7 +588,13 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
     // Box 1: Consumo Medio Reale
     renderFactBox(90, 'Consumo Medio', stats.avgConsumptionStr, stats.avgKmPerLStr, '⛽');
     // Box 2: Costo / Km
-    renderFactBox(90 + colW + colGap, 'Costo al Km', `${settings.currency} ${stats.costPerKm}`, '/ km percorso', '💳');
+    renderFactBox(
+      90 + colW + colGap, 
+      'Costo al Km', 
+      stats.costPerKm !== '--' ? `${settings.currency} ${stats.costPerKm}` : '--', 
+      stats.costPerKm !== '--' ? '/ km percorso' : 'Dato non disp.', 
+      '💳'
+    );
     // Box 3: Soste & Volume
     renderFactBox(
       90 + (colW + colGap) * 2, 
@@ -656,14 +778,18 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 
   // Copia riassunto testuale per WhatsApp / Telegram
   const handleCopyText = () => {
+    const vehiclesInfoStr = displayVehicles.length > 1
+      ? `\n🚙 Mezzi inclusi: ${displayVehicles.map(v => `${v.title}${v.plate ? ` (${v.plate})` : ''}`).join(', ')}`
+      : '';
+
     const text = `📊 Il mio Recap Auto - ${formattedPeriodLabel.toUpperCase()}
-Veicolo: ${vehicleTitle} ${vehiclePlate ? `(${vehiclePlate})` : ''}
+Veicolo: ${vehicleTitle} ${singleVehicle?.plate ? `(${singleVehicle.plate})` : ''}${vehiclesInfoStr}
 👤 Mood: ${stats.persona.emoji} ${stats.persona.title}
 
 🛣️ Strada percorsa: ${stats.totalKm > 0 ? `${stats.totalKm.toLocaleString('it-IT')} km` : '0 km'}${stats.kmTrendPercent !== 0 ? ` (${stats.kmTrendPercent > 0 ? '+' : ''}${stats.kmTrendPercent}% rispetto al periodo precedente)` : ''}
 ⛽ Consumo medio reale: ${stats.avgConsumptionStr} (${stats.avgKmPerLStr})
-💳 Spesa complessiva: ${settings.currency} ${stats.totalCost.toFixed(0)} (${settings.currency} ${stats.costPerKm}/km)
-⛽ Rifornimenti: ${stats.refuelStopsCount} soste • ${stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} L erogati` : '0 L'}
+💳 Spesa complessiva: ${settings.currency} ${stats.totalCost.toFixed(0)} (${stats.costPerKm !== '--' ? `${settings.currency} ${stats.costPerKm}/km` : 'costo/km non disp.'})
+⛽ Rifornimenti: ${stats.refuelStopsCount} soste • ${stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(0)} ${stats.fuelUnit} erogati` : `0 ${stats.fuelUnit}`}
 ${stats.upcomingRenewals.length > 0 ? `⏳ Prossime scadenze: ${stats.upcomingRenewals.map(r => `${r.label} (${r.dateStr})`).join(', ')}` : '✅ Nessuna scadenza urgente!'}
 
 Creato con MyGarage 🚗💨`;
@@ -708,8 +834,8 @@ Creato con MyGarage 🚗💨`;
           </button>
         </div>
 
-        {/* CONTROLLI DI FILTRO (PERIODO, VEICOLO & TEMA CARD) */}
-        <div className="px-4 py-3 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        {/* CONTROLLI DI FILTRO (PERIODO & TEMA CARD) */}
+        <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
           
           {/* Switch Mese / Anno / Tutto */}
           <div className="inline-flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 font-bold shadow-2xs">
@@ -780,22 +906,6 @@ Creato con MyGarage 🚗💨`;
               </select>
             )}
 
-            {/* Selettore Veicolo */}
-            {vehicles.length > 1 && (
-              <select
-                value={selectedVehicleId}
-                onChange={(e) => setSelectedVehicleId(e.target.value)}
-                className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:border-indigo-500 cursor-pointer max-w-[140px] truncate shadow-2xs"
-              >
-                <option value="all">Tutti i veicoli</option>
-                {vehicles.map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.brand} {v.model}
-                  </option>
-                ))}
-              </select>
-            )}
-
             {/* Selettore Tema Card (Chiaro coerente vs Dark) */}
             <button
               onClick={() => setCardTheme(t => t === 'light' ? 'dark' : 'light')}
@@ -806,6 +916,67 @@ Creato con MyGarage 🚗💨`;
             </button>
           </div>
         </div>
+
+        {/* BARRA DI SELEZIONE DEL VEICOLO CON ANTEPRIME FOTOGRAFICHE */}
+        {vehicles.length > 1 && (
+          <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+              <Car className="w-3.5 h-3.5" />
+              <span>Recap:</span>
+            </span>
+
+            {/* Opzione: Garage Completo / Tutti i veicoli */}
+            <button
+              type="button"
+              onClick={() => setSelectedVehicleId('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer border ${
+                selectedVehicleId === 'all'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <span>Tutti i veicoli ({vehicles.length})</span>
+            </button>
+
+            {/* Chip fotografici per ciascun veicolo */}
+            {vehicles.map(v => {
+              const isSelected = selectedVehicleId === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setSelectedVehicleId(v.id)}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-2 cursor-pointer border ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-300 dark:ring-indigo-700'
+                      : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {v.photoUrl ? (
+                    <img
+                      src={v.photoUrl}
+                      alt={v.brand}
+                      className="w-5 h-5 rounded-md object-cover border border-white/30 shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] shrink-0">
+                      {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
+                    </span>
+                  )}
+                  <span className="truncate max-w-[120px]">{v.brand} {v.model}</span>
+                  {v.plate && (
+                    <span className={`text-[9.5px] px-1.5 py-0.2 rounded font-mono ${
+                      isSelected ? 'bg-indigo-700/80 text-indigo-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    }`}>
+                      {v.plate}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* FEEDBACK STATUS BANNER */}
         {statusMessage && (
@@ -845,40 +1016,110 @@ Creato con MyGarage 🚗💨`;
               </span>
             </div>
 
-            {/* FOTO DELL'AUTO CON INFORMAZIONI */}
-            <div className="relative rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-              {vehiclePhoto ? (
-                <>
-                  <img 
-                    src={vehiclePhoto} 
-                    alt={vehicleTitle}
-                    className="w-full h-full object-cover"
-                    crossOrigin="anonymous"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3 text-white">
-                    <h3 className="text-base font-black tracking-tight leading-tight drop-shadow-sm">
-                      {vehicleTitle}
+            {/* FOTO DELL'AUTO / DEI VEICOLI CON LAYOUT PROTETTO ED ELEGANTE */}
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-700/60 aspect-video bg-slate-950 flex items-center justify-center select-none">
+              {displayVehicles.length === 1 ? (
+                // 1. Singolo Veicolo (visualizzazione hero completa)
+                displayVehicles[0].photoUrl ? (
+                  <>
+                    <img 
+                      src={displayVehicles[0].photoUrl} 
+                      alt={displayVehicles[0].title}
+                      className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3 text-white">
+                      <h3 className="text-base font-black tracking-tight leading-tight drop-shadow-sm">
+                        {displayVehicles[0].title}
+                      </h3>
+                      <div className="flex items-center gap-2 font-mono text-[10px] text-slate-300 font-semibold">
+                        {displayVehicles[0].plate && <span>TARGA {displayVehicles[0].plate}</span>}
+                        {displayVehicles[0].plate && displayVehicles[0].odometer > 0 && <span>•</span>}
+                        {displayVehicles[0].odometer > 0 && <span>ODO {displayVehicles[0].odometer.toLocaleString('it-IT')} KM</span>}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-4 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-2">
+                      {displayVehicles[0].vehicleType === 'moto' ? <Bike className="w-6 h-6" /> : <Car className="w-6 h-6" />}
+                    </div>
+                    <h3 className="text-sm font-black text-slate-800 dark:text-white">
+                      {displayVehicles[0].title}
                     </h3>
-                    <div className="flex items-center gap-2 font-mono text-[10px] text-slate-300 font-semibold">
-                      {vehiclePlate && <span>TARGA {vehiclePlate}</span>}
-                      {vehiclePlate && stats.odometer > 0 && <span>•</span>}
-                      {stats.odometer > 0 && <span>ODO {stats.odometer.toLocaleString('it-IT')} KM</span>}
+                    <div className="flex items-center gap-2 font-mono text-[10px] text-slate-400 font-semibold mt-0.5">
+                      {displayVehicles[0].plate && <span>{displayVehicles[0].plate}</span>}
+                      {displayVehicles[0].plate && displayVehicles[0].odometer > 0 && <span>•</span>}
+                      {displayVehicles[0].odometer > 0 && <span>{displayVehicles[0].odometer.toLocaleString('it-IT')} km</span>}
                     </div>
                   </div>
-                </>
+                )
+              ) : displayVehicles.length === 2 ? (
+                // 2. Due Veicoli (Split 50/50 equilibrato)
+                <div className="grid grid-cols-2 gap-1 w-full h-full p-1 bg-slate-900">
+                  {displayVehicles.map(v => (
+                    <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
+                      {v.photoUrl ? (
+                        <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                      ) : (
+                        <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-2xl text-white">
+                          {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-2 text-white">
+                        <span className="text-xs font-black truncate leading-tight">{v.title}</span>
+                        {v.plate && <span className="font-mono text-[9px] text-slate-300 font-bold">{v.plate}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : displayVehicles.length === 3 ? (
+                // 3. Tre Veicoli (3 Colonne simmetriche)
+                <div className="grid grid-cols-3 gap-1 w-full h-full p-1 bg-slate-900">
+                  {displayVehicles.map(v => (
+                    <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
+                      {v.photoUrl ? (
+                        <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                      ) : (
+                        <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-xl text-white">
+                          {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-1.5 text-white">
+                        <span className="text-[11px] font-black truncate leading-tight">{v.brand}</span>
+                        <span className="text-[9px] text-slate-200 truncate font-semibold leading-tight">{v.model}</span>
+                        {v.plate && <span className="font-mono text-[8px] text-slate-300 font-bold">{v.plate}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center p-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-2">
-                    {singleVehicle?.vehicleType === 'moto' ? <Bike className="w-6 h-6" /> : <Car className="w-6 h-6" />}
-                  </div>
-                  <h3 className="text-sm font-black text-slate-800 dark:text-white">
-                    {vehicleTitle}
-                  </h3>
-                  <div className="flex items-center gap-2 font-mono text-[10px] text-slate-400 font-semibold mt-0.5">
-                    {vehiclePlate && <span>{vehiclePlate}</span>}
-                    {vehiclePlate && stats.odometer > 0 && <span>•</span>}
-                    {stats.odometer > 0 && <span>{stats.odometer.toLocaleString('it-IT')} km</span>}
-                  </div>
+                // 4. Quattro o più Veicoli (Griglia 2x2 compatta con badge "+N altri")
+                <div className="grid grid-cols-2 grid-rows-2 gap-1 w-full h-full p-1 bg-slate-900">
+                  {displayVehicles.slice(0, 4).map((v, idx) => {
+                    const isFourth = idx === 3;
+                    const extraCount = displayVehicles.length - 4;
+                    return (
+                      <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
+                        {v.photoUrl ? (
+                          <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                        ) : (
+                          <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-lg text-white">
+                            {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-1.5 text-white">
+                          <span className="text-[11px] font-black truncate leading-tight">{v.title}</span>
+                          {v.plate && <span className="font-mono text-[8px] text-slate-300 font-bold">{v.plate}</span>}
+                        </div>
+                        {isFourth && extraCount > 0 && (
+                          <div className="absolute inset-0 bg-black/75 flex items-center justify-center text-white font-black text-xs">
+                            +{extraCount + 1} altri
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -941,10 +1182,10 @@ Creato con MyGarage 🚗💨`;
                   </div>
                   <div className="my-1">
                     <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
-                      {settings.currency} {stats.costPerKm}
+                      {stats.costPerKm !== '--' ? `${settings.currency} ${stats.costPerKm}` : '--'}
                     </span>
                     <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
-                      al km percorso
+                      {stats.costPerKm !== '--' ? 'al km percorso' : 'Dato non disp.'}
                     </span>
                   </div>
                 </div>

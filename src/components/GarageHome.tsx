@@ -38,16 +38,27 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFuelCategory, setSelectedFuelCategory] = useState<string>('all');
 
-  // Metriche flotta sintetiche ed essenziali
+  // Metriche flotta sintetiche ed essenziali (Km percorsi con le registrazioni e spese)
   const fleetSummary = useMemo(() => {
-    let totalKm = 0;
+    let recordedKm = 0;
     let totalCost = 0;
     let totalRefuels = 0;
 
     vehicles.forEach(car => {
-      const refuelsKm = (car.refuels || []).map(r => Number(r.km) || 0);
-      const maintKm = (car.maintenances || []).map(m => Number(m.km) || 0);
-      totalKm += Math.max(Number(car.initialKm) || 0, ...refuelsKm, ...maintKm);
+      const allKm = [
+        ...(car.refuels || []).map(r => Number(r.km) || 0),
+        ...(car.maintenances || []).map(m => Number(m.km) || 0)
+      ].filter(k => k > 0);
+
+      const hasRecordings = (car.refuels?.length || 0) > 0 || (car.maintenances?.length || 0) > 0;
+      const currentKm = Math.max(Number(car.initialKm) || 0, ...allKm);
+
+      if (hasRecordings && allKm.length > 0) {
+        const initKm = Number(car.initialKm) || 0;
+        const minRecorded = Math.min(...allKm);
+        const baseKm = initKm > 0 ? Math.min(initKm, minRecorded) : minRecorded;
+        recordedKm += Math.max(0, currentKm - baseKm);
+      }
 
       const fCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
       const mCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
@@ -55,7 +66,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
       totalRefuels += (car.refuels?.length || 0);
     });
 
-    return { totalKm, totalCost, totalRefuels };
+    return { recordedKm, totalCost, totalRefuels };
   }, [vehicles]);
 
   // Filtro veicoli pulito
@@ -106,9 +117,9 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
           </div>
 
           <div className="flex flex-col items-center justify-center border-l border-slate-100">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Totali</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Registrati</span>
             <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
-              {fleetSummary.totalKm.toLocaleString('it-IT')} km
+              {fleetSummary.recordedKm.toLocaleString('it-IT')} km
             </span>
           </div>
 

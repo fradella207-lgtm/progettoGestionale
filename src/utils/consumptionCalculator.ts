@@ -493,45 +493,18 @@ export function calculateRecapMetrics(
     };
   }
 
-  // Periodic calculation: 'month' or 'year'
+    // Periodic calculation: 'month' or 'year'
+  let certifiedTripKmSum = 0;
+  let certifiedTripQtySum = 0;
+
   vehicles.forEach(v => {
     const rawRefuels = v.refuels || [];
     const rawMaints = v.maintenances || [];
     const vInitKm = Number(v.initialKm) || 0;
-
-    // Build complete event timeline
-    interface TimelineEvent {
-      date: string;
-      km: number;
-      type: 'refuel' | 'maintenance';
-      price: number;
-      quantity: number;
-    }
-
-    const events: TimelineEvent[] = [
-      ...rawRefuels.map(r => ({
-        date: r.date || '',
-        km: Number(r.km) || 0,
-        type: 'refuel' as const,
-        price: Number(r.price) || 0,
-        quantity: Number(r.quantity) || 0
-      })),
-      ...rawMaints.map(m => ({
-        date: m.date || '',
-        km: Number(m.km) || 0,
-        type: 'maintenance' as const,
-        price: Number(m.cost) || 0,
-        quantity: 0
-      }))
-    ].filter(e => e.date.length >= 7);
-
-    events.sort((a, b) => {
-      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
-      if (diff !== 0) return diff;
-      return a.km - b.km;
-    });
+    const vMetrics = fullMetricsMap.get(v.id)!;
 
     const isCurrentPeriod = (d: string) => {
+      if (!d || d.length < 4) return false;
       if (periodType === 'year') {
         return d.startsWith(String(targetYear));
       }
@@ -539,6 +512,7 @@ export function calculateRecapMetrics(
     };
 
     const isPrevPeriod = (d: string) => {
+      if (!d || d.length < 4) return false;
       if (periodType === 'year') {
         return d.startsWith(String(targetYear - 1));
       }
@@ -546,6 +520,7 @@ export function calculateRecapMetrics(
     };
 
     const isUpToEndOfCurrent = (d: string) => {
+      if (!d || d.length < 4) return false;
       if (periodType === 'year') {
         const y = parseInt(d.split('-')[0], 10);
         return !isNaN(y) && y <= targetYear;
@@ -554,6 +529,7 @@ export function calculateRecapMetrics(
     };
 
     const isBeforeCurrent = (d: string) => {
+      if (!d || d.length < 4) return false;
       if (periodType === 'year') {
         const y = parseInt(d.split('-')[0], 10);
         return !isNaN(y) && y < targetYear;
@@ -561,15 +537,8 @@ export function calculateRecapMetrics(
       return d.substring(0, 7) < targetMonth;
     };
 
-    const isUpToEndOfPrev = (d: string) => {
-      if (periodType === 'year') {
-        const y = parseInt(d.split('-')[0], 10);
-        return !isNaN(y) && y <= targetYear - 1;
-      }
-      return prevMonthStr ? d.substring(0, 7) <= prevMonthStr : false;
-    };
-
     const isBeforePrev = (d: string) => {
+      if (!d || d.length < 4) return false;
       if (periodType === 'year') {
         const y = parseInt(d.split('-')[0], 10);
         return !isNaN(y) && y < targetYear - 1;
@@ -577,83 +546,177 @@ export function calculateRecapMetrics(
       return prevMonthStr ? d.substring(0, 7) < prevMonthStr : false;
     };
 
-    // Calculate vehicle distance in current period
-    const currentEvents = events.filter(e => isCurrentPeriod(e.date));
-    let vPeriodDistance = 0;
-    let vOdometer = vInitKm;
+    // 1. FINANCIAL & VOLUME EVENTS (Accounts for 100% of costs, even if km was not recorded)
+    rawRefuels.forEach(r => {
+      if (isCurrentPeriod(r.date)) {
+        fuelCostSum += Number(r.price) || 0;
+        totalVolumeSum += Number(r.quantity) || 0;
+        refuelStopsSum += 1;
+      }
+    });
 
-    if (currentEvents.length > 0) {
-      const eventsUpToEnd = events.filter(e => isUpToEndOfCurrent(e.date));
-      const eventsBefore = events.filter(e => isBeforeCurrent(e.date));
+    rawMaints.forEach(m => {
+      if (isCurrentPeriod(m.date)) {
+        maintCostSum += Number(m.cost) || 0;
+      }
+    });
 
-      const maxKmEnd = Math.max(vInitKm, ...eventsUpToEnd.map(e => e.km));
-      const maxKmBefore = eventsBefore.length > 0 
-        ? Math.max(vInitKm, ...eventsBefore.map(e => e.km))
-        : (vInitKm > 0 ? vInitKm : (currentEvents.length > 1 ? Math.min(...currentEvents.map(e => e.km)) : currentEvents[0].km));
-
-      vPeriodDistance = Math.max(0, maxKmEnd - maxKmBefore);
-      vOdometer = maxKmEnd;
-    } else {
-      // No events in this period; odometer is highest km up to this period
-      const eventsUpToEnd = events.filter(e => isUpToEndOfCurrent(e.date));
-      vOdometer = Math.max(vInitKm, ...eventsUpToEnd.map(e => e.km));
+    // 2. ODOMETER & DISTANCE TIMELINE (Only events with verified km > 0)
+    interface KmEvent {
+      date: string;
+      km: number;
+      type: 'refuel' | 'maintenance';
     }
 
-    // Calculate vehicle distance in previous period for trend
-    const prevEvents = events.filter(e => isPrevPeriod(e.date));
+    const kmEvents: KmEvent[] = [
+      ...rawRefuels.filter(r => (Number(r.km) || 0) > 0 && r.date?.length >= 7).map(r => ({
+        date: r.date,
+        km: Number(r.km),
+        type: 'refuel' as const
+      })),
+      ...rawMaints.filter(m => (Number(m.km) || 0) > 0 && m.date?.length >= 7).map(m => ({
+        date: m.date,
+        km: Number(m.km),
+        type: 'maintenance' as const
+      }))
+    ];
+
+    kmEvents.sort((a, b) => {
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (diff !== 0) return diff;
+      return a.km - b.km;
+    });
+
+    // Calculate vehicle distance in current period with metrological precision
+    const currentKmEvents = kmEvents.filter(e => isCurrentPeriod(e.date));
+    const eventsBeforeCurrent = kmEvents.filter(e => isBeforeCurrent(e.date));
+    const eventsUpToEndCurrent = kmEvents.filter(e => isUpToEndOfCurrent(e.date));
+
+    let vPeriodDistance = 0;
+    const vOdometer = Math.max(vInitKm, ...eventsUpToEndCurrent.map(e => e.km));
+
+    if (currentKmEvents.length > 0) {
+      const firstCurrent = currentKmEvents[0];
+      const lastCurrent = currentKmEvents[currentKmEvents.length - 1];
+
+      if (currentKmEvents.length >= 2) {
+        // If multiple odometer entries in this period, the intra-period spread is definite
+        const intraPeriodSpread = lastCurrent.km - firstCurrent.km;
+
+        if (eventsBeforeCurrent.length > 0) {
+          const lastBefore = eventsBeforeCurrent[eventsBeforeCurrent.length - 1];
+          const totalSpanDelta = lastCurrent.km - lastBefore.km;
+          const daysGap = Math.max(1, (new Date(firstCurrent.date).getTime() - new Date(lastBefore.date).getTime()) / (1000 * 3600 * 24));
+          
+          // If the gap before is reasonable (<= 45 days for month, 365 for year), attribute full replenished span
+          if (daysGap <= (periodType === 'year' ? 366 : 45) && totalSpanDelta >= intraPeriodSpread) {
+            vPeriodDistance = totalSpanDelta;
+          } else {
+            vPeriodDistance = intraPeriodSpread;
+          }
+        } else {
+          vPeriodDistance = intraPeriodSpread;
+        }
+      } else {
+        // Exactly 1 odometer entry in this period
+        if (eventsBeforeCurrent.length > 0) {
+          const lastBefore = eventsBeforeCurrent[eventsBeforeCurrent.length - 1];
+          if (lastCurrent.km >= lastBefore.km) {
+            vPeriodDistance = lastCurrent.km - lastBefore.km;
+          }
+        } else if (v.registrationDate && isCurrentPeriod(v.registrationDate) && vInitKm > 0 && lastCurrent.km >= vInitKm) {
+          vPeriodDistance = lastCurrent.km - vInitKm;
+        } else {
+          vPeriodDistance = 0;
+        }
+      }
+    }
+
+    // Check certified Board Trips completed within this period
+    const tripsInCurrentPeriod = vMetrics.boardTrips.filter(t => isCurrentPeriod(t.endDate));
+    let vCertifiedTripKm = 0;
+    let vCertifiedTripQty = 0;
+
+    tripsInCurrentPeriod.forEach(t => {
+      vCertifiedTripKm += t.distanceKm;
+      vCertifiedTripQty += t.totalQuantity;
+    });
+
+    if (vCertifiedTripKm > vPeriodDistance) {
+      vPeriodDistance = vCertifiedTripKm;
+    }
+
+    certifiedTripKmSum += vCertifiedTripKm;
+    certifiedTripQtySum += vCertifiedTripQty;
+
+    // Calculate vehicle distance in previous period for trend comparison
+    const prevKmEvents = kmEvents.filter(e => isPrevPeriod(e.date));
+    const eventsBeforePrev = kmEvents.filter(e => isBeforePrev(e.date));
     let vPrevDistance = 0;
-    if (prevEvents.length > 0) {
-      const eventsUpToEndPrev = events.filter(e => isUpToEndOfPrev(e.date));
-      const eventsBeforePrev = events.filter(e => isBeforePrev(e.date));
 
-      const maxKmEndPrev = Math.max(vInitKm, ...eventsUpToEndPrev.map(e => e.km));
-      const maxKmBeforePrev = eventsBeforePrev.length > 0
-        ? Math.max(vInitKm, ...eventsBeforePrev.map(e => e.km))
-        : (vInitKm > 0 ? vInitKm : (prevEvents.length > 1 ? Math.min(...prevEvents.map(e => e.km)) : prevEvents[0].km));
+    if (prevKmEvents.length > 0) {
+      const firstPrev = prevKmEvents[0];
+      const lastPrev = prevKmEvents[prevKmEvents.length - 1];
 
-      vPrevDistance = Math.max(0, maxKmEndPrev - maxKmBeforePrev);
+      if (prevKmEvents.length >= 2) {
+        vPrevDistance = Math.max(0, lastPrev.km - firstPrev.km);
+      } else if (eventsBeforePrev.length > 0) {
+        const lastBeforePrev = eventsBeforePrev[eventsBeforePrev.length - 1];
+        if (lastPrev.km >= lastBeforePrev.km) {
+          vPrevDistance = lastPrev.km - lastBeforePrev.km;
+        }
+      }
     }
 
     // Accumulate sums
     totalKmSum += vPeriodDistance;
     prevKmSum += vPrevDistance;
     maxOdometerFound = Math.max(maxOdometerFound, vOdometer);
-
-    currentEvents.forEach(e => {
-      if (e.type === 'refuel') {
-        fuelCostSum += e.price;
-        totalVolumeSum += e.quantity;
-        refuelStopsSum += 1;
-      } else {
-        maintCostSum += e.price;
-      }
-    });
   });
 
   const totalCostSum = fuelCostSum + maintCostSum;
-  const costPerKm = totalKmSum > 0 ? (totalCostSum / totalKmSum).toFixed(2) : '0.00';
+  const costPerKm = totalKmSum > 0 ? (totalCostSum / totalKmSum).toFixed(2) : '--';
 
   let kmTrendPercent = 0;
   if (prevKmSum > 0 && totalKmSum > 0) {
     kmTrendPercent = Math.round(((totalKmSum - prevKmSum) / prevKmSum) * 100);
   }
 
-  // Exact period consumption calculation
+  // Exact period consumption calculation with highest fidelity
   let avgConsumptionStr = '--';
   let avgKmPerLStr = '--';
 
-  if (totalKmSum > 0 && totalVolumeSum > 0) {
-    const lPer100 = (totalVolumeSum / totalKmSum) * 100;
+  if (certifiedTripKmSum > 0 && certifiedTripQtySum > 0) {
+    // 1. High precision certified full-to-full trips completed in this period
+    const lPer100 = (certifiedTripQtySum / certifiedTripKmSum) * 100;
+    const kmPerL = certifiedTripKmSum / certifiedTripQtySum;
     avgConsumptionStr = `${lPer100.toFixed(1)} ${fuelUnit}/100km`;
-    avgKmPerLStr = `${(100 / lPer100).toFixed(1)} km/${fuelUnit}`;
+    avgKmPerLStr = `${kmPerL.toFixed(1)} km/${fuelUnit}`;
+  } else if (totalKmSum > 0 && totalVolumeSum > 0) {
+    // 2. Continuous period metric with physics plausibility bounds check
+    const rawLPer100 = (totalVolumeSum / totalKmSum) * 100;
+    const rawKmPerL = totalKmSum / totalVolumeSum;
+    const minPlausible = isBEV ? 8 : (isCNG ? 2 : 2.5);
+    const maxPlausible = isBEV ? 40 : (isCNG ? 12 : 24);
+
+    if (rawLPer100 >= minPlausible && rawLPer100 <= maxPlausible) {
+      avgConsumptionStr = `${rawLPer100.toFixed(1)} ${fuelUnit}/100km`;
+      avgKmPerLStr = `${rawKmPerL.toFixed(1)} km/${fuelUnit}`;
+    } else if (isSingle && singleVehicle) {
+      const m = fullMetricsMap.get(singleVehicle.id)!;
+      if (m.unitPer100Km !== '--') {
+        avgConsumptionStr = `${m.unitPer100Km} ${m.fuelUnit}/100km (media)`;
+        avgKmPerLStr = `${m.kmPerUnit} km/${m.fuelUnit}`;
+      }
+    }
   } else if (isSingle && singleVehicle) {
-    // If no refuels or no km in this month, display certified lifetime average with clear note
+    // 3. Fallback to vehicle certified lifetime average or technical specs
     const m = fullMetricsMap.get(singleVehicle.id)!;
     if (m.unitPer100Km !== '--') {
       avgConsumptionStr = `${m.unitPer100Km} ${m.fuelUnit}/100km (media)`;
-    }
-    if (m.kmPerUnit !== '--') {
       avgKmPerLStr = `${m.kmPerUnit} km/${m.fuelUnit}`;
+    } else if (singleVehicle.technicalSpecs?.wltpConsumption) {
+      avgConsumptionStr = `${singleVehicle.technicalSpecs.wltpConsumption}`;
     }
   }
 
