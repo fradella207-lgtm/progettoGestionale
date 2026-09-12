@@ -179,6 +179,12 @@ export interface Vehicle {
   manualInfo?: VehicleManualInfo;
   aiChatHistory?: AIChatMessage[];
   tripUsages?: Record<string, string>; // Maps tripId to classification tag (e.g. "Lavoro", "Viaggio", "Città")
+  // Impianto a Gas Aftermarket (GPL / Metano installato successivamente)
+  hasAftermarketGasSystem?: boolean;
+  aftermarketGasType?: 'GPL' | 'Metano';
+  aftermarketSystemBrand?: string;
+  aftermarketTankLiters?: number;
+  aftermarketInstallDate?: string;
   // Multi-Account / Shared Garage Sync (PRO Feature)
   isShared?: boolean;
   sharedGarageCode?: string;
@@ -285,6 +291,10 @@ export interface Station {
   operatorName?: string;
   rating?: number;
   highway?: string; // e.g. "A1 Milano-Napoli km 45"
+  isHighway?: boolean;
+  highwayName?: string; // e.g. "A1 Milano-Napoli", "A4 Torino-Trieste"
+  highwayDirection?: string; // e.g. "Dir. Sud (Bologna/Firenze/Roma)", "Dir. Nord (Milano/Brennero)", "Dir. Est (Verona/Venezia)", "Dir. Ovest (Torino)"
+  highwayKm?: string; // e.g. "km 156.5"
   isFavorite?: boolean;
   priceHistory?: StationPriceHistoryPoint[];
 }

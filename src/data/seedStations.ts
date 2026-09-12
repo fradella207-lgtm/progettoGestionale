@@ -2,6 +2,266 @@ import { Station, FuelType } from '../types';
 
 export const SEED_STATIONS: Station[] = [
   // =========================================================================
+  // 0. RETE AUTOSTRADALE ITALIANA (A1, A4, A7, A14, A22) - AREE DI SERVIZIO
+  // =========================================================================
+  {
+    id: 'st_hw_a1_1',
+    name: 'Autogrill & Eni Live - San Zenone Ovest (A1)',
+    brand: 'Eni',
+    type: 'both',
+    address: 'Autostrada A1 Milano-Napoli Km 15+100 Ovest',
+    city: 'San Zenone al Lambro',
+    province: 'MI',
+    lat: 45.3120,
+    lng: 9.3510,
+    isHighway: true,
+    highwayName: 'A1 Milano - Napoli',
+    highwayDirection: 'Sud (Bologna / Roma)',
+    highwayKm: 'km 15+100',
+    isOpen24h: true,
+    hasCarWash: true,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.6,
+    operatorName: 'Eni Live / Autogrill',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.849, isSelf: true, updatedAt: 'Oggi, 08:30' },
+      { fuel: 'Diesel', price: 1.769, isSelf: true, updatedAt: 'Oggi, 08:30' },
+      { fuel: 'GPL', price: 0.729, isSelf: false, updatedAt: 'Oggi, 08:30' },
+      { fuel: 'Benzina', price: 2.129, isSelf: false, updatedAt: 'Oggi, 08:30' },
+      { fuel: 'Diesel', price: 2.049, isSelf: false, updatedAt: 'Oggi, 08:30' }
+    ],
+    evPlugs: [
+      { type: 'CCS Combo 2 (DC)', powerKw: 300, pricePerKwh: 0.65, availableCount: 4, totalCount: 4, status: 'available' },
+      { type: 'Type 2 (AC)', powerKw: 22, pricePerKwh: 0.49, availableCount: 2, totalCount: 2, status: 'available' }
+    ]
+  },
+  {
+    id: 'st_hw_a1_2',
+    name: 'Chef Express & Q8 - San Zenone Est (A1)',
+    brand: 'Q8',
+    type: 'fuel',
+    address: 'Autostrada A1 Milano-Napoli Km 15+100 Est',
+    city: 'San Zenone al Lambro',
+    province: 'MI',
+    lat: 45.3140,
+    lng: 9.3530,
+    isHighway: true,
+    highwayName: 'A1 Milano - Napoli',
+    highwayDirection: 'Nord (Milano)',
+    highwayKm: 'km 15+100',
+    isOpen24h: true,
+    hasCarWash: true,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.4,
+    operatorName: 'Q8 Petroleum / Chef Express',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.839, isSelf: true, updatedAt: 'Oggi, 07:45' },
+      { fuel: 'Diesel', price: 1.759, isSelf: true, updatedAt: 'Oggi, 07:45' },
+      { fuel: 'GPL', price: 0.719, isSelf: false, updatedAt: 'Oggi, 07:45' },
+      { fuel: 'Metano', price: 1.349, isSelf: false, updatedAt: 'Oggi, 07:45' }
+    ]
+  },
+  {
+    id: 'st_hw_a4_1',
+    name: 'Autogrill & IP - Brianza Nord (A4)',
+    brand: 'IP',
+    type: 'fuel',
+    address: 'Autostrada A4 Torino-Trieste Km 148+400 Nord',
+    city: 'Caponago',
+    province: 'MB',
+    lat: 45.5680,
+    lng: 9.3820,
+    isHighway: true,
+    highwayName: 'A4 Torino - Trieste',
+    highwayDirection: 'Ovest (Torino / Milano)',
+    highwayKm: 'km 148+400',
+    isOpen24h: true,
+    hasCarWash: false,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.3,
+    operatorName: 'IP Gruppo api / Autogrill',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.859, isSelf: true, updatedAt: 'Oggi, 08:15' },
+      { fuel: 'Diesel', price: 1.779, isSelf: true, updatedAt: 'Oggi, 08:15' },
+      { fuel: 'Benzina', price: 2.149, isSelf: false, updatedAt: 'Oggi, 08:15' },
+      { fuel: 'Diesel', price: 2.069, isSelf: false, updatedAt: 'Oggi, 08:15' }
+    ]
+  },
+  {
+    id: 'st_hw_a4_2',
+    name: 'Free To X & Eni - Brianza Sud (A4)',
+    brand: 'Eni',
+    type: 'both',
+    address: 'Autostrada A4 Torino-Trieste Km 148+400 Sud',
+    city: 'Caponago',
+    province: 'MB',
+    lat: 45.5660,
+    lng: 9.3830,
+    isHighway: true,
+    highwayName: 'A4 Torino - Trieste',
+    highwayDirection: 'Est (Bergamo / Venezia)',
+    highwayKm: 'km 148+400',
+    isOpen24h: true,
+    hasCarWash: true,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.7,
+    operatorName: 'Eni / Free To X',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.845, isSelf: true, updatedAt: 'Oggi, 08:00' },
+      { fuel: 'Diesel', price: 1.765, isSelf: true, updatedAt: 'Oggi, 08:00' },
+      { fuel: 'GPL', price: 0.725, isSelf: false, updatedAt: 'Oggi, 08:00' }
+    ],
+    evPlugs: [
+      { type: 'CCS Combo 2 (DC)', powerKw: 300, pricePerKwh: 0.64, availableCount: 4, totalCount: 4, status: 'available' },
+      { type: 'CHAdeMO', powerKw: 60, pricePerKwh: 0.60, availableCount: 1, totalCount: 1, status: 'available' }
+    ]
+  },
+  {
+    id: 'st_hw_a1_3',
+    name: 'Autogrill & Eni - Secchia Ovest (A1)',
+    brand: 'Eni',
+    type: 'both',
+    address: 'Autostrada A1 del Sole Km 156+500 Ovest',
+    city: 'Modena',
+    province: 'MO',
+    lat: 44.6650,
+    lng: 10.8710,
+    isHighway: true,
+    highwayName: 'A1 Milano - Napoli',
+    highwayDirection: 'Nord (Milano)',
+    highwayKm: 'km 156+500',
+    isOpen24h: true,
+    hasCarWash: false,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.5,
+    operatorName: 'Eni / Autogrill',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.839, isSelf: true, updatedAt: 'Oggi, 08:10' },
+      { fuel: 'Diesel', price: 1.759, isSelf: true, updatedAt: 'Oggi, 08:10' },
+      { fuel: 'GPL', price: 0.719, isSelf: false, updatedAt: 'Oggi, 08:10' },
+      { fuel: 'Metano', price: 1.329, isSelf: false, updatedAt: 'Oggi, 08:10' }
+    ],
+    evPlugs: [
+      { type: 'CCS Combo 2 (DC)', powerKw: 300, pricePerKwh: 0.64, availableCount: 4, totalCount: 4, status: 'available' }
+    ]
+  },
+  {
+    id: 'st_hw_a1_4',
+    name: 'Autogrill & IP - Cantagallo Est (A1)',
+    brand: 'IP',
+    type: 'fuel',
+    address: 'Autostrada A1 del Sole Km 199+000 Est',
+    city: 'Casalecchio di Reno',
+    province: 'BO',
+    lat: 44.4680,
+    lng: 11.2720,
+    isHighway: true,
+    highwayName: 'A1 Milano - Napoli',
+    highwayDirection: 'Sud (Firenze / Roma)',
+    highwayKm: 'km 199+000',
+    isOpen24h: true,
+    hasCarWash: true,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.4,
+    operatorName: 'IP Gruppo api',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.849, isSelf: true, updatedAt: 'Oggi, 08:25' },
+      { fuel: 'Diesel', price: 1.769, isSelf: true, updatedAt: 'Oggi, 08:25' },
+      { fuel: 'GPL', price: 0.729, isSelf: false, updatedAt: 'Oggi, 08:25' }
+    ]
+  },
+  {
+    id: 'st_hw_a14_1',
+    name: 'Chef Express & Q8 - Rubicone Est (A14)',
+    brand: 'Q8',
+    type: 'both',
+    address: 'Autostrada A14 Adriatica Km 111+300 Est',
+    city: 'Savignano sul Rubicone',
+    province: 'FC',
+    lat: 44.1120,
+    lng: 12.3810,
+    isHighway: true,
+    highwayName: 'A14 Bologna - Taranto',
+    highwayDirection: 'Sud (Ancona / Bari)',
+    highwayKm: 'km 111+300',
+    isOpen24h: true,
+    hasCarWash: false,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.5,
+    operatorName: 'Q8 Petroleum / Chef Express',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.839, isSelf: true, updatedAt: 'Oggi, 07:30' },
+      { fuel: 'Diesel', price: 1.759, isSelf: true, updatedAt: 'Oggi, 07:30' },
+      { fuel: 'GPL', price: 0.709, isSelf: false, updatedAt: 'Oggi, 07:30' }
+    ],
+    evPlugs: [
+      { type: 'CCS Combo 2 (DC)', powerKw: 300, pricePerKwh: 0.63, availableCount: 2, totalCount: 2, status: 'available' }
+    ]
+  },
+  {
+    id: 'st_hw_a22_1',
+    name: 'Autogrill & Eni - Nogaredo Ovest (A22)',
+    brand: 'Eni',
+    type: 'both',
+    address: 'Autostrada A22 del Brennero Km 162+200 Ovest',
+    city: 'Nogaredo',
+    province: 'TN',
+    lat: 45.9180,
+    lng: 11.0250,
+    isHighway: true,
+    highwayName: 'A22 del Brennero',
+    highwayDirection: 'Nord (Trento / Brennero)',
+    highwayKm: 'km 162+200',
+    isOpen24h: true,
+    hasCarWash: true,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.6,
+    operatorName: 'Eni / Autogrill',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.859, isSelf: true, updatedAt: 'Oggi, 08:40' },
+      { fuel: 'Diesel', price: 1.779, isSelf: true, updatedAt: 'Oggi, 08:40' },
+      { fuel: 'GPL', price: 0.739, isSelf: false, updatedAt: 'Oggi, 08:40' }
+    ],
+    evPlugs: [
+      { type: 'CCS Combo 2 (DC)', powerKw: 150, pricePerKwh: 0.62, availableCount: 4, totalCount: 4, status: 'available' },
+      { type: 'Tesla Supercharger', powerKw: 250, pricePerKwh: 0.46, availableCount: 8, totalCount: 8, status: 'available' }
+    ]
+  },
+  {
+    id: 'st_hw_a7_1',
+    name: 'Autogrill & Tamoil - Dorno Ovest (A7)',
+    brand: 'Tamoil',
+    type: 'fuel',
+    address: 'Autostrada A7 Milano-Genova Km 33+700 Ovest',
+    city: 'Dorno',
+    province: 'PV',
+    lat: 45.1520,
+    lng: 8.9560,
+    isHighway: true,
+    highwayName: 'A7 Milano - Genova',
+    highwayDirection: 'Sud (Genova)',
+    highwayKm: 'km 33+700',
+    isOpen24h: true,
+    hasCarWash: false,
+    hasBar: true,
+    hasShop: true,
+    rating: 4.3,
+    operatorName: 'Tamoil / Autogrill',
+    fuelPrices: [
+      { fuel: 'Benzina', price: 1.839, isSelf: true, updatedAt: 'Oggi, 07:50' },
+      { fuel: 'Diesel', price: 1.759, isSelf: true, updatedAt: 'Oggi, 07:50' },
+      { fuel: 'GPL', price: 0.719, isSelf: false, updatedAt: 'Oggi, 07:50' }
+    ]
+  },
+  // =========================================================================
   // 1. LOMBARDIA (Milano, Brescia, Bergamo, Monza, Como, Varese, Pavia, Cremona, Mantova, Lecco)
   // =========================================================================
   {

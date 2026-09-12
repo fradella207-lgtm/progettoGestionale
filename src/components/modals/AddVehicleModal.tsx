@@ -92,6 +92,15 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const [powerCv, setPowerCv] = useState<number | ''>(vehicleToEdit?.powerCv ?? '');
   const [powerKw, setPowerKw] = useState<number | ''>(vehicleToEdit?.powerKw ?? '');
   const [initialKm, setInitialKm] = useState<number | ''>(vehicleToEdit?.initialKm ?? 0);
+  
+  // 3. Impianto a Gas Aftermarket (GPL / Metano installato successivamente)
+  const [hasAftermarketGasSystem, setHasAftermarketGasSystem] = useState<boolean>(vehicleToEdit?.hasAftermarketGasSystem || false);
+  const [aftermarketGasType, setAftermarketGasType] = useState<'GPL' | 'Metano'>(vehicleToEdit?.aftermarketGasType || 'GPL');
+  const [aftermarketSystemBrand, setAftermarketSystemBrand] = useState<string>(vehicleToEdit?.aftermarketSystemBrand || '');
+  const [aftermarketTankLiters, setAftermarketTankLiters] = useState<number | ''>(
+    vehicleToEdit?.aftermarketTankLiters ?? (vehicleToEdit?.secondaryTankCapacity ?? '')
+  );
+  const [aftermarketInstallDate, setAftermarketInstallDate] = useState<string>(vehicleToEdit?.aftermarketInstallDate || '');
   const [photoUrl, setPhotoUrl] = useState<string>(
     vehicleToEdit?.photoUrl || 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800&auto=format&fit=crop&q=80'
   );
@@ -163,6 +172,12 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       setPowerCv(vehicleToEdit?.powerCv ?? '');
       setPowerKw(vehicleToEdit?.powerKw ?? '');
       setInitialKm(vehicleToEdit?.initialKm ?? 0);
+
+      setHasAftermarketGasSystem(vehicleToEdit?.hasAftermarketGasSystem || false);
+      setAftermarketGasType(vehicleToEdit?.aftermarketGasType || 'GPL');
+      setAftermarketSystemBrand(vehicleToEdit?.aftermarketSystemBrand || '');
+      setAftermarketTankLiters(vehicleToEdit?.aftermarketTankLiters ?? (vehicleToEdit?.secondaryTankCapacity ?? ''));
+      setAftermarketInstallDate(vehicleToEdit?.aftermarketInstallDate || '');
 
       if (vehicleToEdit?.technicalSpecs) {
         setTechnicalSpecs(vehicleToEdit.technicalSpecs);
@@ -451,7 +466,14 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       registrationDate: regDate || `${targetYearNum}-06-15`,
       photoUrl,
       manualInfo: carManual,
-      technicalSpecs: finalSpecs
+      technicalSpecs: finalSpecs,
+      // Dati Impianto a Gas Aftermarket (GPL / Metano)
+      hasAftermarketGasSystem: vehicleType !== 'moto' ? hasAftermarketGasSystem : false,
+      aftermarketGasType: (vehicleType !== 'moto' && hasAftermarketGasSystem) ? aftermarketGasType : undefined,
+      aftermarketSystemBrand: (vehicleType !== 'moto' && hasAftermarketGasSystem && aftermarketSystemBrand.trim()) ? aftermarketSystemBrand.trim() : undefined,
+      aftermarketTankLiters: (vehicleType !== 'moto' && hasAftermarketGasSystem && aftermarketTankLiters !== '') ? Number(aftermarketTankLiters) : undefined,
+      aftermarketInstallDate: (vehicleType !== 'moto' && hasAftermarketGasSystem && aftermarketInstallDate) ? aftermarketInstallDate : undefined,
+      secondaryTankCapacity: (vehicleType !== 'moto' && hasAftermarketGasSystem && aftermarketTankLiters !== '') ? Number(aftermarketTankLiters) : (vehicleToEdit?.secondaryTankCapacity)
     });
 
     onClose();
@@ -945,6 +967,114 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   />
                 </div>
               </div>
+
+              {/* SEZIONE IMPIANTO A GAS AFTERMARKET (GPL / METANO) */}
+              {vehicleType !== 'moto' && (
+                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox"
+                        id="has-aftermarket-gas-checkbox"
+                        checked={hasAftermarketGasSystem}
+                        onChange={(e) => setHasAftermarketGasSystem(e.target.checked)}
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      />
+                      <label 
+                        htmlFor="has-aftermarket-gas-checkbox" 
+                        className="text-xs font-bold text-slate-900 cursor-pointer select-none"
+                      >
+                        Impianto a Gas Aftermarket installato (GPL / Metano)
+                      </label>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      Doppia alimentazione (Bifuel)
+                    </span>
+                  </div>
+
+                  {hasAftermarketGasSystem && (
+                    <div className="flex flex-col gap-3 pt-2 border-t border-slate-200/70 animate-in fade-in duration-150">
+                      {/* Tipo di Gas Aftermarket */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-bold text-slate-700">
+                          Tipo di Impianto Aggiunto *
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setAftermarketGasType('GPL')}
+                            className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                              aftermarketGasType === 'GPL'
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-300"></span>
+                            <span>Impianto GPL (Gas Liquido)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAftermarketGasType('Metano')}
+                            className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                              aftermarketGasType === 'Metano'
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full bg-blue-300"></span>
+                            <span>Impianto Metano (CNG)</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Marca Impianto & Capacità Bombola */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Marca Impianto Aftermarket
+                          </label>
+                          <input 
+                            type="text"
+                            placeholder="Es. Landi Renzo, BRC, Romano, Tartarini, Lovato, Zavoli..."
+                            value={aftermarketSystemBrand}
+                            onChange={(e) => setAftermarketSystemBrand(e.target.value)}
+                            className="w-full bg-white border border-slate-200 text-xs font-semibold px-3 py-2 rounded-xl focus:border-slate-900 outline-none"
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold text-slate-700">
+                            Capacità Serbatoio / Bombola ({aftermarketGasType === 'Metano' ? 'Kg' : 'Litri'})
+                          </label>
+                          <input 
+                            type="number"
+                            placeholder={aftermarketGasType === 'Metano' ? 'Es. 15' : 'Es. 45'}
+                            value={aftermarketTankLiters}
+                            onChange={(e) => setAftermarketTankLiters(e.target.value === '' ? '' : Number(e.target.value))}
+                            className="w-full bg-white border border-slate-200 text-xs font-bold px-3 py-2 rounded-xl focus:border-slate-900 outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Data Installazione / Collaudo Serbatoio */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                          <span>Data Installazione / Collaudo Impianto</span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            {aftermarketGasType === 'GPL' ? 'Revisione bombola ogni 10 anni' : 'Revisione bombole ogni 4 o 5 anni'}
+                          </span>
+                        </label>
+                        <input 
+                          type="date"
+                          value={aftermarketInstallDate}
+                          onChange={(e) => setAftermarketInstallDate(e.target.value)}
+                          className="w-full bg-white border border-slate-200 text-xs font-semibold px-3 py-2 rounded-xl focus:border-slate-900 outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
           )}

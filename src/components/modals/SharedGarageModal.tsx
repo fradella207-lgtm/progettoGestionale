@@ -455,18 +455,49 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
                     </div>
                   )}
 
-                  {/* Revoke Option */}
-                  <div className="pt-2 border-t border-slate-100 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleRevokeShare}
-                      disabled={isLoading}
-                      className="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1.5 p-2 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Revoca condivisione e disconnetti partner</span>
-                    </button>
-                  </div>
+                  {/* Revoke / Interrompi Condivisione (Riservato all'Amministratore) */}
+                  {(() => {
+                    const isGarageAdmin = !currentVehicle?.sharedRole || currentVehicle.sharedRole === 'owner' || (currentSharedGarage && currentSharedGarage.ownerId === userAccount.id);
+                    return isGarageAdmin ? (
+                      <div className="pt-3 border-t border-slate-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200">
+                        <div className="flex items-start gap-2.5">
+                          <ShieldCheck className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="text-xs font-black text-rose-950 block">
+                              Gestione Amministratore
+                            </span>
+                            <span className="text-[11px] text-rose-800 leading-tight">
+                              Hai creato tu questo codice di condivisione. Puoi interrompere la condivisione per tutti gli account connessi in qualsiasi momento.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          id="btn-revoke-shared-garage-admin"
+                          onClick={handleRevokeShare}
+                          disabled={isLoading}
+                          className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-xs active:scale-95"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Interrompi Condivisione</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="pt-3 border-t border-slate-150 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span className="text-xs text-slate-600 leading-tight">
+                          Sei connesso come membro. La revoca globale è riservata all'amministratore ({currentSharedGarage?.ownerName || currentVehicle?.sharedOwnerName || 'creatore'}).
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRevokeShare}
+                          disabled={isLoading}
+                          className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+                        >
+                          <span>Scollega dal mio account</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 /* State B: Not yet shared */

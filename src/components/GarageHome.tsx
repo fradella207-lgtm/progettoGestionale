@@ -187,81 +187,26 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             />
           </div>
 
-          <div className="flex items-center justify-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full md:w-auto">
-            {/* PULSANTE AGGIUNGI VEICOLO DIRETTO */}
-            <button
-              type="button"
-              id="btn-add-vehicle-home-strip"
-              onClick={onOpenAddCar}
-              className="px-3 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 cursor-pointer bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1.5 shadow-2xs active:scale-95"
-              title={userTier === 'FREE' && vehicles.length >= 1 ? 'Sblocca veicoli illimitati con MyGarage360 PRO' : 'Aggiungi un nuovo veicolo'}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Aggiungi</span>
-              {userTier === 'FREE' && vehicles.length >= 1 && (
-                <ProBadge variant="mini" />
-              )}
-            </button>
-
-            {/* PULSANTE AUTO CONDIVISA / GARAGE CONDIVISO PRO */}
-            <button
-              type="button"
-              id="btn-open-shared-garage-home"
-              onClick={() => {
-                if (userTier === 'FREE') {
-                  onOpenUpgradeModal?.('shared_garage');
-                } else {
-                  onOpenSharedGarage?.();
-                }
-              }}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
-              title="Condividi e sincronizza auto tra più account (marito, moglie, famiglia)"
-            >
-              <Users className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Auto Condivisa</span>
-              {userTier === 'FREE' ? (
-                <ProBadge variant="mini" />
-              ) : (
-                <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.2 rounded-md uppercase">PRO</span>
-              )}
-            </button>
-
+          <div className="flex items-center justify-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full md:w-auto">
             {[
               { id: 'all', label: 'Tutti' },
               { id: 'cars', label: 'Auto' },
-              { id: 'motos', label: 'Moto' },
-              { id: 'petrol', label: 'Benzina' },
-              { id: 'diesel', label: 'Diesel' },
-              { id: 'electric_hybrid', label: 'Ibride/EV' },
-              { id: 'gas', label: 'GPL/Metano' }
+              { id: 'motos', label: 'Moto' }
             ].map((f) => (
               <button
                 key={f.id}
                 type="button"
+                id={`filter-vehicle-${f.id}`}
                 onClick={() => setSelectedFuelCategory(f.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
                   selectedFuelCategory === f.id
-                    ? 'bg-slate-900 text-white border-slate-900'
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
                     : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
                 }`}
               >
                 {f.label}
               </button>
             ))}
-
-            {/* RECAP MENSILE & ANNUALE BUTTON */}
-            {onOpenRecap && (
-              <button
-                id="btn-open-recap-home"
-                type="button"
-                onClick={() => onOpenRecap()}
-                className="px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-900 border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
-                title="Visualizza e condividi il Recap Mensile e Annuale del Garage"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Recap Story</span>
-              </button>
-            )}
           </div>
         </section>
       )}
@@ -459,6 +404,39 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               {userTier === 'FREE' && vehicles.length >= 1 
                 ? 'Passa a PRO per aggiungere 2 o più veicoli' 
                 : 'Auto o moto'}
+            </span>
+          </div>
+
+          {/* Card Condividi un'auto (posizionata in fondo dopo il tasto aggiungi) */}
+          <div
+            id="btn-share-vehicle-home-bottom"
+            onClick={() => {
+              if (userTier === 'FREE') {
+                onOpenUpgradeModal?.('shared_garage');
+              } else {
+                onOpenSharedGarage?.();
+              }
+            }}
+            className="rounded-2xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/80 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px] relative"
+          >
+            <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
+              {userTier === 'FREE' ? (
+                <ProBadge variant="lock" />
+              ) : (
+                <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.5 rounded-md uppercase">PRO</span>
+              )}
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-200 text-indigo-700 flex items-center justify-center shadow-2xs group-hover:scale-105 group-hover:border-indigo-400 transition-all mb-2.5">
+              <Users className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="flex items-center gap-1.5 justify-center">
+              <span className="text-xs sm:text-sm font-bold text-slate-800">Condividi un'auto</span>
+              {userTier === 'FREE' && (
+                <ProBadge variant="mini" />
+              )}
+            </div>
+            <span className="text-[11px] text-slate-500 mt-0.5 max-w-[200px]">
+              Sincronizza un veicolo tra più account con link o codice
             </span>
           </div>
         </section>

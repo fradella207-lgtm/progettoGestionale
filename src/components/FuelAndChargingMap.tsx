@@ -116,7 +116,78 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   // Helper parser from backend API model to UI Station model
   const parseBackendStations = (rawArray: any[]): Station[] => {
     return rawArray.map((item: any) => {
-      if (item.fuelPrices || item.evPlugs) return item as Station;
+      // Helper to detect highway properties from address/name
+      const fullText = `${item.indirizzo_completo || item.indirizzo || ''} ${item.nome_gestore || ''} ${item.comune || ''} ${item.name || ''}`.toLowerCase();
+      
+      const isHighway = !!(
+        item.isHighway || 
+        item.autostrada ||
+        fullText.includes('autostrad') || 
+        fullText.includes('area di servizio') || 
+        fullText.includes('ads ') || 
+        fullText.includes('ad s ') ||
+        fullText.includes('tangenziale') ||
+        fullText.includes('raccordo') ||
+        /\b(a1|a4|a14|a22|a7|a8|a9|a10|a11|a12|a13|a15|a16|a21|a24|a25|a26|a27|a28|a31|a32|a35|a36|a51|a52|a58)\b/i.test(fullText)
+      );
+
+      let highwayName = item.highwayName;
+      let highwayDirection = item.highwayDirection;
+      let highwayKm = item.highwayKm;
+
+      if (isHighway) {
+        if (!highwayName) {
+          const mHighway = fullText.match(/\b(a[1-9]|a[1-3][0-9]|a5[0-9]|tangenziale\s+\w+|raccordo\s+\w+)\b/i);
+          if (mHighway) {
+            highwayName = mHighway[1].toUpperCase();
+          } else if (fullText.includes('tangenziale')) {
+            highwayName = 'Tangenziale';
+          } else {
+            highwayName = 'Autostrada';
+          }
+        }
+
+        if (!highwayDirection) {
+          if (fullText.includes('est') || fullText.includes('dir. est') || fullText.includes('direzione est')) {
+            highwayDirection = 'Est';
+          } else if (fullText.includes('ovest') || fullText.includes('dir. ovest') || fullText.includes('direzione ovest')) {
+            highwayDirection = 'Ovest';
+          } else if (fullText.includes('nord') || fullText.includes('dir. nord') || fullText.includes('direzione nord')) {
+            highwayDirection = 'Nord';
+          } else if (fullText.includes('sud') || fullText.includes('dir. sud') || fullText.includes('direzione sud')) {
+            highwayDirection = 'Sud';
+          } else if (fullText.includes('milano')) {
+            highwayDirection = 'Direzione Milano';
+          } else if (fullText.includes('roma') || fullText.includes('napoli')) {
+            highwayDirection = 'Direzione Roma / Napoli';
+          } else if (fullText.includes('bologna')) {
+            highwayDirection = 'Direzione Bologna';
+          } else if (fullText.includes('venezia')) {
+            highwayDirection = 'Direzione Venezia';
+          } else if (fullText.includes('torino')) {
+            highwayDirection = 'Direzione Torino';
+          } else if (fullText.includes('brennero')) {
+            highwayDirection = 'Direzione Brennero';
+          }
+        }
+
+        if (!highwayKm) {
+          const mKm = fullText.match(/km\s*(\d+[\.,]?\d*)/i);
+          if (mKm) {
+            highwayKm = `km ${mKm[1]}`;
+          }
+        }
+      }
+
+      if (item.fuelPrices || item.evPlugs) {
+        return {
+          ...item,
+          isHighway: isHighway || item.isHighway,
+          highwayName: highwayName || item.highwayName,
+          highwayDirection: highwayDirection || item.highwayDirection,
+          highwayKm: highwayKm || item.highwayKm
+        } as Station;
+      }
 
       const isEvType = item.tipo === 'elettrico' || item.tipo === 'ev' || item.id?.startsWith('ev_') ||
         (item.nome_gestore && (
@@ -144,13 +215,24 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           if (tLower.includes('gasolio') || tLower.includes('diesel') || tLower.includes('hvo')) fuelName = 'Diesel';
           else if (tLower.includes('gpl')) fuelName = 'GPL';
           else if (tLower.includes('metano') || tLower.includes('cng')) fuelName = 'Metano';
+
+          let priceNum = typeof sp.prezzo === 'number' ? sp.prezzo : parseFloat(sp.prezzo);
+          if (priceNum > 10) priceNum = priceNum / 1000; // Handle thousandths format (e.g. 1749 -> 1.749)
+
           return {
             fuel: fuelName,
-            price: sp.prezzo,
+            price: priceNum,
             isSelf,
             rawUpdatedAt: sp.ultimo_aggiornamento,
             updatedAt: formatPriceUpdateDate(sp.ultimo_aggiornamento)
           };
+        })
+        .sort((a: any, b: any) => {
+          // Self first, then by fuel order
+          if (a.isSelf && !b.isSelf) return -1;
+          if (!a.isSelf && b.isSelf) return 1;
+          const order: Record<string, number> = { 'Benzina': 1, 'Diesel': 2, 'GPL': 3, 'Metano': 4 };
+          return (order[a.fuel] || 9) - (order[b.fuel] || 9);
         });
 
       let evPlugs = (item.servizi_prezzi || [])
@@ -214,6 +296,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         province: '',
         lat: item.coordinate?.lat || 45.4642,
         lng: item.coordinate?.lng || 9.1900,
+        isHighway,
+        highwayName,
+        highwayDirection,
+        highwayKm,
         isOpen24h: true,
         hasCarWash: !isEvType && (item.nome_gestore?.toLowerCase().includes('eni') || item.nome_gestore?.toLowerCase().includes('q8')),
         hasBar: true,
@@ -532,6 +618,8 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     return [];
   });
   const [onlyFavorites, setOnlyFavorites] = useState<boolean>(false);
+  const [highwayFilter, setHighwayFilter] = useState<'all' | 'highway_only'>('all');
+  const [highwayDirectionFilter, setHighwayDirectionFilter] = useState<'all' | 'Nord' | 'Sud' | 'Est' | 'Ovest'>('all');
 
   // Price History Modal state
   const [priceHistoryStation, setPriceHistoryStation] = useState<Station | null>(null);
@@ -556,7 +644,8 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   };
 
   // Helper to extract minimum relevant price for sorting, badges and color classification
-  const getMinPrice = (station: Station): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev' } => {
+  // Previene accuratamente la confusione tra carburanti (Benzina vs Diesel vs GPL vs Metano) e tra Self vs Servito
+  const getMinPrice = (station: Station): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev'; fuelType?: FuelType | string; isSelf?: boolean } => {
     if ((station.type === 'ev' || typeFilter === 'ev') && station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
       return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev' };
@@ -566,25 +655,35 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         const matched = station.fuelPrices.filter(p => p.fuel === specificFuelFilter);
         if (matched.length > 0) {
           const selfP = matched.find(m => m.isSelf);
-          const p = selfP ? selfP.price : matched[0].price;
-          return { price: p, label: specificFuelFilter, unit: '€/L', fuelCategory: 'fuel' };
+          const chosen = selfP || matched[0];
+          const unit = chosen.fuel === 'Metano' ? '€/kg' : '€/L';
+          return { price: chosen.price, label: `${chosen.fuel} ${chosen.isSelf ? 'Self' : 'Servito'}`, unit, fuelCategory: 'fuel', fuelType: chosen.fuel, isSelf: chosen.isSelf };
         }
       }
-      // Default: match active car fuel (Diesel, Benzina, GPL, Metano) self service
+      // Match active car fuel (GPL, Metano, Diesel, Benzina) self service, tenendo conto anche di impianti aftermarket GPL/Metano
       let preferredFuel: FuelType = 'Benzina';
       if (selectedVehicle) {
         const ft = (selectedVehicle.fuelType || '').toLowerCase();
         const mot = (selectedVehicle.motorization || '').toLowerCase();
-        if (ft.includes('diesel') || mot.includes('diesel') || mot.includes('d ') || mot.endsWith('d')) preferredFuel = 'Diesel';
-        else if (ft.includes('gpl') || mot.includes('gpl')) preferredFuel = 'GPL';
-        else if (ft.includes('metano') || mot.includes('metano')) preferredFuel = 'Metano';
+        if (selectedVehicle.hasAftermarketGasSystem && selectedVehicle.aftermarketGasType) {
+          preferredFuel = selectedVehicle.aftermarketGasType;
+        } else if (ft.includes('diesel') || mot.includes('diesel') || mot.includes('d ') || mot.endsWith('d')) {
+          preferredFuel = 'Diesel';
+        } else if (ft.includes('gpl') || mot.includes('gpl')) {
+          preferredFuel = 'GPL';
+        } else if (ft.includes('metano') || mot.includes('metano')) {
+          preferredFuel = 'Metano';
+        }
       }
       const selfPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel && p.isSelf);
       const anyPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel);
-      const selfBenz = station.fuelPrices.find(p => p.fuel === 'Benzina' && p.isSelf);
       const selfDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel' && p.isSelf);
-      const chosen = selfPreferred || anyPreferred || selfDiesel || selfBenz || station.fuelPrices[0];
-      return { price: chosen.price, label: `${chosen.fuel}${chosen.isSelf ? ' Self' : ''}`, unit: '€/L', fuelCategory: 'fuel' };
+      const anyDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel');
+      const selfBenz = station.fuelPrices.find(p => p.fuel === 'Benzina' && p.isSelf);
+      const anyBenz = station.fuelPrices.find(p => p.fuel === 'Benzina');
+      const chosen = selfPreferred || anyPreferred || selfDiesel || anyDiesel || selfBenz || anyBenz || station.fuelPrices[0];
+      const unit = chosen.fuel === 'Metano' ? '€/kg' : '€/L';
+      return { price: chosen.price, label: `${chosen.fuel} ${chosen.isSelf ? 'Self' : 'Servito'}`, unit, fuelCategory: 'fuel', fuelType: chosen.fuel, isSelf: chosen.isSelf };
     }
     if (station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
@@ -593,13 +692,26 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     return { price: 0, label: '', unit: '', fuelCategory: 'fuel' };
   };
 
-  // Compute price ranges for chromatic price color scale (Green = Cheap, Amber = Average, Red = Expensive)
-  const priceColorClass = (price: number, category: 'fuel' | 'ev') => {
+  // Compute price ranges for chromatic price color scale calibrato per ciascun tipo di carburante (Green = Cheap, Amber = Average, Red = Expensive)
+  const priceColorClass = (price: number, category: 'fuel' | 'ev', fuelType?: string) => {
     if (!price || price <= 0) return { bg: 'bg-slate-800', text: 'text-white', border: 'border-slate-700', level: 'normal', badge: 'bg-slate-100 text-slate-800' };
     
     if (category === 'fuel') {
-      // Fuel price scale in Italy (e.g. 1.65 - 1.75 = cheap, 1.76 - 1.83 = medium, >1.84 = high/servito)
-      if (price <= 1.745) {
+      let cheapThreshold = 1.745;
+      let avgThreshold = 1.815;
+
+      if (fuelType === 'GPL') {
+        cheapThreshold = 0.699;
+        avgThreshold = 0.749;
+      } else if (fuelType === 'Metano') {
+        cheapThreshold = 1.289;
+        avgThreshold = 1.389;
+      } else if (fuelType === 'Diesel') {
+        cheapThreshold = 1.689;
+        avgThreshold = 1.769;
+      }
+
+      if (price <= cheapThreshold) {
         return { 
           bg: 'bg-emerald-600', 
           hoverBg: 'hover:bg-emerald-700',
@@ -609,7 +721,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200'
         };
       }
-      if (price <= 1.800) {
+      if (price <= avgThreshold) {
         return { 
           bg: 'bg-amber-600', 
           hoverBg: 'hover:bg-amber-700',
@@ -778,6 +890,16 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         if (typeFilter === 'both' && st.type !== 'both') return false;
       }
 
+      // Highway filter (filtro distributori autostradali e direzione)
+      if (highwayFilter === 'highway_only') {
+        if (!st.isHighway) return false;
+        if (highwayDirectionFilter !== 'all') {
+          const dir = (st.highwayDirection || '').toLowerCase();
+          const targetDir = highwayDirectionFilter.toLowerCase();
+          if (!dir.includes(targetDir)) return false;
+        }
+      }
+
       // Specific fuel
       if (specificFuelFilter !== 'all') {
         if (specificFuelFilter === 'Elettrico (Tutte)') {
@@ -825,7 +947,12 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       }
       return 0;
     });
-  }, [processedStations, typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices, onlyFavorites, favoriteStationIds]);
+  }, [processedStations, typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices, onlyFavorites, favoriteStationIds, highwayFilter, highwayDirectionFilter]);
+
+  // Highway stations count in the currently loaded area
+  const highwayStationsCount = useMemo(() => {
+    return processedStations.filter(st => st.isHighway).length;
+  }, [processedStations]);
 
   // Lowest price in active filter (for absolute best badge)
   const lowestPriceStationId = useMemo(() => {
@@ -851,8 +978,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     if (maxDistanceKm < 500) count++;
     if (onlyOpen24h) count++;
     if (onlyWithServices) count++;
+    if (highwayFilter === 'highway_only') count++;
+    if (highwayDirectionFilter !== 'all') count++;
     return count;
-  }, [typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, onlyOpen24h, onlyWithServices]);
+  }, [typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, onlyOpen24h, onlyWithServices, highwayFilter, highwayDirectionFilter]);
 
   // Copy GPS Coordinates / Full Address to Clipboard
   const handleCopyNavigation = (station: Station) => {
@@ -979,11 +1108,12 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       const isBestPrice = st.id === lowestPriceStationId || isProminentDeal;
       const isSelected = selectedStation?.id === st.id;
       const isFav = favoriteStationIds.includes(st.id);
-      const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+      const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory, minInfo.fuelType);
 
       let iconSymbol = '⛽';
       if (st.type === 'ev') iconSymbol = '⚡';
       if (st.type === 'both') iconSymbol = '⛽⚡';
+      if (st.isHighway) iconSymbol = '🛣️';
 
       const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
 
@@ -1211,61 +1341,121 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
 
       {/* 1. TOP POSITION & CITY SEARCH BAR (SOPRA LA MAPPA) */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-[#e2e8f0] shadow-xs flex flex-col gap-2.5">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col gap-2.5">
         
-        {/* ROW 1: SEARCH BAR + COMPACT FILTERS & SYNC ICONS */}
+        {/* ROW 1: SLEEK SEARCH BAR + ACTION BUTTONS */}
         <div className="flex items-center gap-1.5 sm:gap-2 w-full">
           
           {/* SEARCH CITY OR ADDRESS */}
-          <form onSubmit={handleSearchCity} className="flex-1 relative flex items-center min-w-0">
+          <form onSubmit={handleSearchCity} className="flex-1 relative flex items-center min-w-0 bg-slate-50 hover:bg-slate-100/70 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 border border-slate-200/80 rounded-xl sm:rounded-2xl transition-all shadow-2xs">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
             <input 
               type="text"
               id="input-search-stations-city"
-              placeholder="Cerca città o CAP (es. Milano, Roma, A1...)"
+              placeholder="Cerca città, indirizzo o tratta (es. Milano, A1, Roma...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f8fafc] border border-[#cbd5e1] focus:border-[#2563eb] focus:bg-white text-xs font-medium text-[#0f172a] pl-9 pr-14 py-2 rounded-xl sm:rounded-2xl outline-hidden transition-all shadow-2xs"
+              className="w-full bg-transparent text-xs font-medium text-slate-800 placeholder-slate-400 pl-9 pr-16 py-2 outline-hidden"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-12 text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors"
+                title="Cancella ricerca"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               type="submit"
               disabled={isSearchingCity}
-              className="absolute right-1 top-1 bottom-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold px-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
+              className="absolute right-1.5 top-1 bottom-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
               {isSearchingCity ? <RefreshCw className="w-3 h-3 animate-spin" /> : <span>Cerca</span>}
             </button>
           </form>
 
-          {/* FILTERS BUTTON (SOLO ICONA / LOGO AFFIANCATO AL CERCA) */}
+          {/* FILTERS BUTTON (MINIMAL & CLEAR) */}
           <button
             type="button"
             id="btn-toggle-station-filters"
             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            title="Filtri carburante, marchio e raggio"
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border transition-all cursor-pointer relative shadow-2xs ${
+            title="Filtri avanzati (carburante, marchio, raggio)"
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
               isFiltersOpen || activeFiltersCount > 0
-                ? 'bg-blue-50 border-blue-400 text-[#2563eb] ring-2 ring-blue-100'
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                ? 'bg-blue-50 border-blue-300 text-[#2563eb] font-bold ring-2 ring-blue-100'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-xs font-semibold">Filtri</span>
             {activeFiltersCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs border-2 border-white">
+              <span className="bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
                 {activeFiltersCount}
               </span>
             )}
           </button>
 
-          {/* REFRESH / SYNC BUTTON (COMPATTO) */}
+          {/* AUTOSTRADA TOGGLE BUTTON (CLEAN & MINIMAL) */}
+          <button
+            type="button"
+            id="btn-toggle-highway-filter"
+            onClick={() => {
+              setHighwayFilter(prev => {
+                const next = prev === 'highway_only' ? 'all' : 'highway_only';
+                if (next === 'all') setHighwayDirectionFilter('all');
+                return next;
+              });
+            }}
+            title={highwayFilter === 'highway_only' ? "Mostra tutte le strade" : "Filtra distributori in autostrada"}
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+              highwayFilter === 'highway_only'
+                ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold ring-2 ring-emerald-100'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <span className="text-xs">🛣️</span>
+            <span className="hidden sm:inline text-xs font-semibold">Autostrada</span>
+            {highwayStationsCount > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                highwayFilter === 'highway_only' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+              }`}>
+                {highwayStationsCount}
+              </span>
+            )}
+          </button>
+
+          {/* PREFERITI TOGGLE BUTTON */}
+          <button
+            type="button"
+            id="btn-toggle-favorites-filter"
+            onClick={() => setOnlyFavorites(prev => !prev)}
+            title={onlyFavorites ? "Mostra tutti i distributori" : "Mostra solo distributori preferiti"}
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+              onlyFavorites
+                ? 'bg-amber-50 border-amber-400 text-amber-900 font-bold ring-2 ring-amber-100'
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
+            {favoriteStationIds.length > 0 && (
+              <span className="text-[10px] font-bold text-slate-600">
+                {favoriteStationIds.length}
+              </span>
+            )}
+          </button>
+
+          {/* SYNC BUTTON */}
           <button
             type="button"
             id="btn-sync-stations-live"
             onClick={handleManualSync}
             disabled={isSyncingLive}
-            title="Aggiorna listini MIMIT e colonnine adesso"
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all cursor-pointer shadow-2xs"
+            title="Aggiorna listini MIMIT in tempo reale"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs"
           >
-            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncingLive ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLive ? 'animate-spin text-blue-600' : ''}`} />
           </button>
 
           {/* FUEL PRICE ALERTS BUTTON (PRO FEATURE) */}
@@ -1276,80 +1466,109 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
               if (userTier === 'FREE') {
                 onOpenUpgradeModal?.('fuel_alerts');
               } else {
-                alert('🔔 Avvisi Prezzi Carburante di Zona: ATTIVI!\nRiceverai notifiche quando i distributori attorno alla tua posizione o nelle città salvate riducono i prezzi sotto la media regionale.');
+                alert('🔔 Avvisi Prezzi Carburante di Zona: ATTIVI!\nRiceverai notifiche quando i distributori attorno alla tua posizione riducono i prezzi.');
               }
             }}
-            title={userTier === 'PRO' ? "Avvisi Prezzi di Zona Attivi" : "Avvisi Prezzi Carburante di Zona (Disponibile in PRO)"}
-            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+            title={userTier === 'PRO' ? "Avvisi Prezzi di Zona Attivi" : "Avvisi Prezzi Carburante (PRO)"}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 border transition-all cursor-pointer shadow-2xs ${
               userTier === 'PRO'
-                ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100'
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
+                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'
             }`}
           >
-            <Bell className="w-4 h-4 text-amber-600" />
-            <span className="hidden md:inline text-xs font-bold">Avvisi Prezzi</span>
-            {userTier === 'FREE' ? (
-              <ProBadge variant="lock" />
-            ) : (
-              <span className="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">
-                PRO
-              </span>
-            )}
-          </button>
-
-          {/* PREFERITI FILTER TOGGLE BUTTON */}
-          <button
-            type="button"
-            id="btn-toggle-favorites-filter"
-            onClick={() => setOnlyFavorites(prev => !prev)}
-            title={onlyFavorites ? "Mostra tutte le stazioni" : "Filtra e mostra solo i distributori preferiti"}
-            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
-              onlyFavorites
-                ? 'bg-amber-400 border-amber-500 text-slate-950 font-black shadow-xs'
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <Star className={`w-4 h-4 ${onlyFavorites ? 'fill-slate-950 text-slate-950' : 'fill-amber-400 text-amber-500'}`} />
-            <span className="text-xs font-bold">Preferiti</span>
-            {favoriteStationIds.length > 0 && (
-              <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
-                onlyFavorites ? 'bg-slate-950 text-amber-300' : 'bg-amber-100 text-amber-900'
-              }`}>
-                {favoriteStationIds.length}
-              </span>
-            )}
+            <Bell className="w-3.5 h-3.5 text-amber-600" />
           </button>
 
         </div>
 
-        {/* ROW 2: PRESET CITIES SHORTCUTS & COMPACT STATUS */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pb-0.5 text-xs no-scrollbar">
+        {/* ROW 2: INSTANT QUICK-FILTERS FOR FUEL & VEHICLE TYPE (LEGGERO E IMMEDIATO) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {[
+            { id: 'all', label: 'Tutti i carburanti', fuelCat: 'all' },
+            { id: 'Benzina', label: '⛽ Benzina', fuelCat: 'fuel' },
+            { id: 'Diesel', label: '⛽ Diesel', fuelCat: 'fuel' },
+            { id: 'GPL', label: '🟡 GPL', fuelCat: 'fuel' },
+            { id: 'Metano', label: '🟢 Metano', fuelCat: 'fuel' },
+            { id: 'Elettrico (Tutte)', label: '⚡ Elettrico EV', fuelCat: 'ev' },
+          ].map(f => {
+            const isActive = specificFuelFilter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  setSpecificFuelFilter(f.id);
+                  if (f.fuelCat === 'ev') {
+                    setTypeFilter('ev');
+                  } else if (f.fuelCat === 'all') {
+                    setTypeFilter('all');
+                  } else {
+                    setTypeFilter('fuel');
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+
+          {/* AUTOSTRADA DIRECTION SELECTOR INLINE (SE AUTOSTRADA È ATTIVO) */}
+          {highwayFilter === 'highway_only' && (
+            <div className="flex items-center gap-1 pl-2 ml-1 border-l border-slate-200 shrink-0 animate-in fade-in">
+              <span className="text-[10px] font-extrabold uppercase text-emerald-800 shrink-0">Dir:</span>
+              {[
+                { id: 'all', label: 'Tutte' },
+                { id: 'Nord', label: 'Nord ↑' },
+                { id: 'Sud', label: 'Sud ↓' },
+                { id: 'Est', label: 'Est →' },
+                { id: 'Ovest', label: 'Ovest ←' }
+              ].map(dir => (
+                <button
+                  key={dir.id}
+                  type="button"
+                  onClick={() => setHighwayDirectionFilter(dir.id as any)}
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
+                    highwayDirectionFilter === dir.id
+                      ? 'bg-emerald-700 text-white shadow-2xs'
+                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/70'
+                  }`}
+                >
+                  {dir.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ROW 3: PRESET CITIES & LIVE STATUS (MINIMAL & FLAT) */}
+        <div className="flex items-center justify-between gap-2 overflow-x-auto pt-1 border-t border-slate-100 text-xs no-scrollbar">
           <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap mr-0.5">Città:</span>
+            <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap mr-0.5">Città:</span>
             {[
               { name: 'Milano', lat: 45.4642, lng: 9.1900 },
               { name: 'Roma', lat: 41.9028, lng: 12.4964 },
               { name: 'Napoli', lat: 40.8518, lng: 14.2681 },
               { name: 'Torino', lat: 45.0703, lng: 7.6869 },
-              { name: 'Palermo', lat: 38.1157, lng: 13.3615 },
-              { name: 'Genova', lat: 44.4056, lng: 8.9463 },
               { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
               { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
               { name: 'Bari', lat: 41.1171, lng: 16.8719 },
-              { name: 'Catania', lat: 37.5079, lng: 15.0830 },
-              { name: 'Verona (Affi)', lat: 45.5532, lng: 10.7712 },
-              { name: 'Venezia', lat: 45.4408, lng: 12.3155 },
-              { name: 'Brescia', lat: 45.5416, lng: 10.2118 },
-              { name: 'Cagliari', lat: 39.2238, lng: 9.1217 }
+              { name: 'Verona', lat: 45.5532, lng: 10.7712 },
+              { name: 'Palermo', lat: 38.1157, lng: 13.3615 },
+              { name: 'Genova', lat: 44.4056, lng: 8.9463 },
             ].map(c => (
               <button
                 key={c.name}
                 type="button"
                 onClick={() => handleSelectPresetCity(c.name, c.lat, c.lng)}
-                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-all shrink-0 cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all shrink-0 cursor-pointer ${
                   searchQuery === c.name 
-                    ? 'bg-blue-50 border-blue-300 text-[#2563eb] shadow-2xs' 
-                    : 'bg-[#f8fafc] border-slate-200 text-slate-600 hover:bg-slate-100'
+                    ? 'bg-blue-50 text-[#2563eb] font-bold' 
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}
               >
                 {c.name}
@@ -1357,28 +1576,19 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[9px] sm:text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-              🏛️ {totalDbCount.toLocaleString('it-IT')} Stazioni MIMIT
-            </span>
-            {lastSyncTime && (
-              <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
-                {lastSyncTime}
-              </span>
-            )}
+          <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-slate-400 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>MIMIT Live • {totalDbCount.toLocaleString('it-IT')} stazioni</span>
           </div>
         </div>
 
         {/* OPTIONAL GEOLOCATION PROMPT BANNER (PUÒ ESSERE RIFIUTATO E NASCOSTO) */}
         {!hasDeclinedLocation && !userLocation && (
-          <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl sm:rounded-2xl flex items-center justify-between gap-2 text-xs animate-in fade-in">
-            <div className="flex items-center gap-2 text-slate-700 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-blue-100 text-[#2563eb] flex items-center justify-center shrink-0">
-                <LocateFixed className="w-3.5 h-3.5" />
-              </div>
+          <div className="bg-slate-50 border border-slate-200/80 p-2 rounded-xl flex items-center justify-between gap-2 text-xs animate-in fade-in">
+            <div className="flex items-center gap-2 text-slate-600 min-w-0">
+              <LocateFixed className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               <span className="truncate text-[11px]">
-                Attiva GPS per calcolare la distanza esatta dai distributori
+                Attiva il GPS per ordinare i distributori dal più vicino
               </span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -1386,17 +1596,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 type="button"
                 onClick={() => handleRequestLocation(true)}
                 disabled={isLocating}
-                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shadow-2xs"
+                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-[11px] font-bold px-2.5 py-0.5 rounded-lg transition-all"
               >
                 {isLocating ? 'Rilevo...' : 'Consenti'}
               </button>
               <button
                 type="button"
                 onClick={handleDismissLocationBanner}
-                className="bg-white hover:bg-slate-200 text-slate-600 border border-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg transition-all"
+                className="text-slate-400 hover:text-slate-600 text-[11px] px-1.5 py-0.5 rounded-lg transition-all"
                 title="Non mostrare più"
               >
-                Rifiuta
+                Ignora
               </button>
             </div>
           </div>
@@ -1417,97 +1627,162 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
       </div>
 
-      {/* 2. EXPANDABLE FILTERS PANEL (RACCHIUSO NEL TASTO FILTRI) */}
+      {/* 2. EXPANDABLE FILTERS PANEL (DESIGN PULITO E MINIMALE) */}
       {isFiltersOpen && (
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-blue-200 shadow-lg flex flex-col gap-3.5 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-lg flex flex-col gap-4 animate-in fade-in duration-150">
           
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#2563eb]" />
-              <span className="text-xs font-black uppercase text-[#0f172a] tracking-wider">Filtri di Ricerca</span>
+              <SlidersHorizontal className="w-4 h-4 text-slate-700" />
+              <span className="text-xs font-bold uppercase text-slate-800 tracking-wider">Filtri Avanzati</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setTypeFilter('all');
-                setSpecificFuelFilter('all');
-                setBrandFilter('all');
-                setMaxDistanceKm(500);
-                setOnlyOpen24h(false);
-                setOnlyWithServices(false);
-              }}
-              className="text-[11px] font-bold text-[#2563eb] hover:underline cursor-pointer"
-            >
-              Ripristina Filtri
-            </button>
-          </div>
-
-          {/* MAIN CATEGORY TABS */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
-              Tipologia Stazione
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
-              {[
-                { id: 'all', label: 'Tutto', icon: Sparkles },
-                { id: 'fuel', label: 'Carburante', icon: Fuel },
-                { id: 'ev', label: 'Colonnine EV', icon: Zap },
-                { id: 'both', label: 'Ibridi / Dual', icon: PlusCircle }
-              ].map(tab => {
-                const Icon = tab.icon;
-                const isActive = typeFilter === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setTypeFilter(tab.id as any)}
-                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
-                      isActive 
-                        ? 'bg-blue-50 text-[#2563eb] border-blue-300 shadow-2xs' 
-                        : 'bg-[#f8fafc] text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SPECIFIC FUEL, BRAND, DISTANCE, SORT */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            
-            {/* Specific Fuel */}
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
-                Carburante / Spina
-              </label>
-              <select
-                value={specificFuelFilter}
-                onChange={(e) => setSpecificFuelFilter(e.target.value)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setTypeFilter('all');
+                  setSpecificFuelFilter('all');
+                  setBrandFilter('all');
+                  setMaxDistanceKm(500);
+                  setOnlyOpen24h(false);
+                  setOnlyWithServices(false);
+                  setHighwayFilter('all');
+                  setHighwayDirectionFilter('all');
+                }}
+                className="text-[11px] font-semibold text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
               >
-                <option value="all">Tutti i carburanti</option>
-                <option value="Benzina">Benzina (SP95)</option>
-                <option value="Diesel">Gasolio (Diesel)</option>
-                <option value="GPL">GPL</option>
-                <option value="Metano">Metano (CNG)</option>
-                <option value="Elettrico (Tutte)">Elettrico: Tutte le Colonnine</option>
-                <option value="Fast DC (>100kW)">Elettrico: Fast DC (&gt;100 kW)</option>
-                <option value="Tesla Supercharger">Tesla Supercharger (V3/V4)</option>
-              </select>
+                Reimposta filtri
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsFiltersOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* CATEGORY & FUEL SELECTION */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+              Tipologia & Carburante
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'all', label: 'Tutti' },
+                { id: 'Benzina', label: 'Benzina' },
+                { id: 'Diesel', label: 'Diesel' },
+                { id: 'GPL', label: 'GPL' },
+                { id: 'Metano', label: 'Metano' },
+                { id: 'Elettrico (Tutte)', label: 'Elettrico EV' },
+                { id: 'Fast DC (>100kW)', label: 'Fast DC (>100 kW)' },
+                { id: 'Tesla Supercharger', label: 'Tesla Supercharger' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => {
+                    setSpecificFuelFilter(f.id);
+                    if (f.id.includes('Elettrico') || f.id.includes('Fast') || f.id.includes('Tesla')) {
+                      setTypeFilter('ev');
+                    } else if (f.id === 'all') {
+                      setTypeFilter('all');
+                    } else {
+                      setTypeFilter('fuel');
+                    }
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    specificFuelFilter === f.id
+                      ? 'bg-blue-600 text-white shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/80'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* HIGHWAY FILTER IN DRAWER */}
+          <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                Rete Stradale
+              </label>
+              {highwayFilter === 'highway_only' && (
+                <span className="text-[10px] font-bold text-emerald-700">Solo tratte autostradali</span>
+              )}
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHighwayFilter('all');
+                    setHighwayDirectionFilter('all');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    highwayFilter === 'all'
+                      ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Tutte le strade
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHighwayFilter('highway_only')}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    highwayFilter === 'highway_only'
+                      ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  🛣️ Solo Autostrada
+                </button>
+              </div>
+
+              {highwayFilter === 'highway_only' && (
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                  {[
+                    { id: 'all', label: 'Tutte' },
+                    { id: 'Nord', label: 'Nord' },
+                    { id: 'Sud', label: 'Sud' },
+                    { id: 'Est', label: 'Est' },
+                    { id: 'Ovest', label: 'Ovest' }
+                  ].map(d => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => setHighwayDirectionFilter(d.id as any)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        highwayDirectionFilter === d.id
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BRAND & SORT SELECTION (CLEAN 2-COL GRID) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            
             {/* Brand */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+              <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
                 Compagnia / Rete
               </label>
               <select
                 value={brandFilter}
                 onChange={(e) => setBrandFilter(e.target.value)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-hidden cursor-pointer"
               >
                 <option value="all">Tutte le compagnie</option>
                 <option value="Eni">Eni Live / Eni</option>
@@ -1523,13 +1798,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
             {/* Sort */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+              <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
                 Ordinamento
               </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-[#f8fafc] border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 text-xs font-bold text-[#0f172a] outline-hidden cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-hidden cursor-pointer"
               >
                 <option value="price">Prezzo più Basso</option>
                 <option value="distance">Distanza (Più Vicino)</option>
@@ -1539,124 +1814,115 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
           </div>
 
-          {/* CHECKBOXES & CLOSE */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100 text-xs">
-            <div className="flex items-center gap-3 text-slate-700 font-bold">
+          {/* CHECKBOXES & APPLY BUTTON */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+            <div className="flex items-center gap-3 text-slate-700 font-medium">
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={onlyOpen24h}
                   onChange={(e) => setOnlyOpen24h(e.target.checked)}
-                  className="w-4 h-4 rounded-md text-[#2563eb] accent-[#2563eb]"
+                  className="w-4 h-4 rounded-md text-blue-600 accent-blue-600"
                 />
-                <span className="text-[11px]">Aperto 24h</span>
+                <span className="text-[11px] font-semibold">Aperto 24h</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={onlyWithServices}
                   onChange={(e) => setOnlyWithServices(e.target.checked)}
-                  className="w-4 h-4 rounded-md text-[#2563eb] accent-[#2563eb]"
+                  className="w-4 h-4 rounded-md text-blue-600 accent-blue-600"
                 />
-                <span className="text-[11px]">Bar / Lavaggio</span>
+                <span className="text-[11px] font-semibold">Bar / Lavaggio</span>
               </label>
             </div>
 
             <button
               type="button"
               onClick={() => setIsFiltersOpen(false)}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-3.5 py-1.5 rounded-xl transition-all shadow-2xs"
+              className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-2xs"
             >
-              Applica ({filteredStations.length})
+              Mostra {filteredStations.length} distributori
             </button>
           </div>
 
         </div>
       )}
 
-      {/* 3. COLOR LEGEND & MAP DISPLAY CONTROLS */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-white rounded-xl sm:rounded-2xl border border-slate-200 text-[10px] sm:text-[11px] font-bold text-slate-600 shadow-2xs">
+      {/* 3. COLOR LEGEND & MAP DISPLAY CONTROLS (LIGHTWEIGHT & SLIM) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/70 text-[11px] text-slate-500 shadow-2xs">
         
         {/* Color Legend */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <span className="text-slate-400 whitespace-nowrap">Prezzi:</span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
-            <span>Economico</span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0"></span>
-            <span>Medio</span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
-            <span>Alto</span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-teal-600 shrink-0"></span>
-            <span>EV</span>
-          </div>
+        <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar">
+          <span className="text-slate-400 font-medium">Prezzi:</span>
+          <span className="flex items-center gap-1 text-slate-600 font-medium shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Economico
+          </span>
+          <span className="flex items-center gap-1 text-slate-600 font-medium shrink-0">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span> Medio
+          </span>
+          <span className="flex items-center gap-1 text-slate-600 font-medium shrink-0">
+            <span className="w-2 h-2 rounded-full bg-rose-500"></span> Alto
+          </span>
+          <span className="flex items-center gap-1 text-slate-600 font-medium shrink-0">
+            <span className="w-2 h-2 rounded-full bg-teal-500"></span> EV
+          </span>
         </div>
 
         {/* Quick View Controls & Clustering Switch */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => {
               setMaxDistanceKm(9999);
               mapInstanceRef.current?.flyTo([41.9028, 12.4964], 6, { duration: 1 });
             }}
-            title="Visualizza l'intero territorio nazionale italiano"
-            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+            title="Visualizza l'intero territorio nazionale"
+            className="text-[11px] text-slate-600 hover:text-slate-900 font-medium px-2 py-0.5 rounded-lg hover:bg-slate-100 transition-all cursor-pointer flex items-center gap-1"
           >
             <span>🇮🇹</span>
             <span>Tutta Italia</span>
           </button>
 
           {/* Density Mode Selector */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[10px] font-medium">
             <button
               type="button"
               onClick={() => setDensityMode('smart')}
-              title="Vista ottimizzata con anti-collisione e raggruppamento dinamico (consigliata)"
-              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+              title="Vista anti-collisione"
+              className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                 densityMode === 'smart' 
-                  ? 'bg-white text-[#2563eb] shadow-2xs font-extrabold' 
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-slate-900 font-bold shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              🎯 Chiara
+              Chiara
             </button>
             <button
               type="button"
               onClick={() => setDensityMode('best_only')}
-              title="Mostra solo le stazioni con i prezzi più convenienti nell'area visibile"
-              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+              title="Top prezzi convenienti"
+              className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                 densityMode === 'best_only' 
-                  ? 'bg-white text-emerald-700 shadow-2xs font-extrabold' 
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-emerald-700 font-bold shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              💎 Top Prezzi
+              Top Prezzi
             </button>
             <button
               type="button"
               onClick={() => setDensityMode('all')}
-              title="Mostra tutti i singoli pin senza raggruppamento"
-              className={`px-1.5 py-0.5 rounded-md transition-all cursor-pointer ${
+              title="Tutti i pin"
+              className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                 densityMode === 'all' 
-                  ? 'bg-white text-slate-900 shadow-2xs font-extrabold' 
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-slate-900 font-bold shadow-2xs' 
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              📌 Tutti
+              Tutti
             </button>
           </div>
-
-          <span className="hidden sm:inline-flex text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            Aggiornato quotidianamente
-          </span>
         </div>
 
       </div>
@@ -1756,6 +2022,18 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                     📍 {selectedStation.distanceKm} km
                   </span>
                 )}
+                {selectedStation.isHighway && (
+                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-lg text-[10px] font-black flex items-center gap-1">
+                    <span>🛣️</span>
+                    <span>{selectedStation.highwayName || 'Autostrada'}</span>
+                    {selectedStation.highwayDirection && (
+                      <span className="text-emerald-700 font-bold">• Dir. {selectedStation.highwayDirection}</span>
+                    )}
+                    {selectedStation.highwayKm && (
+                      <span className="text-emerald-600 font-medium">({selectedStation.highwayKm})</span>
+                    )}
+                  </span>
+                )}
                 {selectedStation.isOpen24h && (
                   <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px] font-bold">
                     24/7
@@ -1823,14 +2101,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 {selectedStation.fuelPrices && selectedStation.fuelPrices.length > 0 && (
                   <div className="flex flex-col gap-1.5">
                     {selectedStation.fuelPrices.map((fp, i) => {
-                      const col = priceColorClass(fp.price, 'fuel');
+                      const col = priceColorClass(fp.price, 'fuel', fp.fuel);
+                      const unitStr = fp.fuel === 'Metano' ? '€ / kg' : '€ / L';
                       return (
                         <div key={i} className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-2xs">
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
                               <span className={`w-2 h-2 rounded-full ${col.bg}`}></span>
-                              <span className="text-xs font-bold text-[#0f172a]">{fp.fuel}</span>
-                              <span className="text-[10px] text-slate-500 font-medium">{fp.isSelf ? '(Self)' : '(Servito)'}</span>
+                              <span className="text-xs font-black text-[#0f172a]">{fp.fuel}</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${fp.isSelf ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-700'}`}>
+                                {fp.isSelf ? 'Self' : 'Servito'}
+                              </span>
                             </div>
                             <span className="text-[10px] text-slate-400 font-medium pl-3.5">
                               Rilevazione: {fp.updatedAt || 'Oggi'}
@@ -1838,12 +2119,12 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-black text-[#0f172a]">
-                              € {fp.price.toFixed(3).replace('.', ',')} / L
+                              € {fp.price.toFixed(3).replace('.', ',')} <span className="text-[10px] text-slate-500 font-medium">{unitStr}</span>
                             </span>
                             {onOpenRefuelWithStation && (
                               <button
                                 type="button"
-                                onClick={() => onOpenRefuelWithStation(selectedStation, { price: fp.price, type: (fp.fuel === 'GPL' ? 'lpg' : (fp.fuel === 'Metano' ? 'cng' : 'fuel')), name: `${selectedStation.name} (${fp.fuel})` })}
+                                onClick={() => onOpenRefuelWithStation(selectedStation, { price: fp.price, type: (fp.fuel === 'GPL' ? 'lpg' : (fp.fuel === 'Metano' ? 'cng' : 'fuel')), name: `${selectedStation.name} (${fp.fuel} ${fp.isSelf ? 'Self' : 'Servito'})` })}
                                 title="Registra rifornimento con questo prezzo"
                                 className="bg-blue-50 hover:bg-blue-100 text-[#2563eb] text-[10px] font-black px-2 py-1 rounded-lg border border-blue-200 transition-all cursor-pointer"
                               >
@@ -2003,7 +2284,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                         .map((st) => {
                           const minInfo = getMinPrice(st);
                           const isSelected = selectedStation?.id === st.id;
-                          const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+                          const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory, minInfo.fuelType);
 
                           return (
                             <div
@@ -2029,10 +2310,15 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                                 </button>
 
                                 <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <h4 className="text-xs font-bold text-slate-900 truncate">
                                       {st.name}
                                     </h4>
+                                    {st.isHighway && (
+                                      <span className="bg-emerald-100 text-emerald-900 text-[9px] font-black px-1.5 py-0.2 rounded-md shrink-0 border border-emerald-300">
+                                        🛣️ {st.highwayName || 'Autostrada'}{st.highwayDirection ? ` • ${st.highwayDirection}` : ''}
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-[10px] text-slate-500 truncate">
                                     {st.city} ({st.province}) {st.distanceKm !== undefined ? `• ${st.distanceKm} km` : ''}
@@ -2053,9 +2339,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                                 </button>
 
                                 {minInfo.price > 0 && (
-                                  <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
-                                    € {minInfo.price.toFixed(3).replace('.', ',')}
-                                  </span>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-tight">
+                                      {minInfo.label}
+                                    </span>
+                                    <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
+                                      € {minInfo.price.toFixed(3).replace('.', ',')} <span className="text-[9px] font-medium opacity-80">{minInfo.unit}</span>
+                                    </span>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -2072,7 +2363,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                     const isSelected = selectedStation?.id === st.id;
                     const isBestPrice = st.id === lowestPriceStationId;
                     const isFav = favoriteStationIds.includes(st.id);
-                    const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+                    const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory, minInfo.fuelType);
 
                     return (
                       <div
@@ -2102,13 +2393,18 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                           </button>
 
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
                               <h4 className="text-xs font-bold text-[#0f172a] truncate">
                                 {st.name}
                               </h4>
                               {isBestPrice && (
                                 <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-200">
-                                  Più Economico
+                                  Miglior Prezzo
+                                </span>
+                              )}
+                              {st.isHighway && (
+                                <span className="bg-emerald-100 text-emerald-900 text-[9px] font-black px-1.5 py-0.2 rounded-md shrink-0 border border-emerald-300">
+                                  🛣️ {st.highwayName || 'Autostrada'}{st.highwayDirection ? ` • ${st.highwayDirection}` : ''}
                                 </span>
                               )}
                             </div>
@@ -2130,12 +2426,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
                           <div className="flex flex-col items-end gap-0.5">
                             {minInfo.price > 0 && (
-                              <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
-                                € {minInfo.price.toFixed(3).replace('.', ',')}
-                              </span>
+                              <>
+                                <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-tight">
+                                  {minInfo.label}
+                                </span>
+                                <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
+                                  € {minInfo.price.toFixed(3).replace('.', ',')} <span className="text-[9px] font-medium opacity-80">{minInfo.unit}</span>
+                                </span>
+                              </>
                             )}
                             <span className="text-[10px] text-slate-400 font-bold">
-                              {st.distanceKm !== undefined ? `${st.distanceKm} km` : minInfo.unit}
+                              {st.distanceKm !== undefined ? `${st.distanceKm} km` : ''}
                             </span>
                           </div>
                         </div>
