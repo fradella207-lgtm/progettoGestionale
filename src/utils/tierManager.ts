@@ -70,6 +70,8 @@ export function checkFeatureAccess(
     case 'shared_garage':
     case 'multi_account_sync':
     case 'fuel_alerts':
+    case 'price_history':
+    case 'favorite_stations':
     default:
       return false;
   }
@@ -145,6 +147,16 @@ const BASE_FUEL: ProFeatureDetail = {
   proLimit: 'Allerte Live & Radar Risparmio'
 };
 
+const BASE_PRICE_HISTORY: ProFeatureDetail = {
+  id: 'price_history',
+  title: 'Distributori Preferiti & Andamento Prezzo nel Tempo',
+  shortTitle: 'Andamento Prezzi',
+  description: 'Grafico dell\'andamento storico dei prezzi nel tempo per i distributori preferiti in primo piano: monitora le oscillazioni per fare il pieno sempre al miglior prezzo.',
+  badge: 'Grafico Storico',
+  freeLimit: 'Solo prezzi attuali',
+  proLimit: 'Preferiti in primo piano + Grafico andamento prezzi nel tempo'
+};
+
 export const PRO_FEATURES_CATALOG: Record<ProFeatureName, ProFeatureDetail> = {
   multi_vehicle: BASE_MULTI_VEHICLE,
   unlimited_garage: { ...BASE_MULTI_VEHICLE, id: 'unlimited_garage' },
@@ -155,7 +167,9 @@ export const PRO_FEATURES_CATALOG: Record<ProFeatureName, ProFeatureDetail> = {
   cloud_backup: { ...BASE_CLOUD, id: 'cloud_backup' },
   shared_garage: BASE_SHARED_GARAGE,
   multi_account_sync: { ...BASE_SHARED_GARAGE, id: 'multi_account_sync' },
-  fuel_alerts: BASE_FUEL
+  fuel_alerts: BASE_FUEL,
+  price_history: BASE_PRICE_HISTORY,
+  favorite_stations: BASE_PRICE_HISTORY
 };
 
 export const PRO_PRICING_OPTIONS: ProPricingOption[] = [
@@ -216,5 +230,10 @@ export const FREE_VS_PRO_COMPARISON = [
     feature: 'Allerte Prezzi Carburante',
     free: 'Solo mappa manuale',
     pro: 'Radar automatico & Allerte di zona'
+  },
+  {
+    feature: 'Distributori Preferiti & Andamento Prezzi',
+    free: 'Solo prezzi del giorno',
+    pro: 'Preferiti in primo piano + Grafico andamento prezzi nel tempo'
   }
 ];

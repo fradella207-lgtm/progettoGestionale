@@ -20,7 +20,8 @@ import {
   FileSpreadsheet,
   Printer,
   Download,
-  Crown
+  Crown,
+  Users
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType, UserTier, ProFeatureName } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
@@ -51,6 +52,7 @@ interface VehicleDetailProps {
   onOpenFixTank: () => void;
   onOpenRecap?: (vehicleId?: string) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
+  onOpenSharedGarage?: (vehicleId: string) => void;
 }
 
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({
@@ -66,7 +68,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenEditMaintenance,
   onOpenFixTank,
   onOpenRecap,
-  onOpenUpgradeModal
+  onOpenUpgradeModal,
+  onOpenSharedGarage
 }) => {
   const [mainTab, setMainTab] = useState<'overview' | 'documents' | 'ai'>(
     (initialTab === 'overview' || initialTab === 'documents' || initialTab === 'ai') ? initialTab : 'overview'
@@ -272,6 +275,31 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Condividi Auto (Shared Garage PRO) */}
+              <button
+                type="button"
+                id="btn-share-vehicle-detail"
+                onClick={() => {
+                  if (userTier === 'FREE') {
+                    onOpenUpgradeModal?.('shared_garage');
+                  } else {
+                    onOpenSharedGarage?.(vehicle.id);
+                  }
+                }}
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                title="Condividi questo veicolo con un altro account (es. marito, moglie, famiglia) per sincronizzazione istantanea"
+              >
+                <Users className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Condividi</span>
+                {userTier === 'FREE' ? (
+                  <ProBadge variant="lock" />
+                ) : (
+                  <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.2 rounded-md uppercase">
+                    PRO
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 

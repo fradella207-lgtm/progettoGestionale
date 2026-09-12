@@ -17,6 +17,7 @@ import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { RecapStoryModal } from './components/modals/RecapStoryModal';
 import { PaywallModal } from './components/modals/PaywallModal';
+import { SharedGarageModal } from './components/modals/SharedGarageModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
@@ -277,6 +278,26 @@ export default function App() {
     setRecapInitialVehicleId(carId || selectedCarId);
     setIsRecapModalOpen(true);
   };
+
+  // 9. SHARED GARAGE (AUTO CONDIVISA COPPIA/FAMIGLIA PRO)
+  const [isSharedGarageModalOpen, setIsSharedGarageModalOpen] = useState(false);
+  const [sharedGarageInitialVehicleId, setSharedGarageInitialVehicleId] = useState<string | undefined>(undefined);
+
+  const handleOpenSharedGarage = (carId?: string) => {
+    setSharedGarageInitialVehicleId(carId || selectedCarId);
+    setIsSharedGarageModalOpen(true);
+  };
+
+  // URL Query listener for one-time join codes or links (?join=ABC1234 or ?share=ABC1234)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('join') || params.get('share') || params.get('code');
+      if (code) {
+        setIsSharedGarageModalOpen(true);
+      }
+    } catch {}
+  }, []);
 
   // Sync to localStorage and Firestore
   useEffect(() => {
@@ -835,6 +856,7 @@ export default function App() {
             onImportVehicles={handleImportVehicles}
             onOpenRecap={handleOpenRecap}
             onOpenUpgradeModal={handleOpenUpgradeModal}
+            onOpenSharedGarage={() => handleOpenSharedGarage()}
           />
         ) : (
           selectedVehicle ? (
@@ -874,6 +896,7 @@ export default function App() {
               }}
               onOpenRecap={handleOpenRecap}
               onOpenUpgradeModal={handleOpenUpgradeModal}
+              onOpenSharedGarage={(vehicleId) => handleOpenSharedGarage(vehicleId)}
             />
           ) : (
             <div className="text-center py-20">
@@ -1016,6 +1039,26 @@ export default function App() {
         onClose={() => setIsPaywallOpen(false)}
         targetFeature={paywallTargetFeature}
         onUpgradeSuccess={handleUpgradeSuccess}
+      />
+
+      <SharedGarageModal 
+        isOpen={isSharedGarageModalOpen}
+        onClose={() => setIsSharedGarageModalOpen(false)}
+        vehicles={vehicles}
+        activeVehicleId={sharedGarageInitialVehicleId || selectedCarId}
+        userAccount={account}
+        userTier={userTier}
+        onOpenUpgradeModal={handleOpenUpgradeModal}
+        onVehicleUpdated={(updatedVehicle) => {
+          handleDirectUpdateVehicle(updatedVehicle);
+          showToast(`Veicolo ${updatedVehicle.brand} ${updatedVehicle.model} sincronizzato!`, 'success');
+        }}
+        onVehicleAdded={(newVehicle) => {
+          setVehicles(prev => [newVehicle, ...prev]);
+          setSelectedCarId(newVehicle.id);
+          showToast(`Veicolo ${newVehicle.brand} ${newVehicle.model} aggiunto al tuo garage!`, 'success');
+        }}
+        onShowToast={showToast}
       />
 
     </div>

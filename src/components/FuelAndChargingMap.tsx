@@ -30,8 +30,10 @@ import {
   CheckCheck,
   ChevronDown,
   Bell,
-  Crown
+  Crown,
+  TrendingUp
 } from 'lucide-react';
+import { StationPriceHistoryModal } from './modals/StationPriceHistoryModal';
 
 interface FuelAndChargingMapProps {
   vehicles: Vehicle[];
@@ -518,6 +520,41 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   // Selected Station for detail card
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
 
+  // Favorite Stations Persistence
+  const [favoriteStationIds, setFavoriteStationIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('garage_favorite_stations');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+  const [onlyFavorites, setOnlyFavorites] = useState<boolean>(false);
+
+  // Price History Modal state
+  const [priceHistoryStation, setPriceHistoryStation] = useState<Station | null>(null);
+  const [isPriceHistoryOpen, setIsPriceHistoryOpen] = useState<boolean>(false);
+
+  const handleToggleFavorite = (stationId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setFavoriteStationIds(prev => {
+      const exists = prev.includes(stationId);
+      const next = exists ? prev.filter(id => id !== stationId) : [stationId, ...prev];
+      try {
+        localStorage.setItem('garage_favorite_stations', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleOpenPriceHistory = (station: Station, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPriceHistoryStation(station);
+    setIsPriceHistoryOpen(true);
+  };
+
   // Helper to extract minimum relevant price for sorting, badges and color classification
   const getMinPrice = (station: Station): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev' } => {
     if ((station.type === 'ev' || typeFilter === 'ev') && station.evPlugs && station.evPlugs.length > 0) {
@@ -770,6 +807,9 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       // Services
       if (onlyWithServices && !st.hasCarWash && !st.hasBar && !st.hasShop) return false;
 
+      // Only Favorites filter
+      if (onlyFavorites && !favoriteStationIds.includes(st.id)) return false;
+
       return true;
     }).sort((a, b) => {
       if (sortBy === 'distance') {
@@ -785,7 +825,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       }
       return 0;
     });
-  }, [processedStations, typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices]);
+  }, [processedStations, typeFilter, specificFuelFilter, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices, onlyFavorites, favoriteStationIds]);
 
   // Lowest price in active filter (for absolute best badge)
   const lowestPriceStationId = useMemo(() => {
@@ -938,6 +978,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       const minInfo = getMinPrice(st);
       const isBestPrice = st.id === lowestPriceStationId || isProminentDeal;
       const isSelected = selectedStation?.id === st.id;
+      const isFav = favoriteStationIds.includes(st.id);
       const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
 
       let iconSymbol = '⛽';
@@ -949,11 +990,13 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       const markerHtml = `
         <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-115 z-50' : 'hover:scale-105'} transition-all">
           <div class="${colorScheme.bg} text-white px-2 py-0.5 rounded-lg shadow-sm border ${
-            isSelected 
-              ? 'border-amber-300 ring-3 ring-amber-400 font-black' 
-              : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400 font-black' : 'border-white/90 font-bold')
+            isFav
+              ? 'border-amber-300 ring-2 ring-amber-400 font-black'
+              : (isSelected 
+                  ? 'border-amber-300 ring-3 ring-amber-400 font-black' 
+                  : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400 font-black' : 'border-white/90 font-bold'))
           } text-[11px] tracking-tight whitespace-nowrap flex items-center gap-1">
-            <span class="text-[10px]">${iconSymbol}</span>
+            ${isFav ? '<span class="text-amber-300 text-[10px]">⭐</span>' : `<span class="text-[10px]">${iconSymbol}</span>`}
             <span>${priceText}</span>
           </div>
           <div class="w-1.5 h-1.5 ${colorScheme.bg} rotate-45 -mt-0.5 shadow-2xs border-r border-b border-black/10"></div>
@@ -969,7 +1012,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
       const marker = L.marker([st.lat, st.lng], { 
         icon: customIcon,
-        zIndexOffset: isSelected ? 1000 : (isBestPrice ? 500 : zOffset)
+        zIndexOffset: isSelected ? 1000 : (isFav ? 700 : (isBestPrice ? 500 : zOffset))
       });
 
       marker.on('click', () => {
@@ -1250,6 +1293,29 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             ) : (
               <span className="text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">
                 PRO
+              </span>
+            )}
+          </button>
+
+          {/* PREFERITI FILTER TOGGLE BUTTON */}
+          <button
+            type="button"
+            id="btn-toggle-favorites-filter"
+            onClick={() => setOnlyFavorites(prev => !prev)}
+            title={onlyFavorites ? "Mostra tutte le stazioni" : "Filtra e mostra solo i distributori preferiti"}
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+              onlyFavorites
+                ? 'bg-amber-400 border-amber-500 text-slate-950 font-black shadow-xs'
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Star className={`w-4 h-4 ${onlyFavorites ? 'fill-slate-950 text-slate-950' : 'fill-amber-400 text-amber-500'}`} />
+            <span className="text-xs font-bold">Preferiti</span>
+            {favoriteStationIds.length > 0 && (
+              <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                onlyFavorites ? 'bg-slate-950 text-amber-300' : 'bg-amber-100 text-amber-900'
+              }`}>
+                {favoriteStationIds.length}
               </span>
             )}
           </button>
@@ -1658,13 +1724,29 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedStation(null)}
-                  className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleFavorite(selectedStation.id, e)}
+                    className={`p-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                      favoriteStationIds.includes(selectedStation.id)
+                        ? 'bg-amber-50 text-amber-900 border-amber-300'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                    title={favoriteStationIds.includes(selectedStation.id) ? "Rimuovi dai preferiti" : "Salva tra i preferiti in primo piano"}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${favoriteStationIds.includes(selectedStation.id) ? 'fill-amber-400 text-amber-500' : 'text-slate-400'}`} />
+                    <span className="hidden sm:inline text-[11px]">{favoriteStationIds.includes(selectedStation.id) ? 'Preferito' : 'Salva'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStation(null)}
+                    className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Distance & Badges */}
@@ -1696,6 +1778,35 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   </span>
                 )}
               </div>
+
+              {/* TASTO ANDAMENTO STORICO PREZZO NEL TEMPO */}
+              <button
+                type="button"
+                id="btn-open-station-price-history"
+                onClick={() => handleOpenPriceHistory(selectedStation)}
+                className="w-full bg-indigo-50/70 hover:bg-indigo-100/70 border border-indigo-200 text-indigo-950 p-2.5 rounded-xl text-xs font-extrabold flex items-center justify-between transition-all cursor-pointer shadow-2xs group"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block font-black text-indigo-950 leading-tight">Andamento Prezzo nel Tempo</span>
+                    <span className="block text-[10px] text-indigo-700 font-medium">Storico 30 giorni e analisi convenienza</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {userTier === 'PRO' ? (
+                    <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.5 rounded-md uppercase">
+                      PRO
+                    </span>
+                  ) : (
+                    <ProBadge variant="lock" />
+                  )}
+                  <ChevronRight className="w-3.5 h-3.5 text-indigo-500 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </button>
 
               {/* PRICE LIST TABLE */}
               <div className="bg-[#f8fafc] rounded-2xl p-3.5 border border-slate-200 flex flex-col gap-2.5">
@@ -1871,67 +1982,167 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {filteredStations.slice(0, visibleListLimit).map((st) => {
-                  const minInfo = getMinPrice(st);
-                  const isSelected = selectedStation?.id === st.id;
-                  const isBestPrice = st.id === lowestPriceStationId;
-                  const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+              <div className="flex flex-col gap-3">
 
-                  return (
-                    <div
-                      key={st.id}
-                      onClick={() => {
-                        setSelectedStation(st);
-                        mapInstanceRef.current?.flyTo([st.lat, st.lng], 14, { duration: 0.8 });
-                      }}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isSelected 
-                          ? 'bg-blue-50/50 border-[#2563eb] shadow-xs ring-1 ring-[#2563eb]' 
-                          : (isBestPrice 
-                              ? 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-400' 
-                              : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50')
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${
-                          st.type === 'ev' 
-                            ? 'bg-teal-50 text-teal-600 border-teal-100' 
-                            : 'bg-blue-50 text-[#2563eb] border-blue-100'
-                        }`}>
-                          {st.type === 'ev' ? <Zap className="w-4 h-4" /> : <Fuel className="w-4 h-4" />}
+                {/* DISTRIBUTORI PREFERITI IN PRIMO PIANO */}
+                {!onlyFavorites && favoriteStationIds.length > 0 && (
+                  <div className="bg-amber-50/60 rounded-2xl p-3 border border-amber-200/80 flex flex-col gap-2">
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-[11px] font-black uppercase text-amber-950 tracking-wider flex items-center gap-1.5">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                        Distributori Preferiti in Primo Piano
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded-full">
+                        {filteredStations.filter(s => favoriteStationIds.includes(s.id)).length} salvati
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {filteredStations
+                        .filter(st => favoriteStationIds.includes(st.id))
+                        .map((st) => {
+                          const minInfo = getMinPrice(st);
+                          const isSelected = selectedStation?.id === st.id;
+                          const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+
+                          return (
+                            <div
+                              key={`fav_${st.id}`}
+                              onClick={() => {
+                                setSelectedStation(st);
+                                mapInstanceRef.current?.flyTo([st.lat, st.lng], 14, { duration: 0.8 });
+                              }}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                                isSelected 
+                                  ? 'bg-amber-100/70 border-amber-500 ring-2 ring-amber-400 shadow-xs' 
+                                  : 'bg-white border-amber-200/80 hover:border-amber-400 hover:shadow-xs'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleFavorite(st.id, e)}
+                                  className="p-1 rounded-lg hover:bg-amber-100 text-amber-500 transition-colors cursor-pointer shrink-0"
+                                  title="Rimuovi dai preferiti"
+                                >
+                                  <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                                </button>
+
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <h4 className="text-xs font-bold text-slate-900 truncate">
+                                      {st.name}
+                                    </h4>
+                                  </div>
+                                  <p className="text-[10px] text-slate-500 truncate">
+                                    {st.city} ({st.province}) {st.distanceKm !== undefined ? `• ${st.distanceKm} km` : ''}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleOpenPriceHistory(st, e)}
+                                  className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-900 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                                  title="Visualizza andamento prezzo storico 30gg"
+                                >
+                                  <TrendingUp className="w-3 h-3 text-indigo-600" />
+                                  <span className="hidden sm:inline">Andamento</span>
+                                  {userTier === 'FREE' && <ProBadge variant="mini" />}
+                                </button>
+
+                                {minInfo.price > 0 && (
+                                  <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
+                                    € {minInfo.price.toFixed(3).replace('.', ',')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ELENCO GENERALE STAZIONI */}
+                <div className="flex flex-col gap-2">
+                  {filteredStations.slice(0, visibleListLimit).map((st) => {
+                    const minInfo = getMinPrice(st);
+                    const isSelected = selectedStation?.id === st.id;
+                    const isBestPrice = st.id === lowestPriceStationId;
+                    const isFav = favoriteStationIds.includes(st.id);
+                    const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory);
+
+                    return (
+                      <div
+                        key={st.id}
+                        onClick={() => {
+                          setSelectedStation(st);
+                          mapInstanceRef.current?.flyTo([st.lat, st.lng], 14, { duration: 0.8 });
+                        }}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                          isSelected 
+                            ? 'bg-blue-50/50 border-[#2563eb] shadow-xs ring-1 ring-[#2563eb]' 
+                            : (isBestPrice 
+                                ? 'bg-emerald-50/30 border-emerald-300 hover:border-emerald-400' 
+                                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50')
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleFavorite(st.id, e)}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                              isFav ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-100'
+                            }`}
+                            title={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+                          >
+                            <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-500' : ''}`} />
+                          </button>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-bold text-[#0f172a] truncate">
+                                {st.name}
+                              </h4>
+                              {isBestPrice && (
+                                <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-200">
+                                  Più Economico
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 truncate">
+                              {st.city} ({st.province}) • {st.address}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <h4 className="text-xs font-bold text-[#0f172a] truncate">
-                              {st.name}
-                            </h4>
-                            {isBestPrice && (
-                              <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border border-emerald-200">
-                                Più Economico
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenPriceHistory(st, e)}
+                            className="p-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-lg text-xs transition-colors cursor-pointer"
+                            title="Visualizza andamento prezzo storico 30gg"
+                          >
+                            <TrendingUp className="w-3.5 h-3.5" />
+                          </button>
+
+                          <div className="flex flex-col items-end gap-0.5">
+                            {minInfo.price > 0 && (
+                              <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
+                                € {minInfo.price.toFixed(3).replace('.', ',')}
                               </span>
                             )}
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              {st.distanceKm !== undefined ? `${st.distanceKm} km` : minInfo.unit}
+                            </span>
                           </div>
-                          <p className="text-[11px] text-slate-500 truncate">
-                            {st.city} ({st.province}) • {st.address}
-                          </p>
                         </div>
                       </div>
-
-                      <div className="flex flex-col items-end shrink-0 gap-0.5">
-                        {minInfo.price > 0 && (
-                          <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${colorScheme.badge}`}>
-                            € {minInfo.price.toFixed(3).replace('.', ',')}
-                          </span>
-                        )}
-                        <span className="text-[10px] text-slate-400 font-bold">
-                          {st.distanceKm !== undefined ? `${st.distanceKm} km` : minInfo.unit}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
 
                 {filteredStations.length > visibleListLimit && (
                   <button
@@ -1950,6 +2161,20 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         </div>
 
       </div>
+
+      {/* MODALE STORICO PREZZI DISTRIBUTORE (PRO FEATURE) */}
+      <StationPriceHistoryModal
+        station={priceHistoryStation}
+        isOpen={isPriceHistoryOpen}
+        onClose={() => {
+          setIsPriceHistoryOpen(false);
+          setPriceHistoryStation(null);
+        }}
+        userTier={userTier}
+        isFavorite={priceHistoryStation ? favoriteStationIds.includes(priceHistoryStation.id) : false}
+        onToggleFavorite={handleToggleFavorite}
+        onOpenUpgradeModal={onOpenUpgradeModal}
+      />
 
     </div>
   );

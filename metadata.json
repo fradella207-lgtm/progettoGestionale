@@ -1,6 +1,6 @@
 {
   "name": "MyGarage",
-  "description": "Gestione semplice e completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, scadenze, recap mensile e annuale in stile story.",
+  "description": "Gestione completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, scadenze, distributori carburante preferiti con andamento storico prezzi 30gg, sincronizzazione multi-account e recap in stile story.",
   "requestFramePermissions": ["geolocation", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

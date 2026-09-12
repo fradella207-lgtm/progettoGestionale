@@ -13,7 +13,8 @@ import {
   Sparkles,
   ArrowUpRight,
   Crown,
-  Lock
+  Lock,
+  Users
 } from 'lucide-react';
 import { Vehicle, AppSettings, UserTier, ProFeatureName } from '../types';
 import { ProBadge } from './common/ProBadge';
@@ -29,6 +30,7 @@ interface GarageHomeProps {
   onImportVehicles?: (importedVehicles: Vehicle[]) => void;
   onOpenRecap?: (vehicleId?: string) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
+  onOpenSharedGarage?: (vehicleId?: string) => void;
 }
 
 export const GarageHome: React.FC<GarageHomeProps> = ({
@@ -40,7 +42,8 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
   onOpenEditCar,
   onDeleteVehicle,
   onOpenRecap,
-  onOpenUpgradeModal
+  onOpenUpgradeModal,
+  onOpenSharedGarage
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFuelCategory, setSelectedFuelCategory] = useState<string>('all');
@@ -197,6 +200,29 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               <span>Aggiungi</span>
               {userTier === 'FREE' && vehicles.length >= 1 && (
                 <ProBadge variant="mini" />
+              )}
+            </button>
+
+            {/* PULSANTE AUTO CONDIVISA / GARAGE CONDIVISO PRO */}
+            <button
+              type="button"
+              id="btn-open-shared-garage-home"
+              onClick={() => {
+                if (userTier === 'FREE') {
+                  onOpenUpgradeModal?.('shared_garage');
+                } else {
+                  onOpenSharedGarage?.();
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 flex items-center gap-1.5 shadow-2xs"
+              title="Condividi e sincronizza auto tra più account (marito, moglie, famiglia)"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Auto Condivisa</span>
+              {userTier === 'FREE' ? (
+                <ProBadge variant="mini" />
+              ) : (
+                <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.2 rounded-md uppercase">PRO</span>
               )}
             </button>
 

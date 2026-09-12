@@ -285,6 +285,8 @@ export interface Station {
   operatorName?: string;
   rating?: number;
   highway?: string; // e.g. "A1 Milano-Napoli km 45"
+  isFavorite?: boolean;
+  priceHistory?: StationPriceHistoryPoint[];
 }
 
 export interface UserAccount {
@@ -302,6 +304,13 @@ export interface UserAccount {
 
 export type UserTier = 'FREE' | 'PRO';
 
+export interface StationPriceHistoryPoint {
+  date: string; // YYYY-MM-DD
+  price: number;
+  fuel: string;
+  isSelf: boolean;
+}
+
 export type ProFeatureName = 
   | 'multi_vehicle' 
   | 'unlimited_garage'
@@ -312,7 +321,9 @@ export type ProFeatureName =
   | 'cloud_backup'
   | 'shared_garage'
   | 'multi_account_sync'
-  | 'fuel_alerts';
+  | 'fuel_alerts'
+  | 'price_history'
+  | 'favorite_stations';
 
 export interface ProPricingOption {
   id: 'annual' | 'lifetime';
