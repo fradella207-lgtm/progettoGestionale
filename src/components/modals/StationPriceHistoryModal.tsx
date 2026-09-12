@@ -26,6 +26,7 @@ interface StationPriceHistoryModalProps {
   isFavorite: boolean;
   onToggleFavorite: (stationId: string) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
+  initialFuel?: string;
 }
 
 export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> = ({
@@ -35,7 +36,8 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
   userTier = 'FREE',
   isFavorite,
   onToggleFavorite,
-  onOpenUpgradeModal
+  onOpenUpgradeModal,
+  initialFuel
 }) => {
   useSwipeBack({
     onBack: onClose,
@@ -45,7 +47,7 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
   // Collect available fuels or plugs for tabs
   const availableOptions = useMemo(() => {
     if (!station) return [];
-    const opts: { id: string; name: string; currentPrice: number; unit: string; isSelf?: boolean }[] = [];
+    const opts: { id: string; name: string; currentPrice: number; unit: string; isSelf?: boolean; fuel?: string }[] = [];
     
     if (station.fuelPrices && station.fuelPrices.length > 0) {
       station.fuelPrices.forEach(fp => {
@@ -53,8 +55,9 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
           id: `${fp.fuel}_${fp.isSelf ? 'self' : 'serv'}`,
           name: `${fp.fuel} (${fp.isSelf ? 'Self' : 'Servito'})`,
           currentPrice: fp.price,
-          unit: '€/L',
-          isSelf: fp.isSelf
+          unit: fp.fuel === 'Metano' ? '€/kg' : '€/L',
+          isSelf: fp.isSelf,
+          fuel: fp.fuel
         });
       });
     }
@@ -65,7 +68,8 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
           id: `ev_${idx}`,
           name: `${plug.type} (${plug.powerKw}kW)`,
           currentPrice: plug.pricePerKwh,
-          unit: '€/kWh'
+          unit: '€/kWh',
+          fuel: 'EV'
         });
       });
     }
@@ -76,6 +80,25 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
   const [selectedOptionId, setSelectedOptionId] = useState<string>(() => {
     return availableOptions[0]?.id || '';
   });
+
+  // Aggiorna l'opzione selezionata in base al carburante richiesto o al cambio di stazione
+  React.useEffect(() => {
+    if (!isOpen || availableOptions.length === 0) return;
+    if (initialFuel) {
+      const match = availableOptions.find(o => 
+        o.fuel?.toLowerCase() === initialFuel.toLowerCase() ||
+        o.id.toLowerCase().includes(initialFuel.toLowerCase()) || 
+        o.name.toLowerCase().includes(initialFuel.toLowerCase())
+      );
+      if (match) {
+        setSelectedOptionId(match.id);
+        return;
+      }
+    }
+    if (!availableOptions.some(o => o.id === selectedOptionId)) {
+      setSelectedOptionId(availableOptions[0].id);
+    }
+  }, [isOpen, initialFuel, station, availableOptions]);
 
   const activeOption = useMemo(() => {
     return availableOptions.find(o => o.id === selectedOptionId) || availableOptions[0] || null;
@@ -223,30 +246,48 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
           </button>
         </div>
 
-        {/* CONTENUTO MODALE */}
-        <div className="p-5 sm:p-6 flex flex-col gap-4.5 overflow-y-auto max-h-[70vh]">
-          
-          {/* SELETTORE CARBURANTE / COLONNINA */}
-          {availableOptions.length > 1 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-              {availableOptions.map(opt => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setSelectedOptionId(opt.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-                    selectedOptionId === opt.id
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200'
-                  }`}
-                >
-                  <span>{opt.name}</span>
-                  <span className="ml-1.5 opacity-80">{opt.currentPrice.toFixed(3)} {opt.unit}</span>
-                </button>
-              ))}
+        {/* SELETTORE CARBURANTE / COLONNINA IN PRIMO PIANO (FISSO SOTTO L'HEADER, NON SCORRE VIA E NON SI TAGLIA) */}
+        {availableOptions.length > 0 && (
+          <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                Seleziona Carburante da Analizzare:
+              </span>
+              {activeOption && (
+                <span className="text-[11px] font-black text-slate-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200/90 shadow-2xs">
+                  {activeOption.name} • {activeOption.currentPrice.toFixed(3)} {activeOption.unit}
+                </span>
+              )}
             </div>
-          )}
 
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {availableOptions.map(opt => {
+                const isSelected = activeOption?.id === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setSelectedOptionId(opt.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200 shadow-2xs'
+                    }`}
+                  >
+                    <span>{opt.name}</span>
+                    <span className={`text-[11px] font-extrabold ${isSelected ? 'text-amber-300' : 'text-slate-900'}`}>
+                      {opt.currentPrice.toFixed(3)} {opt.unit}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CONTENUTO MODALE (SCROLLABILE) */}
+        <div className="p-5 sm:p-6 flex flex-col gap-4.5 overflow-y-auto max-h-[62vh]">
+          
           {/* CARD METRICHE RAPIDE */}
           {stats && activeOption && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -294,13 +335,17 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
 
           {/* AREA GRAFICO (PRO O GATED) */}
           <div className="relative rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <span>Andamento Ultimi 30 Giorni</span>
-                <span className="text-[10px] text-slate-400 font-normal">({activeOption?.name})</span>
-              </span>
-              <span className="text-[10px] font-bold text-slate-500">
-                Media: {stats?.avg.toFixed(3)} {activeOption?.unit}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black text-slate-900">Andamento Ultimi 30 Giorni</span>
+                {activeOption && (
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                    {activeOption.name}
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] font-bold text-slate-600">
+                Media 30gg: <span className="font-mono text-slate-900">{stats?.avg.toFixed(3)} {activeOption?.unit}</span>
               </span>
             </div>
 
