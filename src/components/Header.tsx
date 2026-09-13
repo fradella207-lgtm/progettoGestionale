@@ -173,8 +173,8 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* QUICK RECAP BUTTON */}
-        {onOpenRecap && (
+        {/* QUICK RECAP BUTTON (Nascosto nella schermata distributori) */}
+        {onOpenRecap && currentView !== 'stations' && (
           <button
             id="btn-header-recap"
             type="button"

@@ -59,11 +59,13 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
       const allKm = [
         ...(car.refuels || []).map(r => Number(r.km) || 0),
         ...(car.maintenances || []).map(m => Number(m.km) || 0)
-      ];
+      ].filter(k => k > 0);
+
       if (allKm.length > 0) {
-        const maxKm = Math.max(...allKm);
-        const diff = maxKm - (Number(car.initialKm) || 0);
-        if (diff > 0) recordedKm += diff;
+        // I km registrati corrispondono a quelli in cui sono stati aggiunti i dati
+        recordedKm += Math.max(...allKm);
+      } else if (car.initialKm) {
+        recordedKm += Number(car.initialKm) || 0;
       }
 
       const refuelsCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);

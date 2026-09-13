@@ -31,9 +31,13 @@ import {
   ChevronDown,
   Bell,
   Crown,
-  TrendingUp
+  TrendingUp,
+  AlertTriangle,
+  AlertCircle,
+  Flag
 } from 'lucide-react';
 import { StationPriceHistoryModal } from './modals/StationPriceHistoryModal';
+import { StationReportModal, StationReport } from './modals/StationReportModal';
 
 interface FuelAndChargingMapProps {
   vehicles: Vehicle[];
@@ -652,6 +656,23 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   const [priceHistoryFuel, setPriceHistoryFuel] = useState<string | undefined>(undefined);
   const [isPriceHistoryOpen, setIsPriceHistoryOpen] = useState<boolean>(false);
 
+  // Report Station Modal state ("Segnala e Aiutaci a Migliorare")
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  const [stationToReport, setStationToReport] = useState<Station | null>(null);
+  const [reportedStationIds, setReportedStationIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('mygarage_station_reports');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed.map((r: any) => r.stationId).filter(Boolean);
+      }
+    } catch {}
+    return [];
+  });
+
+  // Top Prezzi Fuel Filter state (per evitare categoricamente confusioni tra Benzina, Diesel, GPL e Metano)
+  const [topPrezziFuel, setTopPrezziFuel] = useState<string>('auto'); // 'auto' | 'Benzina' | 'Diesel' | 'GPL' | 'Metano' | 'EV'
+
   const handleToggleFavorite = (stationId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setFavoriteStationIds(prev => {
@@ -672,17 +693,90 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     setIsPriceHistoryOpen(true);
   };
 
+  const handleOpenReportModal = (station: Station | null, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setStationToReport(station);
+    setIsReportModalOpen(true);
+  };
+
+  const handleReportSubmitted = (report: StationReport) => {
+    if (report.stationId) {
+      setReportedStationIds(prev => Array.from(new Set([report.stationId!, ...prev])));
+    }
+  };
+
+  // Benchmark fuel di riferimento derivato dal veicolo selezionato o preferenze
+  const benchmarkFuel = useMemo<string>(() => {
+    if (selectedVehicle) {
+      const ft = (selectedVehicle.fuelType || '').toLowerCase();
+      const mot = (selectedVehicle.motorization || '').toLowerCase();
+      if (selectedVehicle.hasAftermarketGasSystem && selectedVehicle.aftermarketGasType) {
+        return selectedVehicle.aftermarketGasType;
+      }
+      if (ft.includes('diesel') || mot.includes('diesel') || mot.includes('d ') || mot.endsWith('d')) {
+        return 'Diesel';
+      }
+      if (ft.includes('gpl') || mot.includes('gpl')) {
+        return 'GPL';
+      }
+      if (ft.includes('metano') || mot.includes('metano')) {
+        return 'Metano';
+      }
+      if (ft.includes('elettric') || ft.includes('bev')) {
+        return 'EV';
+      }
+    }
+    return 'Benzina';
+  }, [selectedVehicle]);
+
+  // Helper per estrarre il prezzo ESATTO di un carburante specifico (senza confondere mai Benzina con GPL o Diesel)
+  const getStationPriceForFuel = (station: Station, targetFuel: string): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev'; fuelType: string; isSelf?: boolean } | null => {
+    if (targetFuel === 'EV' || targetFuel.toLowerCase().includes('elettric')) {
+      if (station.evPlugs && station.evPlugs.length > 0) {
+        const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
+        return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev', fuelType: 'Elettrico', isSelf: true };
+      }
+      return null;
+    }
+
+    if (!station.fuelPrices || station.fuelPrices.length === 0) return null;
+
+    const matches = station.fuelPrices.filter(p => 
+      p.fuel.toLowerCase() === targetFuel.toLowerCase() || 
+      p.fuel.toLowerCase().includes(targetFuel.toLowerCase())
+    );
+    if (matches.length === 0) return null;
+
+    // Preferisci Self se disponibile, poi prezzo più basso
+    const sorted = [...matches].sort((a, b) => {
+      if (a.isSelf !== b.isSelf) return a.isSelf ? -1 : 1;
+      return a.price - b.price;
+    });
+    const chosen = sorted[0];
+    const unit = chosen.fuel === 'Metano' ? '€/kg' : '€/L';
+
+    return {
+      price: chosen.price,
+      label: `${chosen.fuel} ${chosen.isSelf ? 'Self' : 'Servito'}`,
+      unit,
+      fuelCategory: 'fuel',
+      fuelType: chosen.fuel,
+      isSelf: chosen.isSelf
+    };
+  };
+
   // Helper to extract minimum relevant price for sorting, badges and color classification
   // Previene accuratamente la confusione tra carburanti (Benzina vs Diesel vs GPL vs Metano) e tra Self vs Servito
   const getMinPrice = (station: Station): { price: number; label: string; unit: string; fuelCategory: 'fuel' | 'ev'; fuelType?: FuelType | string; isSelf?: boolean } => {
     if ((station.type === 'ev' || typeFilter === 'ev') && station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
-      return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev' };
+      return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev', fuelType: 'Elettrico' };
     }
+
     if (station.fuelPrices && station.fuelPrices.length > 0) {
-      // Se l'utente ha selezionato uno o più carburanti specifici, valutiamo il prezzo tra quelli selezionati
+      // 1. Se l'utente ha selezionato uno o più carburanti specifici, confronta solo tra quelli
       if (selectedFuels.length > 0) {
-        const matched = station.fuelPrices.filter(p => selectedFuels.includes(p.fuel));
+        const matched = station.fuelPrices.filter(p => selectedFuels.some(sf => p.fuel.toLowerCase() === sf.toLowerCase() || p.fuel.toLowerCase().includes(sf.toLowerCase())));
         if (matched.length > 0) {
           const sorted = [...matched].sort((a, b) => {
             if (a.isSelf !== b.isSelf) return a.isSelf ? -1 : 1;
@@ -693,35 +787,38 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
           return { price: chosen.price, label: `${chosen.fuel} ${chosen.isSelf ? 'Self' : 'Servito'}`, unit, fuelCategory: 'fuel', fuelType: chosen.fuel, isSelf: chosen.isSelf };
         }
       }
-      // Match active car fuel (GPL, Metano, Diesel, Benzina) self service, tenendo conto anche di impianti aftermarket GPL/Metano
-      let preferredFuel: FuelType = 'Benzina';
-      if (selectedVehicle) {
-        const ft = (selectedVehicle.fuelType || '').toLowerCase();
-        const mot = (selectedVehicle.motorization || '').toLowerCase();
-        if (selectedVehicle.hasAftermarketGasSystem && selectedVehicle.aftermarketGasType) {
-          preferredFuel = selectedVehicle.aftermarketGasType;
-        } else if (ft.includes('diesel') || mot.includes('diesel') || mot.includes('d ') || mot.endsWith('d')) {
-          preferredFuel = 'Diesel';
-        } else if (ft.includes('gpl') || mot.includes('gpl')) {
-          preferredFuel = 'GPL';
-        } else if (ft.includes('metano') || mot.includes('metano')) {
-          preferredFuel = 'Metano';
-        }
+
+      // 2. Se siamo in modalità Top Prezzi con un carburante specifico selezionato
+      if (densityMode === 'best_only' && topPrezziFuel !== 'auto') {
+        const specific = getStationPriceForFuel(station, topPrezziFuel);
+        if (specific) return specific;
       }
-      const selfPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel && p.isSelf);
-      const anyPreferred = station.fuelPrices.find(p => p.fuel === preferredFuel);
-      const selfDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel' && p.isSelf);
-      const anyDiesel = station.fuelPrices.find(p => p.fuel === 'Diesel');
-      const selfBenz = station.fuelPrices.find(p => p.fuel === 'Benzina' && p.isSelf);
-      const anyBenz = station.fuelPrices.find(p => p.fuel === 'Benzina');
-      const chosen = selfPreferred || anyPreferred || selfDiesel || anyDiesel || selfBenz || anyBenz || station.fuelPrices[0];
-      const unit = chosen.fuel === 'Metano' ? '€/kg' : '€/L';
-      return { price: chosen.price, label: `${chosen.fuel} ${chosen.isSelf ? 'Self' : 'Servito'}`, unit, fuelCategory: 'fuel', fuelType: chosen.fuel, isSelf: chosen.isSelf };
+
+      // 3. Altrimenti usa rigorosamente il carburante del veicolo dell'utente (o Benzina),
+      // evitando categoricamente di confondere GPL (0.7€) con Benzina/Diesel (1.7€)!
+      const primaryFuel = benchmarkFuel === 'EV' ? 'Benzina' : benchmarkFuel;
+      const primaryPrice = getStationPriceForFuel(station, primaryFuel);
+      if (primaryPrice) return primaryPrice;
+
+      // Se la stazione non ha il carburante del veicolo, cerca Benzina Self
+      const fallbackBenz = getStationPriceForFuel(station, 'Benzina');
+      if (fallbackBenz) return fallbackBenz;
+
+      // Poi Diesel Self
+      const fallbackDiesel = getStationPriceForFuel(station, 'Diesel');
+      if (fallbackDiesel) return fallbackDiesel;
+
+      // Ultima spiaggia: primo carburante ma con l'etichetta esatta (es. GPL o Metano)
+      const first = station.fuelPrices[0];
+      const unit = first.fuel === 'Metano' ? '€/kg' : '€/L';
+      return { price: first.price, label: `${first.fuel} ${first.isSelf ? 'Self' : 'Servito'}`, unit, fuelCategory: 'fuel', fuelType: first.fuel, isSelf: first.isSelf };
     }
+
     if (station.evPlugs && station.evPlugs.length > 0) {
       const minEv = Math.min(...station.evPlugs.map(p => p.pricePerKwh));
-      return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev' };
+      return { price: minEv, label: 'EV', unit: '€/kWh', fuelCategory: 'ev', fuelType: 'Elettrico' };
     }
+
     return { price: 0, label: '', unit: '', fuelCategory: 'fuel' };
   };
 
@@ -974,8 +1071,14 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         return (a.distanceKm || 0) - (b.distanceKm || 0);
       }
       if (sortBy === 'price') {
-        const priceA = getMinPrice(a).price || 999;
-        const priceB = getMinPrice(b).price || 999;
+        const targetFuel = densityMode === 'best_only' && topPrezziFuel !== 'auto'
+          ? topPrezziFuel
+          : (selectedFuels.length === 1 ? selectedFuels[0] : (benchmarkFuel === 'EV' ? 'Benzina' : benchmarkFuel));
+
+        const pInfoA = getStationPriceForFuel(a, targetFuel) || getMinPrice(a);
+        const pInfoB = getStationPriceForFuel(b, targetFuel) || getMinPrice(b);
+        const priceA = pInfoA.price > 0 ? pInfoA.price : 999;
+        const priceB = pInfoB.price > 0 ? pInfoB.price : 999;
         return priceA - priceB;
       }
       if (sortBy === 'rating') {
@@ -983,7 +1086,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       }
       return 0;
     });
-  }, [processedStations, typeFilter, selectedFuels, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices, onlyFavorites, favoriteStationIds, highwayFilter, highwayDirectionFilter]);
+  }, [processedStations, typeFilter, selectedFuels, brandFilter, maxDistanceKm, sortBy, onlyOpen24h, onlyWithServices, onlyFavorites, favoriteStationIds, highwayFilter, highwayDirectionFilter, densityMode, topPrezziFuel, benchmarkFuel]);
 
   // Highway stations count in the currently loaded area
   const highwayStationsCount = useMemo(() => {
@@ -995,15 +1098,19 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
     if (filteredStations.length === 0) return null;
     let minP = Infinity;
     let bestId = null;
+    const targetFuel = densityMode === 'best_only' && topPrezziFuel !== 'auto'
+      ? topPrezziFuel
+      : (selectedFuels.length === 1 ? selectedFuels[0] : (benchmarkFuel === 'EV' ? 'Benzina' : benchmarkFuel));
+
     filteredStations.forEach(st => {
-      const p = getMinPrice(st).price;
+      const p = (getStationPriceForFuel(st, targetFuel) || getMinPrice(st)).price;
       if (p > 0 && p < minP) {
         minP = p;
         bestId = st.id;
       }
     });
     return bestId;
-  }, [filteredStations, selectedFuels]);
+  }, [filteredStations, selectedFuels, densityMode, topPrezziFuel, benchmarkFuel]);
 
   // Active filters count for the button badge
   const activeFiltersCount = useMemo(() => {
@@ -1140,18 +1247,36 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
     // Helper: Render full detailed price pill
     const renderIndividualMarker = (st: Station, isProminentDeal = false, zOffset = 0) => {
-      const minInfo = getMinPrice(st);
+      const targetFuel = densityMode === 'best_only' && topPrezziFuel !== 'auto'
+        ? topPrezziFuel
+        : (selectedFuels.length === 1 ? selectedFuels[0] : null);
+
+      const minInfo = targetFuel 
+        ? (getStationPriceForFuel(st, targetFuel) || getMinPrice(st))
+        : getMinPrice(st);
+
       const isBestPrice = st.id === lowestPriceStationId || isProminentDeal;
       const isSelected = selectedStation?.id === st.id;
       const isFav = favoriteStationIds.includes(st.id);
+      const isReported = reportedStationIds.includes(st.id);
       const colorScheme = priceColorClass(minInfo.price, minInfo.fuelCategory, minInfo.fuelType);
 
       let iconSymbol = '⛽';
-      if (st.type === 'ev') iconSymbol = '⚡';
+      if (st.type === 'ev' || minInfo.fuelCategory === 'ev') iconSymbol = '⚡';
       if (st.type === 'both') iconSymbol = '⛽⚡';
       if (st.isHighway) iconSymbol = '🛣️';
 
-      const priceText = minInfo.price > 0 ? `€${minInfo.price.toFixed(3).replace('.', ',')}` : st.brand;
+      // Etichetta del tipo di alimentazione per massima chiarezza
+      let fuelTag = '';
+      if (minInfo.fuelType === 'Benzina') fuelTag = 'B';
+      else if (minInfo.fuelType === 'Diesel') fuelTag = 'D';
+      else if (minInfo.fuelType === 'GPL') fuelTag = 'GPL';
+      else if (minInfo.fuelType === 'Metano') fuelTag = 'Met';
+      else if (minInfo.fuelCategory === 'ev') fuelTag = 'EV';
+
+      const priceText = minInfo.price > 0 
+        ? `${fuelTag ? `<span class="opacity-80 text-[9px] font-bold">${fuelTag}</span> ` : ''}€${minInfo.price.toFixed(3).replace('.', ',')}` 
+        : st.brand;
 
       const markerHtml = `
         <div class="custom-station-pin cursor-pointer flex flex-col items-center group ${isSelected ? 'scale-115 z-50' : 'hover:scale-105'} transition-all">
@@ -1162,7 +1287,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                   ? 'border-amber-300 ring-3 ring-amber-400 font-black' 
                   : (isBestPrice ? 'border-emerald-300 ring-2 ring-emerald-400 font-black' : 'border-white/90 font-bold'))
           } text-[11px] tracking-tight whitespace-nowrap flex items-center gap-1">
-            ${isFav ? '<span class="text-amber-300 text-[10px]">⭐</span>' : `<span class="text-[10px]">${iconSymbol}</span>`}
+            ${isFav ? '<span class="text-amber-300 text-[10px]">⭐</span>' : (isReported ? '<span class="text-amber-300 text-[10px]" title="Segnalazione community">⚠️</span>' : `<span class="text-[10px]">${iconSymbol}</span>`)}
             <span>${priceText}</span>
           </div>
           <div class="w-1.5 h-1.5 ${colorScheme.bg} rotate-45 -mt-0.5 shadow-2xs border-r border-b border-black/10"></div>
@@ -1307,13 +1432,20 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
     // --- EXECUTE DENSITY STRATEGY ---
     if (densityMode === 'best_only') {
-      // Show top 8 most economical stations in current view
-      const topDeals = [...visiblePool]
-        .sort((a, b) => {
-          const pA = getMinPrice(a).price || 999;
-          const pB = getMinPrice(b).price || 999;
-          return pA - pB;
+      const targetFuel = topPrezziFuel !== 'auto'
+        ? topPrezziFuel
+        : (selectedFuels.length === 1 ? selectedFuels[0] : (benchmarkFuel === 'EV' ? 'Benzina' : benchmarkFuel));
+
+      // Filtra e ordina rigorosamente per il carburante target, evitando confronti errati tra carburanti diversi
+      const candidates = visiblePool
+        .map(st => {
+          const pInfo = getStationPriceForFuel(st, targetFuel);
+          return { st, pInfo, price: pInfo ? pInfo.price : 999 };
         })
+        .filter(item => item.price < 900)
+        .sort((a, b) => a.price - b.price);
+
+      const topDeals = (candidates.length > 0 ? candidates.map(c => c.st) : visiblePool)
         .slice(0, 10);
 
       topDeals.forEach(st => renderIndividualMarker(st, true));
@@ -1376,10 +1508,10 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   return (
     <div className="flex flex-col gap-4 w-full font-['Plus_Jakarta_Sans',sans-serif]">
 
-      {/* 1. TOP POSITION & CITY SEARCH BAR (SOPRA LA MAPPA) */}
+      {/* 1. TOP POSITION & CITY SEARCH BAR (SOPRA LA MAPPA - PULITO, MINIMALE E SENZA TROPPI ELEMENTI) */}
       <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xs flex flex-col gap-2.5">
         
-        {/* ROW 1: SLEEK SEARCH BAR + ACTION BUTTONS */}
+        {/* ROW: SEARCH BAR + FAVORITES + FILTERS (ONLY ESSENTIAL CONTROLS AS REQUESTED) */}
         <div className="flex items-center gap-1.5 sm:gap-2 w-full">
           
           {/* SEARCH CITY OR ADDRESS */}
@@ -1388,16 +1520,16 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             <input 
               type="text"
               id="input-search-stations-city"
-              placeholder="Cerca città, indirizzo o tratta (es. Milano, A1, Roma...)"
+              placeholder="Cerca città, indirizzo o tratta..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-xs font-medium text-slate-800 placeholder-slate-400 pl-9 pr-16 py-2 outline-hidden"
+              className="w-full bg-transparent text-xs font-medium text-slate-800 placeholder-slate-400 pl-9 pr-14 py-2 outline-hidden"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-12 text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors"
+                className="absolute right-11 text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors"
                 title="Cancella ricerca"
               >
                 <X className="w-3.5 h-3.5" />
@@ -1406,61 +1538,11 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             <button
               type="submit"
               disabled={isSearchingCity}
-              className="absolute right-1.5 top-1 bottom-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
+              className="absolute right-1 top-1 bottom-1 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold px-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
               {isSearchingCity ? <RefreshCw className="w-3 h-3 animate-spin" /> : <span>Cerca</span>}
             </button>
           </form>
-
-          {/* FILTERS BUTTON (MINIMAL & CLEAR) */}
-          <button
-            type="button"
-            id="btn-toggle-station-filters"
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            title="Filtri avanzati (carburanti multipli, marchio, raggio)"
-            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
-              isFiltersOpen || activeFiltersCount > 0
-                ? 'bg-blue-50 border-blue-300 text-[#2563eb] font-bold ring-2 ring-blue-100'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">Filtri</span>
-            {activeFiltersCount > 0 && (
-              <span className="bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
-          {/* AUTOSTRADA TOGGLE BUTTON (CLEAN & MINIMAL) */}
-          <button
-            type="button"
-            id="btn-toggle-highway-filter"
-            onClick={() => {
-              setHighwayFilter(prev => {
-                const next = prev === 'highway_only' ? 'all' : 'highway_only';
-                if (next === 'all') setHighwayDirectionFilter('all');
-                return next;
-              });
-            }}
-            title={highwayFilter === 'highway_only' ? "Mostra tutte le strade" : "Filtra distributori in autostrada"}
-            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
-              highwayFilter === 'highway_only'
-                ? 'bg-emerald-50 border-emerald-400 text-emerald-800 font-bold ring-2 ring-emerald-100'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <span className="text-xs">🛣️</span>
-            <span className="hidden md:inline text-xs font-semibold">Autostrada</span>
-            {highwayStationsCount > 0 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                highwayFilter === 'highway_only' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
-              }`}>
-                {highwayStationsCount}
-              </span>
-            )}
-          </button>
 
           {/* PREFERITI TOGGLE BUTTON */}
           <button
@@ -1482,7 +1564,28 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             )}
           </button>
 
-          {/* SYNC BUTTON (DESKTOP / TABLET) */}
+          {/* FILTERS BUTTON (CONTAINS ALL FUEL & HIGHWAY FILTERS) */}
+          <button
+            type="button"
+            id="btn-toggle-station-filters"
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            title="Filtri avanzati (carburanti, autostrada, marchio, raggio)"
+            className={`h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-1.5 shrink-0 border transition-all cursor-pointer shadow-2xs ${
+              isFiltersOpen || activeFiltersCount > 0
+                ? 'bg-blue-50 border-blue-300 text-[#2563eb] font-bold ring-2 ring-blue-100'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="text-xs font-semibold">Filtri</span>
+            {activeFiltersCount > 0 && (
+              <span className="bg-[#2563eb] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-2xs">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
+          {/* LIVE SYNC BUTTON (DESKTOP) */}
           <button
             type="button"
             id="btn-sync-stations-live"
@@ -1494,143 +1597,123 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncingLive ? 'animate-spin text-blue-600' : ''}`} />
           </button>
 
-          {/* FUEL PRICE ALERTS BUTTON (DESKTOP / TABLET) */}
-          <button
-            type="button"
-            id="btn-fuel-price-alerts"
-            onClick={() => {
-              if (userTier === 'FREE') {
-                onOpenUpgradeModal?.('fuel_alerts');
-              } else {
-                alert('🔔 Avvisi Prezzi Carburante di Zona: ATTIVI!\nRiceverai notifiche quando i distributori attorno alla tua posizione riducono i prezzi.');
-              }
-            }}
-            title={userTier === 'PRO' ? "Avvisi Prezzi di Zona Attivi" : "Avvisi Prezzi Carburante (PRO)"}
-            className={`hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl items-center justify-center shrink-0 border transition-all cursor-pointer shadow-2xs ${
-              userTier === 'PRO'
-                ? 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
-                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-            }`}
-          >
-            <Bell className="w-3.5 h-3.5 text-amber-600" />
-          </button>
-
         </div>
 
-        {/* ROW 2: INSTANT QUICK-FILTERS FOR FUEL WITH MULTI-SELECTION */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {/* ACTIVE FILTERS SUMMARY CHIPS (SLIM & DISMISSIBLE) */}
+        {activeFiltersCount > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
+            <span className="text-[10px] font-semibold text-slate-400 shrink-0">Filtri attivi:</span>
+            {selectedFuels.map(f => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => toggleFuelFilter(f)}
+                className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold shrink-0 cursor-pointer"
+              >
+                <span>{f}</span>
+                <X className="w-3 h-3" />
+              </button>
+            ))}
+            {highwayFilter === 'highway_only' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setHighwayFilter('all');
+                  setHighwayDirectionFilter('all');
+                }}
+                className="bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold shrink-0 cursor-pointer"
+              >
+                <span>🛣️ Autostrada {highwayDirectionFilter !== 'all' ? `(${highwayDirectionFilter})` : ''}</span>
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            {brandFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setBrandFilter('all')}
+                className="bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold shrink-0 cursor-pointer"
+              >
+                <span>{brandFilter}</span>
+                <X className="w-3 h-3" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setTypeFilter('all');
+                setSelectedFuels([]);
+                setBrandFilter('all');
+                setMaxDistanceKm(9999);
+                setOnlyOpen24h(false);
+                setOnlyWithServices(false);
+                setHighwayFilter('all');
+                setHighwayDirectionFilter('all');
+              }}
+              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 underline ml-auto shrink-0 cursor-pointer"
+            >
+              Azzera
+            </button>
+          </div>
+        )}
+
+        {/* DISCLAIMER & SEGNALA SECTION: "I / !" ALERT FOR PRICE ACCURACY */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100/90 text-xs">
+          <div className="flex items-start sm:items-center gap-1.5 text-slate-500">
+            <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-800 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0" title="Informazione accuratezza prezzi">
+              !
+            </span>
+            <p className="text-[11px] leading-tight text-slate-500">
+              I prezzi provengono dall'Osservaprezzi MIMIT e potrebbero presentare scostamenti rispetto alla pompa. Verifica sempre prima del rifornimento.
+            </p>
+          </div>
           <button
             type="button"
-            id="btn-fuel-filter-all"
-            onClick={() => {
-              setSelectedFuels([]);
-              setTypeFilter('all');
-            }}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-              selectedFuels.length === 0
-                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200/90'
-            }`}
+            onClick={() => handleOpenReportModal(null)}
+            className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 shrink-0 self-end sm:self-center cursor-pointer bg-blue-50/60 hover:bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60 transition-colors"
+            title="Segnala prezzo errato o aiutaci a migliorare"
           >
-            Tutti i carburanti
+            <Flag className="w-3 h-3 text-blue-600" />
+            <span>Segnala e Aiutaci a Migliorare</span>
           </button>
+        </div>
 
-          {[
-            { id: 'Benzina', label: '⛽ Benzina' },
-            { id: 'Diesel', label: '⛽ Diesel' },
-            { id: 'GPL', label: '🟡 GPL' },
-            { id: 'Metano', label: '🟢 Metano' },
-            { id: 'Elettrico (Tutte)', label: '⚡ Elettrico EV' },
-          ].map(f => {
-            const isSelected = selectedFuels.includes(f.id);
-            return (
-              <button
-                key={f.id}
-                type="button"
-                id={`btn-fuel-filter-${f.id.toLowerCase().replace(/[^a-z0-9]/g, '')}`}
-                onClick={() => toggleFuelFilter(f.id)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 border ${
-                  isSelected
-                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200/90'
-                }`}
-              >
-                {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                <span>{f.label}</span>
-              </button>
-            );
-          })}
-
-          {selectedFuels.length > 1 && (
-            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full shrink-0">
-              {selectedFuels.length} selezionati
-            </span>
-          )}
-
-          {/* AUTOSTRADA DIRECTION SELECTOR INLINE (SE AUTOSTRADA È ATTIVO) */}
-          {highwayFilter === 'highway_only' && (
-            <div className="flex items-center gap-1 pl-2 ml-1 border-l border-slate-200 shrink-0 animate-in fade-in">
-              <span className="text-[10px] font-extrabold uppercase text-emerald-800 shrink-0">Dir:</span>
+        {/* TOP PREZZI SPECIFIC FUEL SELECTOR (WHEN IN 'best_only' MODE) TO AVOID CROSS-FUEL MISMATCH */}
+        {densityMode === 'best_only' && (
+          <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-2 flex flex-col gap-1.5 animate-in fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-800 text-xs font-black">Top Prezzi:</span>
+                <span className="text-[11px] text-emerald-800 font-medium">Confronta solo per tipo di alimentazione:</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-md">
+                Evita errori tra carburanti
+              </span>
+            </div>
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
               {[
-                { id: 'all', label: 'Tutte' },
-                { id: 'Nord', label: 'Nord ↑' },
-                { id: 'Sud', label: 'Sud ↓' },
-                { id: 'Est', label: 'Est →' },
-                { id: 'Ovest', label: 'Ovest ←' }
-              ].map(dir => (
+                { id: 'auto', label: `Veicolo (${benchmarkFuel})` },
+                { id: 'Benzina', label: '⛽ Benzina' },
+                { id: 'Diesel', label: '⛽ Diesel' },
+                { id: 'GPL', label: '🟡 GPL' },
+                { id: 'Metano', label: '🟢 Metano' },
+                { id: 'EV', label: '⚡ Elettrico EV' },
+              ].map(opt => (
                 <button
-                  key={dir.id}
+                  key={opt.id}
                   type="button"
-                  onClick={() => setHighwayDirectionFilter(dir.id as any)}
-                  className={`px-2 py-0.5 rounded-full text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
-                    highwayDirectionFilter === dir.id
+                  onClick={() => setTopPrezziFuel(opt.id)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    topPrezziFuel === opt.id
                       ? 'bg-emerald-700 text-white shadow-2xs'
-                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/70'
+                      : 'bg-white text-emerald-900 hover:bg-emerald-100 border border-emerald-200'
                   }`}
                 >
-                  {dir.label}
+                  {opt.label}
                 </button>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* ROW 3: PRESET CITIES & LIVE STATUS (MINIMAL & FLAT) */}
-        <div className="flex items-center justify-between gap-2 overflow-x-auto pt-1 border-t border-slate-100 text-xs no-scrollbar">
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap mr-0.5">Città:</span>
-            {[
-              { name: 'Milano', lat: 45.4642, lng: 9.1900 },
-              { name: 'Roma', lat: 41.9028, lng: 12.4964 },
-              { name: 'Napoli', lat: 40.8518, lng: 14.2681 },
-              { name: 'Torino', lat: 45.0703, lng: 7.6869 },
-              { name: 'Bologna', lat: 44.4949, lng: 11.3426 },
-              { name: 'Firenze', lat: 43.7696, lng: 11.2558 },
-              { name: 'Bari', lat: 41.1171, lng: 16.8719 },
-              { name: 'Verona', lat: 45.5532, lng: 10.7712 },
-              { name: 'Palermo', lat: 38.1157, lng: 13.3615 },
-              { name: 'Genova', lat: 44.4056, lng: 8.9463 },
-            ].map(c => (
-              <button
-                key={c.name}
-                type="button"
-                onClick={() => handleSelectPresetCity(c.name, c.lat, c.lng)}
-                className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all shrink-0 cursor-pointer ${
-                  searchQuery === c.name 
-                    ? 'bg-blue-50 text-[#2563eb] font-bold' 
-                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
           </div>
-
-          <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-slate-400 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>MIMIT Live • {totalDbCount.toLocaleString('it-IT')} stazioni</span>
-          </div>
-        </div>
+        )}
 
         {/* OPTIONAL GEOLOCATION PROMPT BANNER (PUÒ ESSERE RIFIUTATO E NASCOSTO) */}
         {!hasDeclinedLocation && !userLocation && (
@@ -2244,6 +2327,27 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
               </div>
 
+              {/* DISCLAIMER & SEGNALA DIFORMITÀ PREZZO */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 flex items-center justify-between gap-2.5">
+                <div className="flex items-start gap-2 min-w-0">
+                  <span className="w-4 h-4 rounded-full bg-amber-200 text-amber-900 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5" title="Avviso accuratezza">
+                    !
+                  </span>
+                  <p className="text-[11px] text-amber-950 leading-tight">
+                    I prezzi potrebbero differire dal totem alla pompa. Se riscontri inesattezze, aiutaci a migliorare il servizio:
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleOpenReportModal(selectedStation)}
+                  className="bg-white hover:bg-amber-100 text-amber-900 text-[11px] font-black px-2.5 py-1.5 rounded-xl border border-amber-300 shadow-2xs flex items-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+                  title="Segnala prezzo difforme o stazione inattiva"
+                >
+                  <Flag className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Segnala</span>
+                </button>
+              </div>
+
               {/* ACTION BUTTONS & SIMPLE NAVIGATION COPY COMMAND */}
               <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -2483,7 +2587,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={(e) => handleOpenPriceHistory(st, minInfo.fuelType, e)}
@@ -2491,6 +2595,15 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
                             title="Visualizza andamento prezzo storico 30gg"
                           >
                             <TrendingUp className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenReportModal(st, e)}
+                            className="p-1.5 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-400 hover:border-amber-300 rounded-lg text-xs transition-colors cursor-pointer"
+                            title="Segnala discrepanza prezzo o stazione inattiva"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
                           </button>
 
                           <div className="flex flex-col items-end gap-0.5">
@@ -2546,6 +2659,17 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
         isFavorite={priceHistoryStation ? favoriteStationIds.includes(priceHistoryStation.id) : false}
         onToggleFavorite={handleToggleFavorite}
         onOpenUpgradeModal={onOpenUpgradeModal}
+      />
+
+      {/* MODALE SEGNALA E AIUTACI A MIGLIORARE */}
+      <StationReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => {
+          setIsReportModalOpen(false);
+          setStationToReport(null);
+        }}
+        station={stationToReport}
+        onReportSubmitted={handleReportSubmitted}
       />
 
     </div>
