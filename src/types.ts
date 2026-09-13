@@ -192,6 +192,8 @@ export interface Vehicle {
   sharedOwnerEmail?: string;
   sharedRole?: 'owner' | 'member';
   sharedMembersCount?: number;
+  sharedPermissionsLevel?: 'full' | 'read_only' | 'refuel_only';
+  sharedAllowDocumentView?: boolean;
   lastSyncTimestamp?: string;
 }
 
@@ -200,6 +202,7 @@ export interface SharedGarageMember {
   name: string;
   email: string;
   role: 'owner' | 'member';
+  permission?: 'full' | 'read_only' | 'refuel_only';
   joinedAt: string;
 }
 
@@ -217,6 +220,10 @@ export interface SharedGarage {
   createdAt: string;
   updatedAt: string;
   active: boolean;
+  permissionsLevel?: 'full' | 'read_only' | 'refuel_only';
+  allowDocumentView?: boolean;
+  notifyOnExpenses?: boolean;
+  allowEditPastRecords?: boolean;
 }
 
 export interface AIAdvice {

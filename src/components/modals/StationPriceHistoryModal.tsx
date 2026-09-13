@@ -44,28 +44,39 @@ export const StationPriceHistoryModal: React.FC<StationPriceHistoryModalProps> =
     enabled: isOpen
   });
 
-  // Collect available fuels or plugs for tabs
+  // Collect available fuels or plugs for tabs with deduplicated unique keys
   const availableOptions = useMemo(() => {
     if (!station) return [];
     const opts: { id: string; name: string; currentPrice: number; unit: string; isSelf?: boolean; fuel?: string }[] = [];
+    const seenFuelModes = new Map<string, number>();
     
     if (station.fuelPrices && station.fuelPrices.length > 0) {
       station.fuelPrices.forEach(fp => {
-        opts.push({
-          id: `${fp.fuel}_${fp.isSelf ? 'self' : 'serv'}`,
-          name: `${fp.fuel} (${fp.isSelf ? 'Self' : 'Servito'})`,
-          currentPrice: fp.price,
-          unit: fp.fuel === 'Metano' ? '€/kg' : '€/L',
-          isSelf: fp.isSelf,
-          fuel: fp.fuel
-        });
+        const key = `${fp.fuel}_${fp.isSelf ? 'self' : 'serv'}`;
+        if (!seenFuelModes.has(key)) {
+          seenFuelModes.set(key, opts.length);
+          opts.push({
+            id: key,
+            name: `${fp.fuel} (${fp.isSelf ? 'Self' : 'Servito'})`,
+            currentPrice: fp.price,
+            unit: fp.fuel === 'Metano' ? '€/kg' : '€/L',
+            isSelf: fp.isSelf,
+            fuel: fp.fuel
+          });
+        } else {
+          // If duplicate entry exists, update to lowest price if better
+          const existingIdx = seenFuelModes.get(key)!;
+          if (fp.price < opts[existingIdx].currentPrice) {
+            opts[existingIdx].currentPrice = fp.price;
+          }
+        }
       });
     }
 
     if (station.evPlugs && station.evPlugs.length > 0) {
       station.evPlugs.forEach((plug, idx) => {
         opts.push({
-          id: `ev_${idx}`,
+          id: `ev_${idx}_${plug.type.replace(/\s+/g, '')}_${plug.powerKw}`,
           name: `${plug.type} (${plug.powerKw}kW)`,
           currentPrice: plug.pricePerKwh,
           unit: '€/kWh',

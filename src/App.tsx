@@ -235,6 +235,7 @@ export default function App() {
   // 7. MODALS STATE
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle | null>(null);
+  const [addVehicleInitialType, setAddVehicleInitialType] = useState<'car' | 'moto'>('car');
 
   const [isRefuelModalOpen, setIsRefuelModalOpen] = useState(false);
   const [editingRefuel, setEditingRefuel] = useState<RefuelRecord | null>(null);
@@ -470,12 +471,13 @@ export default function App() {
   };
 
   // Handler: Open Add Car with Freemium Gate (1 vehicle max on FREE)
-  const handleOpenAddCarRequest = () => {
+  const handleOpenAddCarRequest = (initialType?: 'car' | 'moto') => {
     if (userTier === 'FREE' && vehicles.length >= 1) {
       handleOpenUpgradeModal('unlimited_garage');
       return;
     }
     setVehicleToEdit(null);
+    setAddVehicleInitialType(initialType || 'car');
     setIsAddCarModalOpen(true);
   };
 
@@ -942,6 +944,7 @@ export default function App() {
       <AddVehicleModal 
         isOpen={isAddCarModalOpen}
         vehicleToEdit={vehicleToEdit}
+        initialVehicleType={addVehicleInitialType}
         onClose={() => {
           setIsAddCarModalOpen(false);
           setVehicleToEdit(null);

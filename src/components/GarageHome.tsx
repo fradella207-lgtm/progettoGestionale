@@ -24,7 +24,7 @@ interface GarageHomeProps {
   settings: AppSettings;
   userTier?: UserTier;
   onSelectVehicle: (vehicleId: string, tab?: 'overview' | 'specs' | 'documents' | 'ai') => void;
-  onOpenAddCar: () => void;
+  onOpenAddCar: (initialType?: 'car' | 'moto') => void;
   onOpenEditCar: (vehicle: Vehicle) => void;
   onDeleteVehicle: (vehicleId: string) => void;
   onImportVehicles?: (importedVehicles: Vehicle[]) => void;
@@ -58,22 +58,17 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
       const allKm = [
         ...(car.refuels || []).map(r => Number(r.km) || 0),
         ...(car.maintenances || []).map(m => Number(m.km) || 0)
-      ].filter(k => k > 0);
-
-      const hasRecordings = (car.refuels?.length || 0) > 0 || (car.maintenances?.length || 0) > 0;
-      const currentKm = Math.max(Number(car.initialKm) || 0, ...allKm);
-
-      if (hasRecordings && allKm.length > 0) {
-        const initKm = Number(car.initialKm) || 0;
-        const minRecorded = Math.min(...allKm);
-        const baseKm = initKm > 0 ? Math.min(initKm, minRecorded) : minRecorded;
-        recordedKm += Math.max(0, currentKm - baseKm);
+      ];
+      if (allKm.length > 0) {
+        const maxKm = Math.max(...allKm);
+        const diff = maxKm - (Number(car.initialKm) || 0);
+        if (diff > 0) recordedKm += diff;
       }
 
-      const fCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
-      const mCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
-      totalCost += fCost + mCost;
-      totalRefuels += (car.refuels?.length || 0);
+      const refuelsCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+      const maintCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+      totalCost += (refuelsCost + maintCost);
+      totalRefuels += (car.refuels || []).length;
     });
 
     return { recordedKm, totalCost, totalRefuels };
@@ -118,25 +113,32 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
 
       {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA CENTRATA) */}
       {vehicles.length > 0 && (
-        <section className="flex flex-col gap-2.5">
-          <div className="grid grid-cols-3 gap-2 bg-white border border-slate-200/80 p-3 sm:p-4 rounded-2xl shadow-2xs text-center">
-            <div className="flex flex-col items-center justify-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Veicoli</span>
-              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
+        <section className="flex flex-col gap-2.5 max-w-4xl mx-auto w-full">
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-2xs grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div>
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Veicoli Attivi</span>
+              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
                 {vehicles.length}
               </span>
             </div>
 
-            <div className="flex flex-col items-center justify-center border-l border-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Km Registrati</span>
-              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
-                {fleetSummary.recordedKm.toLocaleString('it-IT')} km
+            <div className="border-l border-slate-100 sm:border-l">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Km Registrati</span>
+              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
+                +{fleetSummary.recordedKm.toLocaleString('it-IT')}
               </span>
             </div>
 
-            <div className="flex flex-col items-center justify-center border-l border-slate-100">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Spesa Complessiva</span>
-              <span className="text-base sm:text-lg font-black text-slate-900 mt-0.5 truncate">
+            <div className="border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Rifornimenti</span>
+              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
+                {fleetSummary.totalRefuels}
+              </span>
+            </div>
+
+            <div className="border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Spesa Totale</span>
+              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
                 {settings.currency} {fleetSummary.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
@@ -173,10 +175,10 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
         </section>
       )}
 
-      {/* 3. RICERCA E FILTRI VELOCI */}
+      {/* 3. RICERCA E FILTRI VELOCI CON TASTO CONDIVIDI UN VEICOLO */}
       {vehicles.length > 0 && (
-        <section className="flex flex-col md:flex-row items-center justify-center gap-2.5">
-          <div className="relative w-full md:w-80">
+        <section className="flex flex-col sm:flex-row items-center justify-between gap-2.5 max-w-6xl w-full mx-auto">
+          <div className="relative w-full sm:w-72 md:w-80">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
@@ -187,26 +189,53 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             />
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full md:w-auto">
-            {[
-              { id: 'all', label: 'Tutti' },
-              { id: 'cars', label: 'Auto' },
-              { id: 'motos', label: 'Moto' }
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                id={`filter-vehicle-${f.id}`}
-                onClick={() => setSelectedFuelCategory(f.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
-                  selectedFuelCategory === f.id
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                    : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex items-center justify-start sm:justify-end gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full sm:w-auto">
+            {/* Filtri Tutti / Auto / Moto */}
+            <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100/90 border border-slate-200/80 shrink-0">
+              {[
+                { id: 'all', label: 'Tutti' },
+                { id: 'cars', label: 'Auto' },
+                { id: 'motos', label: 'Moto' }
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  id={`filter-vehicle-${f.id}`}
+                  onClick={() => setSelectedFuelCategory(f.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    selectedFuelCategory === f.id
+                      ? 'bg-white text-slate-950 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-950'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Separatore */}
+            <div className="h-5 w-[1px] bg-slate-200 hidden sm:block shrink-0" />
+
+            {/* TASTO "Condividi un veicolo" INSERITO ACCANTO AI FILTRI */}
+            <button
+              type="button"
+              id="btn-share-vehicle-filter-bar"
+              onClick={() => {
+                if (userTier === 'FREE') {
+                  onOpenUpgradeModal?.('shared_garage');
+                } else {
+                  onOpenSharedGarage?.();
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200/80 active:scale-95 shadow-2xs"
+              title="Apri pannello di controllo condivisione veicolo"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Condividi un veicolo</span>
+              {vehicles.some(v => v.isShared) && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </button>
           </div>
         </section>
       )}
@@ -222,7 +251,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             Aggiungi il tuo primo veicolo (auto o moto) per iniziare a registrare chilometri, rifornimenti e scadenze.
           </p>
           <button
-            onClick={onOpenAddCar}
+            onClick={() => onOpenAddCar('car')}
             className="mt-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -230,15 +259,47 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
           </button>
         </section>
       ) : filteredVehicles.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center flex flex-col items-center justify-center gap-1.5 shadow-2xs">
-          <p className="text-xs font-bold text-slate-700">Nessun veicolo corrisponde alla ricerca</p>
-          <button
-            onClick={() => { setSearchQuery(''); setSelectedFuelCategory('all'); }}
-            className="text-xs text-slate-900 font-bold hover:underline cursor-pointer"
-          >
-            Azzera filtri
-          </button>
-        </div>
+        selectedFuelCategory === 'motos' ? (
+          /* SE SI SELEZIONA MOTO E NON C'E' NESSUNA MOTO -> BOTTONE AGGIUNGI MOTO */
+          <section className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 flex flex-col items-center justify-center text-center shadow-2xs my-2">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 border border-amber-200/60 shadow-2xs">
+              <Bike className="w-7 h-7 stroke-[1.75]" />
+            </div>
+            <h3 className="text-base sm:text-lg font-black text-slate-900">Nessuna moto nel garage</h3>
+            <p className="text-xs text-slate-500 max-w-sm mt-1 leading-relaxed">
+              Non hai ancora registrato una moto o scooter nel tuo garage. Aggiungine una per tracciare tagliandi, rifornimenti dedicati e consumi delle due ruote.
+            </p>
+            <div className="flex items-center gap-2.5 mt-4">
+              <button
+                type="button"
+                id="btn-add-moto-when-empty"
+                onClick={() => onOpenAddCar('moto')}
+                className="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold px-4.5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <Bike className="w-4 h-4" />
+                <span>Aggiungi moto</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedFuelCategory('all')}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition-all cursor-pointer"
+              >
+                Mostra tutti i veicoli
+              </button>
+            </div>
+          </section>
+        ) : (
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center flex flex-col items-center justify-center gap-1.5 shadow-2xs">
+            <p className="text-xs font-bold text-slate-700">Nessun veicolo corrisponde alla ricerca</p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedFuelCategory('all'); }}
+              className="text-xs text-slate-900 font-bold hover:underline cursor-pointer"
+            >
+              Azzera filtri
+            </button>
+          </div>
+        )
       ) : (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredVehicles.map((car) => {
@@ -278,7 +339,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                       </div>
                     )}
 
-                    {/* Badge Carburante & Tipo */}
+                    {/* Badge Carburante & Tipo & Condivisione */}
                     <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
                       {car.vehicleType === 'moto' && (
                         <div className="bg-slate-900/90 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
@@ -290,6 +351,12 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                         {isElectric ? <Zap className="w-3 h-3 text-amber-400" /> : null}
                         <span>{car.fuelType.split(' ')[0]}</span>
                       </div>
+                      {car.isShared && (
+                        <div className="bg-indigo-600/90 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span>Condivisa</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Bottoni Modifica / Elimina / Recap */}
@@ -338,23 +405,25 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                         <h2 className="text-sm font-extrabold text-slate-900 truncate">
                           {car.brand} {car.model}
                         </h2>
-                        <p className="text-[11px] text-slate-500 font-medium">
-                          {car.motorization || 'Di serie'} • {car.registrationDate?.split('-')[0] || 'N/D'}
-                        </p>
-                      </div>
-
-                      <div className="bg-slate-50 border border-slate-300 rounded px-1.5 py-0.5 inline-flex items-center gap-1 shrink-0 font-mono text-[10px] font-bold">
-                        <span className="bg-blue-600 text-white text-[7px] px-0.5 rounded-[1px]">IT</span>
-                        <span className="tracking-wider">{car.plate}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            {car.plate}
+                          </span>
+                          {car.registrationDate && (
+                            <span className="text-[11px] text-slate-400">
+                              Anno {car.registrationDate.split('-')[0]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Parametri essenziali (Km e Spesa) */}
-                    <div className="grid grid-cols-2 gap-1.5 bg-slate-50/70 p-2 rounded-xl text-center border border-slate-100">
+                    {/* Statistiche compatte */}
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-center">
                       <div>
-                        <span className="text-[9px] uppercase font-bold text-slate-400 block">Km</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-400 block">Km Attuali</span>
                         <span className="text-xs font-black text-slate-900 mt-0.5 block">
-                          {currentKm.toLocaleString('it-IT')}
+                          {currentKm.toLocaleString('it-IT')} km
                         </span>
                       </div>
                       <div className="border-l border-slate-200">
@@ -381,9 +450,9 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             );
           })}
 
-          {/* Card Aggiungi Veicolo (opzionale alla fine della griglia) */}
+          {/* Card Aggiungi Veicolo (in griglia) */}
           <div
-            onClick={onOpenAddCar}
+            onClick={() => onOpenAddCar('car')}
             className="rounded-2xl border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/40 hover:bg-slate-50/90 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px] relative"
           >
             {userTier === 'FREE' && vehicles.length >= 1 && (
@@ -407,7 +476,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
             </span>
           </div>
 
-          {/* Card Condividi un'auto (posizionata in fondo dopo il tasto aggiungi) */}
+          {/* Card Condividi un veicolo (rinominata da condividi un'auto) */}
           <div
             id="btn-share-vehicle-home-bottom"
             onClick={() => {
@@ -430,13 +499,13 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               <Users className="w-5 h-5 text-indigo-600" />
             </div>
             <div className="flex items-center gap-1.5 justify-center">
-              <span className="text-xs sm:text-sm font-bold text-slate-800">Condividi un'auto</span>
+              <span className="text-xs sm:text-sm font-bold text-slate-800">Condividi un veicolo</span>
               {userTier === 'FREE' && (
                 <ProBadge variant="mini" />
               )}
             </div>
             <span className="text-[11px] text-slate-500 mt-0.5 max-w-[200px]">
-              Sincronizza un veicolo tra più account con link o codice
+              Pannello di controllo con permessi e sincronizzazione live Firestore
             </span>
           </div>
         </section>

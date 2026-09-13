@@ -49,6 +49,7 @@ import { validatePlate } from '../../utils/plateValidator';
 
 interface AddVehicleModalProps {
   vehicleToEdit?: Vehicle | null;
+  initialVehicleType?: 'car' | 'moto';
   isOpen: boolean;
   onClose: () => void;
   onSave: (vehicleData: Partial<Vehicle>) => void;
@@ -56,6 +57,7 @@ interface AddVehicleModalProps {
 
 export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   vehicleToEdit,
+  initialVehicleType,
   isOpen,
   onClose,
   onSave
@@ -66,7 +68,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   const modelContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Tipo Veicolo: Auto o Moto
-  const [vehicleType, setVehicleType] = useState<'car' | 'moto'>(vehicleToEdit?.vehicleType || 'car');
+  const [vehicleType, setVehicleType] = useState<'car' | 'moto'>(vehicleToEdit?.vehicleType || initialVehicleType || 'car');
 
   // Active step: 1 = Veicolo & Targa, 2 = Motore & Serbatoio, 3 = Km & Foto
   const [activeStep, setActiveStep] = useState<1 | 2 | 3>(1);
@@ -150,7 +152,7 @@ export const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setActiveStep(1);
-      const initialType = vehicleToEdit?.vehicleType || 'car';
+      const initialType = vehicleToEdit?.vehicleType || initialVehicleType || 'car';
       const initialBrand = vehicleToEdit?.brand || '';
       const initialModel = vehicleToEdit?.model || '';
       const initialPlate = vehicleToEdit?.plate || '';

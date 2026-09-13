@@ -232,3 +232,87 @@ export async function leaveOrRevokeSharedGarage(
     }, { merge: true });
   }
 }
+
+/**
+ * Update control settings (permissions, document visibility, notifications)
+ */
+export async function updateSharedGarageSettings(
+  code: string,
+  updates: {
+    permissionsLevel?: 'full' | 'read_only' | 'refuel_only';
+    allowDocumentView?: boolean;
+    notifyOnExpenses?: boolean;
+    allowEditPastRecords?: boolean;
+  }
+): Promise<void> {
+  const cleanCode = code.trim().toUpperCase();
+  const shareDocRef = doc(db, 'shared_garages', cleanCode);
+  const now = new Date().toISOString();
+
+  await setDoc(shareDocRef, {
+    ...updates,
+    updatedAt: now
+  }, { merge: true });
+}
+
+/**
+ * Remove a specific member from the shared garage (Admin kick)
+ */
+export async function removeMemberFromSharedGarage(
+  code: string,
+  memberUid: string
+): Promise<SharedGarage> {
+  const cleanCode = code.trim().toUpperCase();
+  const shareDocRef = doc(db, 'shared_garages', cleanCode);
+  const snap = await getDoc(shareDocRef);
+
+  if (!snap.exists()) {
+    throw new Error('Garage condiviso non trovato.');
+  }
+
+  const data = snap.data() as SharedGarage;
+  const filteredMembers = (data.members || []).filter(m => m.uid !== memberUid);
+  const filteredUids = (data.allowedUids || []).filter(u => u !== memberUid);
+  const now = new Date().toISOString();
+
+  const updated: SharedGarage = {
+    ...data,
+    members: filteredMembers,
+    allowedUids: filteredUids,
+    updatedAt: now
+  };
+
+  await setDoc(shareDocRef, {
+    members: filteredMembers,
+    allowedUids: filteredUids,
+    updatedAt: now
+  }, { merge: true });
+
+  return updated;
+}
+
+/**
+ * Regenerate a new code for the shared garage, invalidating old code
+ */
+export async function regenerateSharedGarageCode(
+  oldCode: string,
+  vehicle: Vehicle,
+  user: UserAccount
+): Promise<SharedGarage> {
+  // 1. Delete old code doc
+  if (oldCode) {
+    try {
+      await deleteDoc(doc(db, 'shared_garages', oldCode));
+    } catch {}
+  }
+
+  // 2. Create with new random code
+  const newCode = generateShareCode();
+  const vehicleWithNewCode: Vehicle = {
+    ...vehicle,
+    sharedGarageCode: newCode
+  };
+
+  return await createOrUpdateSharedGarage(vehicleWithNewCode, user);
+}
+
