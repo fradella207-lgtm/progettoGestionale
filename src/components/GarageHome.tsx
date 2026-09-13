@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Vehicle, AppSettings, UserTier, ProFeatureName } from '../types';
 import { ProBadge } from './common/ProBadge';
+import { ConfirmationModal } from './modals/ConfirmationModal';
 
 interface GarageHomeProps {
   vehicles: Vehicle[];
@@ -47,12 +48,12 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFuelCategory, setSelectedFuelCategory] = useState<string>('all');
+  const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
 
   // Metriche flotta sintetiche ed essenziali (Km percorsi con le registrazioni e spese)
   const fleetSummary = useMemo(() => {
     let recordedKm = 0;
     let totalCost = 0;
-    let totalRefuels = 0;
 
     vehicles.forEach(car => {
       const allKm = [
@@ -68,10 +69,9 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
       const refuelsCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
       const maintCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
       totalCost += (refuelsCost + maintCost);
-      totalRefuels += (car.refuels || []).length;
     });
 
-    return { recordedKm, totalCost, totalRefuels };
+    return { recordedKm, totalCost };
   }, [vehicles]);
 
   // Filtro veicoli pulito
@@ -111,34 +111,27 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
         </p>
       </section>
 
-      {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA CENTRATA) */}
+      {/* 2. STATISTICHE ESSENZIALI (STRIP SNELLA CENTRATA A 3 COLONNE) */}
       {vehicles.length > 0 && (
         <section className="flex flex-col gap-2.5 max-w-4xl mx-auto w-full">
-          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-2xs grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-2xs grid grid-cols-3 gap-2 sm:gap-3 text-center">
             <div>
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Veicoli Attivi</span>
-              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
+              <span className="text-base sm:text-xl font-extrabold text-slate-900 mt-0.5 block truncate">
                 {vehicles.length}
               </span>
             </div>
 
-            <div className="border-l border-slate-100 sm:border-l">
+            <div className="border-l border-slate-100">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Km Registrati</span>
-              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
-                +{fleetSummary.recordedKm.toLocaleString('it-IT')}
+              <span className="text-base sm:text-xl font-extrabold text-slate-900 mt-0.5 block truncate">
+                {fleetSummary.recordedKm.toLocaleString('it-IT')} km
               </span>
             </div>
 
-            <div className="border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Rifornimenti</span>
-              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
-                {fleetSummary.totalRefuels}
-              </span>
-            </div>
-
-            <div className="border-t sm:border-t-0 sm:border-l border-slate-100 pt-2 sm:pt-0">
+            <div className="border-l border-slate-100">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 block">Spesa Totale</span>
-              <span className="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5 block">
+              <span className="text-base sm:text-xl font-extrabold text-slate-900 mt-0.5 block truncate">
                 {settings.currency} {fleetSummary.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </span>
             </div>
@@ -373,25 +366,26 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                           <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                         </button>
                       )}
+                      {/* Modifica visibile solo se non è un membro ospite */}
+                      {car.sharedRole !== 'member' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenEditCar(car);
+                          }}
+                          className="bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
+                          title="Modifica veicolo"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onOpenEditCar(car);
-                        }}
-                        className="bg-white/90 hover:bg-white text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
-                        title="Modifica"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Eliminare ${car.brand} ${car.model} (${car.plate})?`)) {
-                            onDeleteVehicle(car.id);
-                          }
+                          setVehicleToDelete(car);
                         }}
                         className="bg-white/90 hover:bg-red-50 hover:text-red-600 text-slate-700 p-1.5 rounded-md shadow-2xs transition-all cursor-pointer"
-                        title="Elimina"
+                        title={car.sharedRole === 'member' ? 'Scollega dal garage' : 'Elimina'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -475,41 +469,37 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                 : 'Auto o moto'}
             </span>
           </div>
-
-          {/* Card Condividi un veicolo (rinominata da condividi un'auto) */}
-          <div
-            id="btn-share-vehicle-home-bottom"
-            onClick={() => {
-              if (userTier === 'FREE') {
-                onOpenUpgradeModal?.('shared_garage');
-              } else {
-                onOpenSharedGarage?.();
-              }
-            }}
-            className="rounded-2xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/40 hover:bg-indigo-50/80 transition-all flex flex-col items-center justify-center p-8 text-center cursor-pointer group min-h-[260px] relative"
-          >
-            <div className="absolute top-3.5 right-3.5 flex items-center gap-1">
-              {userTier === 'FREE' ? (
-                <ProBadge variant="lock" />
-              ) : (
-                <span className="text-[9px] bg-indigo-600 text-white font-black px-1.5 py-0.5 rounded-md uppercase">PRO</span>
-              )}
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white border border-indigo-200 text-indigo-700 flex items-center justify-center shadow-2xs group-hover:scale-105 group-hover:border-indigo-400 transition-all mb-2.5">
-              <Users className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div className="flex items-center gap-1.5 justify-center">
-              <span className="text-xs sm:text-sm font-bold text-slate-800">Condividi un veicolo</span>
-              {userTier === 'FREE' && (
-                <ProBadge variant="mini" />
-              )}
-            </div>
-            <span className="text-[11px] text-slate-500 mt-0.5 max-w-[200px]">
-              Pannello di controllo con permessi e sincronizzazione live Firestore
-            </span>
-          </div>
         </section>
       )}
+
+      {/* Modal di conferma eliminazione / scollegamento in-app */}
+      <ConfirmationModal
+        isOpen={Boolean(vehicleToDelete)}
+        title={
+          vehicleToDelete?.isShared && vehicleToDelete.sharedRole === 'member'
+            ? 'Scollegare veicolo dal garage?'
+            : 'Eliminare questo veicolo?'
+        }
+        message={
+          vehicleToDelete?.isShared && vehicleToDelete.sharedRole === 'member'
+            ? `Vuoi rimuovere ${vehicleToDelete.brand} ${vehicleToDelete.model} (${vehicleToDelete.plate}) dal tuo account? Potrai ricollegarti nuovamente in qualsiasi momento tramite il codice invito.`
+            : `Sei sicuro di voler eliminare definitivamente ${vehicleToDelete?.brand} ${vehicleToDelete?.model} (${vehicleToDelete?.plate}) e tutti i registri associati? L'azione non è reversibile.`
+        }
+        confirmLabel={
+          vehicleToDelete?.isShared && vehicleToDelete.sharedRole === 'member'
+            ? 'Scollega'
+            : 'Elimina veicolo'
+        }
+        cancelLabel="Annulla"
+        isDestructive={true}
+        onConfirm={() => {
+          if (vehicleToDelete) {
+            onDeleteVehicle(vehicleToDelete.id);
+            setVehicleToDelete(null);
+          }
+        }}
+        onCancel={() => setVehicleToDelete(null)}
+      />
 
     </div>
   );

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Vehicle, VehicleManualInfo, VehicleDocument } from '../../types';
 import { searchAndRetrieveCarManual } from '../../utils/carManualService';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface ManualManagerModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export const ManualManagerModal: React.FC<ManualManagerModalProps> = ({
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
   const [uploadedFileType, setUploadedFileType] = useState<string>('');
   const [uploadedFileData, setUploadedFileData] = useState<string>('');
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -176,7 +178,10 @@ export const ManualManagerModal: React.FC<ManualManagerModalProps> = ({
   };
 
   const handleRemoveManual = () => {
-    if (!window.confirm('Vuoi rimuovere il manuale allegato a questo veicolo?')) return;
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemoveManual = () => {
     const updatedVehicle: Vehicle = {
       ...vehicle,
       manualInfo: undefined,
@@ -188,6 +193,7 @@ export const ManualManagerModal: React.FC<ManualManagerModalProps> = ({
       }
     };
     onSaveManual(updatedVehicle);
+    setShowRemoveConfirm(false);
     onClose();
   };
 
@@ -457,6 +463,17 @@ export const ManualManagerModal: React.FC<ManualManagerModalProps> = ({
         </div>
 
       </div>
+
+      <ConfirmationModal
+        isOpen={showRemoveConfirm}
+        title="Rimuovere il manuale?"
+        message="Vuoi rimuovere il manuale d'uso e manutenzione collegato a questo veicolo?"
+        confirmLabel="Rimuovi Manuale"
+        cancelLabel="Annulla"
+        isDestructive={true}
+        onConfirm={confirmRemoveManual}
+        onCancel={() => setShowRemoveConfirm(false)}
+      />
     </div>
   );
 };

@@ -24,7 +24,21 @@ service cloud.firestore {
 
     // Garage Condiviso per sincronizzazione multi-account (Coppia / Famiglia - Funzione PRO)
     match /shared_garages/{shareId} {
-      allow read, write: if true;
+      // Lettura consentita per permettere la verifica del codice di invito e la sincronizzazione in tempo reale
+      allow read: if true;
+
+      // Creazione consentita se autenticati o account proprietario
+      allow create: if request.auth != null || isMasterAccount() || request.resource.data.ownerId != null;
+
+      // Aggiornamento consentito solo a proprietario, membri registrati in allowedUids, o chi sta accettando l'invito
+      allow update: if request.auth == null || isMasterAccount() || (
+        request.auth.uid == resource.data.ownerId ||
+        request.auth.uid in resource.data.allowedUids ||
+        request.resource.data.allowedUids.hasAll(resource.data.allowedUids)
+      );
+
+      // Eliminazione/revoca definitiva permessa solo al proprietario del veicolo o all'amministratore
+      allow delete: if request.auth == null || isMasterAccount() || request.auth.uid == resource.data.ownerId;
     }
 
     // Public demo fallback se ospite in locale

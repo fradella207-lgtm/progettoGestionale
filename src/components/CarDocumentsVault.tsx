@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Vehicle, VehicleDocument } from '../types';
+import { ConfirmationModal } from './modals/ConfirmationModal';
 
 interface CarDocumentsVaultProps {
   vehicle: Vehicle;
@@ -39,6 +40,7 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
     return 'Notification' in window && Notification.permission === 'granted';
   });
+  const [docToDeleteId, setDocToDeleteId] = useState<string | null>(null);
 
   // New Document Form State
   const [newTitle, setNewTitle] = useState('');
@@ -204,15 +206,20 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
 
   const handleDeleteDocument = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('Sei sicuro di voler eliminare questo documento dal tuo archivio?')) return;
-    const updatedDocs = docs.filter(d => d.id !== id);
+    setDocToDeleteId(id);
+  };
+
+  const confirmDeleteDoc = () => {
+    if (!docToDeleteId) return;
+    const updatedDocs = docs.filter(d => d.id !== docToDeleteId);
     onUpdateVehicle({
       ...vehicle,
       documents: updatedDocs,
     });
-    if (selectedDocForPreview?.id === id) {
+    if (selectedDocForPreview?.id === docToDeleteId) {
       setSelectedDocForPreview(null);
     }
+    setDocToDeleteId(null);
   };
 
   const getTypeBadge = (type: string) => {
@@ -770,6 +777,17 @@ export const CarDocumentsVault: React.FC<CarDocumentsVaultProps> = ({
         </div>
       )}
 
+      {/* Custom Confirmation Modal for Document Deletion */}
+      <ConfirmationModal
+        isOpen={Boolean(docToDeleteId)}
+        title="Eliminare questo documento?"
+        message="Sei sicuro di voler eliminare questo documento dal tuo archivio? L'operazione non può essere annullata."
+        confirmLabel="Elimina Documento"
+        cancelLabel="Annulla"
+        isDestructive={true}
+        onConfirm={confirmDeleteDoc}
+        onCancel={() => setDocToDeleteId(null)}
+      />
     </div>
   );
 };

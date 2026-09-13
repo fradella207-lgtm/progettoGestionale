@@ -21,6 +21,7 @@ import { SharedGarageModal } from './components/modals/SharedGarageModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
+import { syncSharedVehicleToCloud, leaveOrRevokeSharedGarage, subscribeToSharedGarage } from './utils/sharedGarageService';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
 function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
@@ -343,6 +344,74 @@ export default function App() {
     setNotifications(generateVehicleNotifications(vehicles));
   }, [vehicles, account, settings]);
 
+  // Real-time synchronization for shared garage vehicles
+  useEffect(() => {
+    const sharedVehicles = vehicles.filter(v => v.isShared && v.sharedGarageCode);
+    if (sharedVehicles.length === 0) return;
+
+    const unsubs: Array<() => void> = [];
+
+    sharedVehicles.forEach(veh => {
+      const code = veh.sharedGarageCode!;
+      try {
+        const unsub = subscribeToSharedGarage(
+          code,
+          (sharedGarage) => {
+            setVehicles(prevVehicles => {
+              return prevVehicles.map(v => {
+                if (v.id === veh.id || (v.isShared && v.sharedGarageCode === code)) {
+                  const source = sharedGarage.vehicle;
+                  if (!source) return v;
+                  
+                  // Se l'utente è un membro invitato, aggiorna i dati dal cloud
+                  const isMember = v.sharedRole === 'member';
+                  return {
+                    ...v,
+                    ...(isMember ? {
+                      brand: source.brand || v.brand,
+                      model: source.model || v.model,
+                      plate: source.plate || v.plate,
+                      fuelType: source.fuelType || v.fuelType,
+                      initialKm: source.initialKm ?? v.initialKm,
+                      registrationDate: source.registrationDate || v.registrationDate,
+                      photoUrl: source.photoUrl || v.photoUrl,
+                      refuels: source.refuels || v.refuels,
+                      maintenances: source.maintenances || v.maintenances,
+                      documents: (sharedGarage.allowDocumentView !== false) ? (source.documents || v.documents) : [],
+                    } : {
+                      // Se l'utente è l'owner, sincronizza eventuali rifornimenti o modifiche apportate dai membri
+                      refuels: source.refuels || v.refuels,
+                      maintenances: source.maintenances || v.maintenances
+                    }),
+                    sharedMembersCount: sharedGarage.members?.length || 1,
+                    sharedPermissionsLevel: sharedGarage.permissionsLevel || 'full',
+                    sharedAllowDocumentView: typeof sharedGarage.allowDocumentView === 'boolean' ? sharedGarage.allowDocumentView : true,
+                    lastSyncTimestamp: sharedGarage.updatedAt || new Date().toISOString()
+                  };
+                }
+                return v;
+              });
+            });
+          },
+          () => {
+            // Se il garage è stato revocato o eliminato
+            if (veh.sharedRole === 'member') {
+              showToast(`La condivisione per ${veh.brand} ${veh.model} è stata revocata dal proprietario.`, 'info');
+              setVehicles(prev => prev.filter(v => v.id !== veh.id));
+            }
+          }
+        );
+        unsubs.push(unsub);
+      } catch (err) {
+        console.debug('Failed to subscribe to shared vehicle:', err);
+      }
+    });
+
+    return () => {
+      unsubs.forEach(u => u());
+    };
+  }, [vehicles.map(v => `${v.id}_${v.isShared}_${v.sharedGarageCode}`).join(',')]);
+
   useEffect(() => {
     localStorage.setItem('garage_settings', JSON.stringify(settings));
   }, [settings]);
@@ -560,21 +629,39 @@ export default function App() {
   const handleDirectUpdateVehicle = (updatedCar: Vehicle) => {
     const updatedList = vehicles.map(v => v.id === updatedCar.id ? updatedCar : v);
     setVehicles(updatedList);
+    if (updatedCar.isShared && updatedCar.sharedGarageCode) {
+      syncSharedVehicleToCloud(updatedCar);
+    }
   };
 
   // Handler: Delete vehicle
-  const handleDeleteVehicle = (vehicleId: string) => {
+  const handleDeleteVehicle = async (vehicleId: string) => {
+    const targetCar = vehicles.find(v => v.id === vehicleId);
+    if (targetCar?.isShared && targetCar.sharedGarageCode) {
+      const isOwner = targetCar.sharedRole !== 'member';
+      try {
+        await leaveOrRevokeSharedGarage(targetCar.sharedGarageCode, account.id, isOwner);
+      } catch (e) {
+        console.warn('Error during shared garage leave/revoke:', e);
+      }
+    }
     const updated = vehicles.filter(v => v.id !== vehicleId);
     setVehicles(updated);
     if (selectedCarId === vehicleId && updated.length > 0) {
       setSelectedCarId(updated[0].id);
     }
-    showToast('Veicolo rimosso dal garage.', 'info');
+    showToast(targetCar?.sharedRole === 'member' ? 'Veicolo scollegato dal garage.' : 'Veicolo rimosso dal garage.', 'info');
   };
 
   // Handler: Save Refuel
   const handleSaveRefuel = (refuelData: RefuelRecord) => {
     if (!selectedVehicle) return;
+
+    // Controllo effettivo permessi Shared Garage
+    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
+      showToast('Operazione bloccata: il proprietario ha impostato il tuo profilo in Sola Lettura.', 'error');
+      return;
+    }
 
     const existingIndex = (selectedVehicle.refuels || []).findIndex(r => r.id === refuelData.id);
     let updatedRefuels = [...(selectedVehicle.refuels || [])];
@@ -593,6 +680,9 @@ export default function App() {
     };
 
     setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+    if (updatedVehicle.isShared && updatedVehicle.sharedGarageCode) {
+      syncSharedVehicleToCloud(updatedVehicle);
+    }
   };
 
   // Handler: Open Refuel with Station info pre-filled
@@ -601,6 +691,12 @@ export default function App() {
       showToast('Aggiungi prima un veicolo al tuo garage per registrare un rifornimento!', 'error');
       return;
     }
+
+    if (selectedVehicle?.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
+      showToast('Operazione bloccata: il proprietario ha impostato il tuo profilo in Sola Lettura.', 'error');
+      return;
+    }
+
     setEditingRefuel({
       id: `ref_${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
@@ -618,18 +714,38 @@ export default function App() {
   // Handler: Delete Refuel
   const handleDeleteRefuel = (refuelId: string) => {
     if (!selectedVehicle) return;
+
+    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
+      showToast('Operazione bloccata: non hai i permessi per eliminare rifornimenti.', 'error');
+      return;
+    }
+
     const updatedRefuels = (selectedVehicle.refuels || []).filter(r => r.id !== refuelId);
     const updatedVehicle: Vehicle = {
       ...selectedVehicle,
       refuels: updatedRefuels
     };
     setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+    if (updatedVehicle.isShared && updatedVehicle.sharedGarageCode) {
+      syncSharedVehicleToCloud(updatedVehicle);
+    }
     showToast('Rifornimento eliminato.', 'info');
   };
 
   // Handler: Save Maintenance
   const handleSaveMaintenance = (maintData: MaintenanceRecord) => {
     if (!selectedVehicle) return;
+
+    // Controllo effettivo permessi Shared Garage per manutenzione
+    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && (selectedVehicle.sharedPermissionsLevel === 'read_only' || selectedVehicle.sharedPermissionsLevel === 'refuel_only')) {
+      showToast(
+        selectedVehicle.sharedPermissionsLevel === 'read_only'
+          ? 'Operazione bloccata: il veicolo è impostato in sola lettura.'
+          : 'Operazione bloccata: i tuoi permessi consentono solo l\'inserimento di rifornimenti.',
+        'error'
+      );
+      return;
+    }
 
     const existingIndex = (selectedVehicle.maintenances || []).findIndex(m => m.id === maintData.id);
     let updatedMaints = [...(selectedVehicle.maintenances || [])];
@@ -648,17 +764,29 @@ export default function App() {
     };
 
     setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+    if (updatedVehicle.isShared && updatedVehicle.sharedGarageCode) {
+      syncSharedVehicleToCloud(updatedVehicle);
+    }
   };
 
   // Handler: Delete Maintenance
   const handleDeleteMaintenance = (maintId: string) => {
     if (!selectedVehicle) return;
+
+    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && (selectedVehicle.sharedPermissionsLevel === 'read_only' || selectedVehicle.sharedPermissionsLevel === 'refuel_only')) {
+      showToast('Operazione bloccata: non hai i permessi per modificare gli interventi di manutenzione.', 'error');
+      return;
+    }
+
     const updatedMaints = (selectedVehicle.maintenances || []).filter(m => m.id !== maintId);
     const updatedVehicle: Vehicle = {
       ...selectedVehicle,
       maintenances: updatedMaints
     };
     setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v));
+    if (updatedVehicle.isShared && updatedVehicle.sharedGarageCode) {
+      syncSharedVehicleToCloud(updatedVehicle);
+    }
     showToast('Intervento di manutenzione eliminato.', 'info');
   };
 

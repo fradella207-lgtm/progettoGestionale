@@ -33,6 +33,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { Vehicle, AIChatMessage, UserTier, ProFeatureName } from '../types';
 import { ManualManagerModal } from './modals/ManualManagerModal';
+import { ConfirmationModal } from './modals/ConfirmationModal';
 import { searchAndRetrieveCarManual } from '../utils/carManualService';
 
 interface CarAIAssistantProps {
@@ -57,6 +58,7 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   
   // Gate screen fast-search state
   const [isGateSearching, setIsGateSearching] = useState(false);
@@ -425,11 +427,15 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
   };
 
   const handleClearHistory = () => {
-    if (!window.confirm('Vuoi cancellare la cronologia della chat per questa auto?')) return;
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearHistory = () => {
     onUpdateVehicle({
       ...vehicle,
       aiChatHistory: [],
     });
+    setShowClearConfirm(false);
   };
 
   const handleSelectPrompt = (prompt: string) => {
@@ -1126,6 +1132,18 @@ export const CarAIAssistant: React.FC<CarAIAssistantProps> = ({
           onUpdateVehicle(updatedVehicle);
           setShowManualModal(false);
         }}
+      />
+
+      {/* Confirmation Modal for Clearing Chat History */}
+      <ConfirmationModal
+        isOpen={showClearConfirm}
+        title="Cancellare la cronologia chat?"
+        message="Vuoi cancellare l'intera cronologia dei messaggi scambiati con l'assistente per questo veicolo?"
+        confirmLabel="Cancella Cronologia"
+        cancelLabel="Annulla"
+        isDestructive={true}
+        onConfirm={confirmClearHistory}
+        onCancel={() => setShowClearConfirm(false)}
       />
 
     </div>

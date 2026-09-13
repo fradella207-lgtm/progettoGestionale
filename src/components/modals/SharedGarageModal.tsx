@@ -37,6 +37,7 @@ import {
   regenerateSharedGarageCode
 } from '../../utils/sharedGarageService';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface SharedGarageModalProps {
   isOpen: boolean;
@@ -79,6 +80,23 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   const [allowDocView, setAllowDocView] = useState<boolean>(true);
   const [notifyExp, setNotifyExp] = useState<boolean>(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Custom confirmation modal state (no native browser confirm)
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    cancelLabel?: string;
+    isDestructive?: boolean;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: () => {}
+  });
 
   const hasProAccess = checkFeatureAccess('shared_garage', userTier);
 
@@ -178,40 +196,56 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   };
 
   // Handler: Regenerate Share Code
-  const handleRegenerateCode = async () => {
+  const handleRegenerateCode = () => {
     if (!currentShareCode || !currentVehicle) return;
-    if (!window.confirm('Vuoi generare un nuovo codice? Il vecchio codice non sarà più valido per nuovi inviti.')) {
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const regenerated = await regenerateSharedGarageCode(currentShareCode, currentVehicle, userAccount);
-      setCurrentSharedGarage(regenerated);
-      onVehicleUpdated(regenerated.vehicle);
-      onShowToast('Nuovo codice generato con successo!', 'success');
-    } catch (e) {
-      onShowToast('Errore durante la generazione del nuovo codice', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    setConfirmModalConfig({
+      isOpen: true,
+      title: 'Generare un nuovo codice?',
+      message: 'Il vecchio codice non sarà più valido per nuovi inviti. Gli utenti già connessi rimarranno comunque sincronizzati.',
+      confirmLabel: 'Rigenera Codice',
+      cancelLabel: 'Annulla',
+      isDestructive: false,
+      onConfirm: async () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        setIsLoading(true);
+        try {
+          const regenerated = await regenerateSharedGarageCode(currentShareCode, currentVehicle, userAccount);
+          setCurrentSharedGarage(regenerated);
+          onVehicleUpdated(regenerated.vehicle);
+          onShowToast('Nuovo codice generato con successo!', 'success');
+        } catch (e) {
+          onShowToast('Errore durante la generazione del nuovo codice', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   // Handler: Kick / Remove single member
-  const handleKickMember = async (memberUid: string, memberName: string) => {
+  const handleKickMember = (memberUid: string, memberName: string) => {
     if (!currentShareCode) return;
-    if (!window.confirm(`Vuoi disconnettere ${memberName} da questo veicolo?`)) {
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const updated = await removeMemberFromSharedGarage(currentShareCode, memberUid);
-      setCurrentSharedGarage(updated);
-      onShowToast(`${memberName} è stato disconnesso dal veicolo`, 'info');
-    } catch (e) {
-      onShowToast('Errore durante la rimozione del membro', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    setConfirmModalConfig({
+      isOpen: true,
+      title: 'Disconnettere questo utente?',
+      message: `Vuoi disconnettere ${memberName} da questo veicolo? Non riceverà più aggiornamenti né potrà inserire dati.`,
+      confirmLabel: 'Disconnetti',
+      cancelLabel: 'Annulla',
+      isDestructive: true,
+      onConfirm: async () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        setIsLoading(true);
+        try {
+          const updated = await removeMemberFromSharedGarage(currentShareCode, memberUid);
+          setCurrentSharedGarage(updated);
+          onShowToast(`${memberName} è stato disconnesso dal veicolo`, 'info');
+        } catch (e) {
+          onShowToast('Errore durante la rimozione del membro', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   // Handler: Copy Share Link
@@ -291,40 +325,46 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   };
 
   // Handler: Revoke / Stop Sharing (Termina quando vuole lui)
-  const handleRevokeShare = async () => {
-    if (!currentShareCode) return;
+  const handleRevokeShare = () => {
+    if (!currentShareCode || !currentVehicle) return;
     const isGarageAdmin = !currentVehicle?.sharedRole || currentVehicle.sharedRole === 'owner' || (currentSharedGarage && currentSharedGarage.ownerId === userAccount.id);
 
-    const confirmMsg = isGarageAdmin
-      ? `Terminare la condivisione per ${currentVehicle.brand} ${currentVehicle.model}? Tutti i partner connessi perderanno l'accesso e il veicolo tornerà privato al 100%.`
-      : `Vuoi scollegare ${currentVehicle.brand} ${currentVehicle.model} dal tuo account? Non riceverai più aggiornamenti su questo veicolo.`;
-
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await leaveOrRevokeSharedGarage(currentShareCode, userAccount.id, isGarageAdmin);
-      const updatedVehicle: Vehicle = {
-        ...currentVehicle,
-        isShared: false,
-        sharedGarageCode: undefined,
-        sharedOwnerName: undefined,
-        sharedOwnerEmail: undefined,
-        sharedRole: undefined,
-        sharedMembersCount: undefined,
-        sharedPermissionsLevel: undefined,
-        sharedAllowDocumentView: undefined
-      };
-      onVehicleUpdated(updatedVehicle);
-      setCurrentSharedGarage(null);
-      onShowToast(isGarageAdmin ? 'Condivisione terminata. Il veicolo ora è privato ed esclusivo per te.' : 'Hai scollegato il veicolo dal tuo account.', 'info');
-    } catch (err) {
-      onShowToast('Errore durante la terminazione della condivisione', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+    setConfirmModalConfig({
+      isOpen: true,
+      title: isGarageAdmin ? 'Terminare la condivisione?' : 'Scollegare il veicolo?',
+      message: isGarageAdmin
+        ? `Vuoi terminare la condivisione per ${currentVehicle.brand} ${currentVehicle.model}? Tutti i partner connessi perderanno l'accesso istantaneamente e il veicolo tornerà privato al 100%.`
+        : `Vuoi scollegare ${currentVehicle.brand} ${currentVehicle.model} dal tuo account? Non riceverai più aggiornamenti su questo veicolo.`,
+      confirmLabel: isGarageAdmin ? 'Termina Condivisione' : 'Scollega Veicolo',
+      cancelLabel: 'Annulla',
+      isDestructive: true,
+      onConfirm: async () => {
+        setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        setIsLoading(true);
+        try {
+          await leaveOrRevokeSharedGarage(currentShareCode, userAccount.id, isGarageAdmin);
+          const updatedVehicle: Vehicle = {
+            ...currentVehicle,
+            isShared: false,
+            sharedGarageCode: undefined,
+            sharedOwnerName: undefined,
+            sharedOwnerEmail: undefined,
+            sharedRole: undefined,
+            sharedMembersCount: undefined,
+            sharedPermissionsLevel: undefined,
+            sharedAllowDocumentView: undefined
+          };
+          onVehicleUpdated(updatedVehicle);
+          setCurrentSharedGarage(null);
+          onShowToast(isGarageAdmin ? 'Condivisione terminata. Il veicolo ora è privato ed esclusivo per te.' : 'Hai scollegato il veicolo dal tuo account.', 'info');
+          onClose();
+        } catch (err) {
+          onShowToast('Errore durante la terminazione della condivisione', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   const isGarageAdmin = !currentVehicle?.sharedRole || currentVehicle.sharedRole === 'owner' || (currentSharedGarage && currentSharedGarage.ownerId === userAccount.id);
@@ -477,315 +517,377 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Share Code and Direct Links */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                        Codice di Sincronizzazione
-                      </span>
-                      {isGarageAdmin && (
-                        <button
-                          type="button"
-                          onClick={handleRegenerateCode}
-                          disabled={isLoading}
-                          className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
-                          title="Genera un nuovo codice per invalidare quello vecchio"
-                        >
-                          <KeyRound className="w-3.5 h-3.5" />
-                          <span>Rigenera nuovo codice</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-3">
-                      <div className="flex-1 w-full flex items-center justify-between px-5 py-3 rounded-2xl bg-white border-2 border-indigo-200 shadow-2xs">
-                        <span className="font-mono text-2xl font-black text-indigo-700 tracking-widest">
-                          {currentShareCode}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={handleCopyCode}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedCode ? 'Copiato' : 'Copia'}</span>
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleShareWhatsApp}
-                        className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer shrink-0"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        <span>Invia su WhatsApp</span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1">
-                      <input 
-                        type="text" 
-                        readOnly 
-                        value={shareUrl}
-                        className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-500 font-mono text-[11px] select-all focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleCopyLink}
-                        className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
-                      >
-                        {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedLink ? 'Copiato' : 'Copia Link'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 2. REALE PANNELLO DI CONTROLLO: REGOLE E PERMESSI */}
-                  {isGarageAdmin && (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div className="flex items-center gap-2">
-                          <Sliders className="w-4 h-4 text-indigo-600" />
-                          <h4 className="text-sm font-black text-slate-900">
-                            Regole di Controllo & Permessi Partner
-                          </h4>
-                        </div>
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                          Reale Controllo
-                        </span>
-                      </div>
-
-                      {/* Livello di Accesso */}
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Livello di Autorizzazione del Partner
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {[
-                            { 
-                              id: 'full', 
-                              title: 'Completo', 
-                              desc: 'Può inserire e modificare spese, pieni e tagliandi',
-                              icon: Edit3 
-                            },
-                            { 
-                              id: 'refuel_only', 
-                              title: 'Solo Rifornimenti', 
-                              desc: 'Può registrare solo carburante/ricarica e km',
-                              icon: Fuel 
-                            },
-                            { 
-                              id: 'read_only', 
-                              title: 'Sola Lettura', 
-                              desc: 'Solo consultazione: non può aggiungere o modificare',
-                              icon: Eye 
-                            }
-                          ].map(opt => {
-                            const Icon = opt.icon;
-                            const isSel = permLevel === opt.id;
-                            return (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => setPermLevel(opt.id as any)}
-                                className={`p-3 rounded-xl border text-left flex flex-col justify-between gap-1 transition-all cursor-pointer ${
-                                  isSel
-                                    ? 'bg-indigo-50/90 border-indigo-600 text-indigo-950 shadow-2xs'
-                                    : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs font-black flex items-center gap-1.5">
-                                    <Icon className="w-3.5 h-3.5 text-indigo-600" />
-                                    {opt.title}
-                                  </span>
-                                  {isSel && <Check className="w-3.5 h-3.5 text-indigo-700 stroke-[3]" />}
-                                </div>
-                                <span className="text-[10px] text-slate-500 leading-tight">
-                                  {opt.desc}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Opzioni Aggiuntive */}
-                      <div className="pt-2 space-y-2.5">
-                        <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <FileText className="w-4 h-4 text-slate-600" />
-                            <div>
-                              <span className="text-xs font-bold text-slate-800 block">
-                                Visualizzazione Documenti e Libretto
-                              </span>
-                              <span className="text-[11px] text-slate-500">
-                                Permetti al partner di consultare polizza, libretto e scadenze bollo.
-                              </span>
-                            </div>
-                          </div>
-                          <input 
-                            type="checkbox"
-                            checked={allowDocView}
-                            onChange={(e) => setAllowDocView(e.target.checked)}
-                            className="w-4 h-4 accent-indigo-600 cursor-pointer"
-                          />
-                        </label>
-
-                        <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <Bell className="w-4 h-4 text-slate-600" />
-                            <div>
-                              <span className="text-xs font-bold text-slate-800 block">
-                                Notifiche di Nuove Spese & Pieni
-                              </span>
-                              <span className="text-[11px] text-slate-500">
-                                Ricevi notifica ogni volta che il partner registra una spesa o rifornimento.
-                              </span>
-                            </div>
-                          </div>
-                          <input 
-                            type="checkbox"
-                            checked={notifyExp}
-                            onChange={(e) => setNotifyExp(e.target.checked)}
-                            className="w-4 h-4 accent-indigo-600 cursor-pointer"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="flex justify-end pt-1">
-                        <button
-                          type="button"
-                          onClick={handleSaveControlSettings}
-                          disabled={isSavingSettings}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
-                        >
-                          {isSavingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                          <span>Salva Regole di Controllo</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. ACCOUNT CONNESSI & GESTIONE DISPOSITIVI */}
-                  {currentSharedGarage?.members && currentSharedGarage.members.length > 0 && (
-                    <div className="border-t border-slate-200 pt-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                          Dispositivi e Account Connessi ({currentSharedGarage.members.length})
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          Aggiornato live
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        {currentSharedGarage.members.map((m, idx) => {
-                          const isMe = m.uid === userAccount.id;
-                          const isMemberOwner = m.role === 'owner';
-
-                          return (
-                            <div 
-                              key={m.uid || idx} 
-                              className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs">
-                                  {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-black text-slate-800">
-                                      {m.name || m.email || 'Utente Connesso'}
-                                    </span>
-                                    {isMe && (
-                                      <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded">
-                                        (Tu)
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-[11px] text-slate-500">
-                                    {m.email || 'Account sincronizzato'} • Collegato il {new Date(m.joinedAt).toLocaleDateString('it-IT')}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                                  isMemberOwner ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-800'
-                                }`}>
-                                  {isMemberOwner ? 'Proprietario' : 'Partner / Membro'}
-                                </span>
-
-                                {/* Bottone Espulsione singolo membro per l'Admin */}
-                                {isGarageAdmin && !isMemberOwner && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleKickMember(m.uid, m.name || m.email)}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                    title={`Disconnetti ${m.name || 'questo utente'}`}
-                                  >
-                                    <UserX className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 4. TERMINA CONDIVISIONE QUANDO VUOLE LUI (PULSANTE DEFINITIVO DI REVOCA) */}
-                  <div className="pt-2">
-                    {isGarageAdmin ? (
-                      <div className="bg-rose-50/90 border-2 border-rose-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  {/* VIEW SEPARATION: MEMBER (CANNOT RE-SHARE) VS OWNER (FULL CONTROL) */}
+                  {!isGarageAdmin ? (
+                    /* MEMBER VIEW: Cannot re-share, cannot view/share invite codes, cannot edit rules */
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
                         <div className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-5 h-5" />
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                            <ShieldCheck className="w-5 h-5" />
                           </div>
                           <div>
-                            <span className="text-xs font-black text-rose-950 uppercase tracking-wide block">
-                              Termina Condivisione del Veicolo
-                            </span>
-                            <span className="text-[11px] text-rose-800 leading-tight block mt-0.5 max-w-md">
-                              Puoi interrompere la condivisione in qualsiasi momento. Tutti gli altri account verranno disconnessi istantaneamente e il veicolo tornerà 100% privato nel tuo garage.
-                            </span>
+                            <h4 className="text-sm font-black text-slate-900">
+                              Veicolo Condiviso da {currentVehicle.sharedOwnerName || currentVehicle.sharedOwnerEmail || 'Proprietario'}
+                            </h4>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                              Sei connesso come utente autorizzato con sincronizzazione in tempo reale. <strong className="text-slate-700 font-bold">Solo il proprietario</strong> può generare nuovi inviti, condividere il veicolo o modificare le regole di accesso.
+                            </p>
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          id="btn-terminate-sharing-admin"
-                          onClick={handleRevokeShare}
-                          disabled={isLoading}
-                          className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span>Termina Condivisione Ora</span>
-                        </button>
+                        <div className="border-t border-slate-200/80 pt-3.5 space-y-2.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                            Regole applicate al tuo account:
+                          </span>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                            <div className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col gap-1 shadow-2xs">
+                              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                <Fuel className="w-4 h-4 text-indigo-600 shrink-0" />
+                                <span>Operazioni Consentite</span>
+                              </span>
+                              <span className="text-slate-600 text-[11px] leading-snug">
+                                {currentVehicle.sharedPermissionsLevel === 'read_only' && (
+                                  <span className="text-amber-700 font-medium">🔒 Sola Lettura: Puoi consultare storico e km, ma non puoi registrare rifornimenti o spese.</span>
+                                )}
+                                {currentVehicle.sharedPermissionsLevel === 'refuel_only' && (
+                                  <span className="text-blue-700 font-medium">⛽ Solo Rifornimenti: Puoi registrare carburante/ricariche e km. Tagliandi riservati.</span>
+                                )}
+                                {(currentVehicle.sharedPermissionsLevel === 'full' || !currentVehicle.sharedPermissionsLevel) && (
+                                  <span className="text-emerald-700 font-medium">✅ Completo: Puoi registrare sia rifornimenti che interventi di manutenzione.</span>
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col gap-1 shadow-2xs">
+                              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
+                                <span>Documenti di Bordo</span>
+                              </span>
+                              <span className="text-slate-600 text-[11px] leading-snug">
+                                {currentVehicle.sharedAllowDocumentView === false ? (
+                                  <span className="text-amber-700 font-medium">🔒 Riservati: I documenti del veicolo sono visibili unicamente al proprietario.</span>
+                                ) : (
+                                  <span className="text-emerald-700 font-medium">📄 Visibili: Puoi consultare libretto e documenti di bordo del veicolo.</span>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    ) : (
+
+                      {/* Scollega dal garage */}
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                           <span className="text-xs font-bold text-slate-800 block">
-                            Connesso come Partner
+                            Vuoi rimuovere questo veicolo?
                           </span>
                           <span className="text-[11px] text-slate-500">
-                            Puoi scollegare questo veicolo dal tuo garage se non desideri più gestirlo.
+                            Scollega il veicolo dal tuo garage se non desideri più visualizzarlo. I dati del proprietario non verranno cancellati.
                           </span>
                         </div>
                         <button
                           type="button"
+                          id="btn-leave-shared-garage-member"
                           onClick={handleRevokeShare}
                           disabled={isLoading}
-                          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+                          className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 active:scale-95"
                         >
-                          <span>Scollega dal mio garage</span>
+                          <UserX className="w-4 h-4" />
+                          <span>Scollega Veicolo</span>
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    /* OWNER VIEW: Share Code, Controls, Members, Revoke */
+                    <div className="space-y-6">
+                      {/* Share Code and Direct Links */}
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            Codice di Sincronizzazione
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRegenerateCode}
+                            disabled={isLoading}
+                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
+                            title="Genera un nuovo codice per invalidare quello vecchio"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Rigenera codice</span>
+                          </button>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                          <div className="flex-1 w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white border-2 border-indigo-200 shadow-2xs">
+                            <span className="font-mono text-xl sm:text-2xl font-black text-indigo-700 tracking-widest">
+                              {currentShareCode}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleCopyCode}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                            >
+                              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{copiedCode ? 'Copiato' : 'Copia'}</span>
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleShareWhatsApp}
+                            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer shrink-0"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Invia su WhatsApp</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1">
+                          <input 
+                            type="text" 
+                            readOnly 
+                            value={shareUrl}
+                            className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-500 font-mono text-[11px] select-all focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyLink}
+                            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                          >
+                            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            <span>{copiedLink ? 'Copiato' : 'Copia Link'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 2. REALE PANNELLO DI CONTROLLO: REGOLE E PERMESSI */}
+                      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            <Sliders className="w-4 h-4 text-indigo-600" />
+                            <h4 className="text-sm font-black text-slate-900">
+                              Console Regole di Controllo
+                            </h4>
+                          </div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                            Controllo Totale
+                          </span>
+                        </div>
+
+                        {/* Livello di Accesso */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Autorizzazioni Operative Partner
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {[
+                              { 
+                                id: 'full', 
+                                title: 'Completo', 
+                                desc: 'Inserimento e modifica di rifornimenti, spese e tagliandi',
+                                icon: Edit3 
+                              },
+                              { 
+                                id: 'refuel_only', 
+                                title: 'Solo Rifornimenti', 
+                                desc: 'Registrazione carburante/ricarica e km. Tagliandi bloccati',
+                                icon: Fuel 
+                              },
+                              { 
+                                id: 'read_only', 
+                                title: 'Sola Lettura', 
+                                desc: 'Solo consultazione: blocca ogni inserimento o modifica',
+                                icon: Eye 
+                              }
+                            ].map(opt => {
+                              const Icon = opt.icon;
+                              const isSel = permLevel === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setPermLevel(opt.id as any)}
+                                  className={`p-3 rounded-xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${
+                                    isSel
+                                      ? 'bg-indigo-50/90 border-indigo-600 text-indigo-950 shadow-2xs ring-1 ring-indigo-500/20'
+                                      : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black flex items-center gap-1.5">
+                                      <Icon className="w-3.5 h-3.5 text-indigo-600" />
+                                      {opt.title}
+                                    </span>
+                                    {isSel && <Check className="w-3.5 h-3.5 text-indigo-700 stroke-[3]" />}
+                                  </div>
+                                  <span className="text-[10px] text-slate-500 leading-tight">
+                                    {opt.desc}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Opzioni Aggiuntive */}
+                        <div className="pt-2 space-y-2.5">
+                          <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
+                            <div className="flex items-center gap-2.5 pr-2">
+                              <FileText className="w-4 h-4 text-slate-600 shrink-0" />
+                              <div>
+                                <span className="text-xs font-bold text-slate-800 block">
+                                  Visualizzazione Documenti e Libretto
+                                </span>
+                                <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
+                                  Se disattivato, i documenti di bordo e il libretto restano privati e riservati solo a te.
+                                </span>
+                              </div>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={allowDocView}
+                              onChange={(e) => setAllowDocView(e.target.checked)}
+                              className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
+                            />
+                          </label>
+
+                          <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
+                            <div className="flex items-center gap-2.5 pr-2">
+                              <Bell className="w-4 h-4 text-slate-600 shrink-0" />
+                              <div>
+                                <span className="text-xs font-bold text-slate-800 block">
+                                  Notifiche di Nuove Spese & Pieni
+                                </span>
+                                <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
+                                  Ricevi un avviso ogni volta che il partner registra una spesa o un rifornimento.
+                                </span>
+                              </div>
+                            </div>
+                            <input 
+                              type="checkbox"
+                              checked={notifyExp}
+                              onChange={(e) => setNotifyExp(e.target.checked)}
+                              className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="flex justify-end pt-1">
+                          <button
+                            type="button"
+                            onClick={handleSaveControlSettings}
+                            disabled={isSavingSettings}
+                            className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                          >
+                            {isSavingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                            <span>Salva Regole di Controllo</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3. ACCOUNT CONNESSI & GESTIONE DISPOSITIVI */}
+                      {currentSharedGarage?.members && currentSharedGarage.members.length > 0 && (
+                        <div className="border-t border-slate-200 pt-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                              Dispositivi e Account Connessi ({currentSharedGarage.members.length})
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              Live
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            {currentSharedGarage.members.map((m, idx) => {
+                              const isMe = m.uid === userAccount.id;
+                              const isMemberOwner = m.role === 'owner';
+
+                              return (
+                                <div 
+                                  key={m.uid || idx} 
+                                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0 pr-2">
+                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0">
+                                      {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-black text-slate-800 truncate">
+                                          {m.name || m.email || 'Utente Connesso'}
+                                        </span>
+                                        {isMe && (
+                                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded shrink-0">
+                                            (Tu)
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-[11px] text-slate-500 truncate block">
+                                        {m.email || 'Account sincronizzato'}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                                      isMemberOwner ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-800'
+                                    }`}>
+                                      {isMemberOwner ? 'Proprietario' : 'Partner'}
+                                    </span>
+
+                                    {/* Bottone Espulsione singolo membro per l'Admin */}
+                                    {!isMemberOwner && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleKickMember(m.uid, m.name || m.email)}
+                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                        title={`Disconnetti ${m.name || 'questo utente'}`}
+                                      >
+                                        <UserX className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. TERMINA CONDIVISIONE QUANDO VUOLE LUI (PULSANTE DEFINITIVO DI REVOCA) */}
+                      <div className="pt-2">
+                        <div className="bg-rose-50/90 border-2 border-rose-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                              <AlertTriangle className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-black text-rose-950 uppercase tracking-wide block">
+                                Termina Condivisione del Veicolo
+                              </span>
+                              <span className="text-[11px] text-rose-800 leading-tight block mt-0.5 max-w-md">
+                                Puoi interrompere la condivisione in qualsiasi momento. Tutti gli altri account connessi verranno disconnessi istantaneamente e il veicolo tornerà 100% privato nel tuo garage.
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            id="btn-terminate-sharing-admin"
+                            onClick={handleRevokeShare}
+                            disabled={isLoading}
+                            className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Termina Condivisione</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* State B: Not yet shared -> Generate Code and activate */
@@ -973,6 +1075,18 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmModalConfig.isOpen}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+        confirmLabel={confirmModalConfig.confirmLabel}
+        cancelLabel={confirmModalConfig.cancelLabel}
+        isDestructive={confirmModalConfig.isDestructive}
+        onConfirm={confirmModalConfig.onConfirm}
+        onCancel={() => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

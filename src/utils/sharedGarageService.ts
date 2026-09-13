@@ -172,6 +172,8 @@ export async function joinSharedGarage(
     sharedOwnerEmail: data.ownerEmail,
     sharedRole: data.ownerId === joiningUid ? 'owner' : 'member',
     sharedMembersCount: currentMembers.length,
+    sharedPermissionsLevel: data.permissionsLevel || 'full',
+    sharedAllowDocumentView: typeof data.allowDocumentView === 'boolean' ? data.allowDocumentView : true,
     lastSyncTimestamp: now
   };
 
@@ -249,10 +251,60 @@ export async function updateSharedGarageSettings(
   const shareDocRef = doc(db, 'shared_garages', cleanCode);
   const now = new Date().toISOString();
 
+  // Fetch current doc to also update the embedded vehicle's permissions
+  const snap = await getDoc(shareDocRef).catch(() => null);
+  let updatedVehicleData: Partial<Vehicle> | undefined = undefined;
+
+  if (snap && snap.exists()) {
+    const data = snap.data() as SharedGarage;
+    if (data.vehicle) {
+      updatedVehicleData = {
+        ...data.vehicle,
+        sharedPermissionsLevel: updates.permissionsLevel ?? data.permissionsLevel ?? 'full',
+        sharedAllowDocumentView: typeof updates.allowDocumentView === 'boolean' 
+          ? updates.allowDocumentView 
+          : (typeof data.allowDocumentView === 'boolean' ? data.allowDocumentView : true),
+        lastSyncTimestamp: now
+      };
+    }
+  }
+
   await setDoc(shareDocRef, {
     ...updates,
+    ...(updatedVehicleData ? { vehicle: updatedVehicleData } : {}),
     updatedAt: now
   }, { merge: true });
+}
+
+/**
+ * Real-time subscription to a shared garage document
+ */
+export function subscribeToSharedGarage(
+  code: string,
+  onUpdate: (sharedGarage: SharedGarage) => void,
+  onRevoked: () => void
+): () => void {
+  const cleanCode = code.trim().toUpperCase();
+  const shareDocRef = doc(db, 'shared_garages', cleanCode);
+
+  return onSnapshot(
+    shareDocRef,
+    (snap) => {
+      if (!snap.exists()) {
+        onRevoked();
+        return;
+      }
+      const data = snap.data() as SharedGarage;
+      if (!data.active) {
+        onRevoked();
+        return;
+      }
+      onUpdate(data);
+    },
+    (error) => {
+      console.warn('Subscription error on shared garage:', error);
+    }
+  );
 }
 
 /**
