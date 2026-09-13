@@ -19,6 +19,8 @@ import {
 import { Vehicle, AppSettings, UserTier, ProFeatureName } from '../types';
 import { ProBadge } from './common/ProBadge';
 import { ConfirmationModal } from './modals/ConfirmationModal';
+import { calculateVehicleConsumptionMetrics } from '../utils/consumptionCalculator';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface GarageHomeProps {
   vehicles: Vehicle[];
@@ -56,17 +58,9 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
     let totalCost = 0;
 
     vehicles.forEach(car => {
-      const allKm = [
-        ...(car.refuels || []).map(r => Number(r.km) || 0),
-        ...(car.maintenances || []).map(m => Number(m.km) || 0)
-      ].filter(k => k > 0);
-
-      if (allKm.length > 0) {
-        // I km registrati corrispondono a quelli in cui sono stati aggiunti i dati
-        recordedKm += Math.max(...allKm);
-      } else if (car.initialKm) {
-        recordedKm += Number(car.initialKm) || 0;
-      }
+      // Calcola i km effettivi registrati con i dati inseriti nell'app (rifornimenti, tagliandi, trip)
+      const metrics = calculateVehicleConsumptionMetrics(car);
+      recordedKm += (metrics.totalDistance || 0);
 
       const refuelsCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
       const maintCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
@@ -186,7 +180,7 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
 
           <div className="flex items-center justify-start sm:justify-end gap-2 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full sm:w-auto">
             {/* Filtri Tutti / Auto / Moto */}
-            <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100/90 border border-slate-200/80 shrink-0">
+            <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100/90 border border-slate-200/80 shrink-0 relative">
               {[
                 { id: 'all', label: 'Tutti' },
                 { id: 'cars', label: 'Auto' },
@@ -197,12 +191,19 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                   type="button"
                   id={`filter-vehicle-${f.id}`}
                   onClick={() => setSelectedFuelCategory(f.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 cursor-pointer z-10 ${
                     selectedFuelCategory === f.id
-                      ? 'bg-white text-slate-950 shadow-xs'
+                      ? 'text-slate-950 font-black'
                       : 'text-slate-600 hover:text-slate-950'
                   }`}
                 >
+                  {selectedFuelCategory === f.id && (
+                    <motion.div
+                      layoutId="garage-filter-active-pill"
+                      className="absolute inset-0 bg-white rounded-lg shadow-xs -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                    />
+                  )}
                   {f.label}
                 </button>
               ))}
@@ -297,22 +298,28 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
         )
       ) : (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredVehicles.map((car) => {
-            const refuelsKm = (car.refuels || []).map(r => Number(r.km) || 0);
-            const maintKm = (car.maintenances || []).map(m => Number(m.km) || 0);
-            const currentKm = Math.max(Number(car.initialKm) || 0, ...refuelsKm, ...maintKm);
-            
-            const carFuelCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
-            const carMaintCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
-            const carTotalCost = carFuelCost + carMaintCost;
-            const isElectric = car.fuelType.includes('Elettrica') || car.fuelType.includes('BEV');
+          <AnimatePresence mode="popLayout">
+            {filteredVehicles.map((car) => {
+              const refuelsKm = (car.refuels || []).map(r => Number(r.km) || 0);
+              const maintKm = (car.maintenances || []).map(m => Number(m.km) || 0);
+              const currentKm = Math.max(Number(car.initialKm) || 0, ...refuelsKm, ...maintKm);
+              
+              const carFuelCost = (car.refuels || []).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+              const carMaintCost = (car.maintenances || []).reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+              const carTotalCost = carFuelCost + carMaintCost;
+              const isElectric = car.fuelType.includes('Elettrica') || car.fuelType.includes('BEV');
 
-            return (
-              <div 
-                key={car.id}
-                onClick={() => onSelectVehicle(car.id, 'overview')}
-                className="bg-white rounded-2xl border border-slate-200 hover:border-slate-400 transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs hover:shadow-xs cursor-pointer group"
-              >
+              return (
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.18 }}
+                  key={car.id}
+                  onClick={() => onSelectVehicle(car.id, 'overview')}
+                  className="bg-white rounded-2xl border border-slate-200 hover:border-slate-400 transition-all duration-200 flex flex-col justify-between overflow-hidden shadow-2xs hover:shadow-xs cursor-pointer group"
+                >
                 <div>
                   {/* Foto Auto/Moto compatta con badges essenziali */}
                   <div className="w-full h-36 bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
@@ -442,9 +449,10 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                   </span>
                 </div>
 
-              </div>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
 
           {/* Card Aggiungi Veicolo (in griglia) */}
           <div

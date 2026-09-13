@@ -109,10 +109,13 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
   const safeAverageKmPerUnit = metrics.kmPerUnit !== '--' ? Number(metrics.kmPerUnit) : 0;
   const safeAverageUnitPer100Km = metrics.unitPer100Km !== '--' ? Number(metrics.unitPer100Km) : 0;
 
-  // Chart data calculations
-  const maxEfficiency = Math.max(...chronologicalTrips.map(t => t.kmPerUnit || 0), 1);
+  // Chart data calculations with generous headroom to prevent collision
+  const maxEfficiency = Math.max(...chronologicalTrips.map(t => t.kmPerUnit || 0), safeAverageKmPerUnit, 1);
+  const chartHeadroomEfficiency = maxEfficiency * 1.25;
   const maxDistance = Math.max(...chronologicalTrips.map(t => t.distanceKm || 0), 100);
+  const chartHeadroomDistance = maxDistance * 1.2;
   const maxSpent = Math.max(...chronologicalTrips.map(t => t.totalSpent || 0), 50);
+  const chartHeadroomSpent = maxSpent * 1.2;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
@@ -204,10 +207,18 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
           <section className="bg-white border border-slate-200/70 rounded-2xl p-4 sm:p-6 shadow-2xs flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-indigo-600" />
-                  Andamento Cronologico dei Viaggi
-                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-indigo-600" />
+                    Andamento Cronologico dei Viaggi
+                  </h3>
+                  {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-lg shadow-2xs">
+                      <span className="w-3 border-b-2 border-dashed border-indigo-500 inline-block" />
+                      Media: {safeAverageKmPerUnit.toFixed(1)} km/{unitLabel}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Evoluzione giorno per giorno tra i vari rifornimenti a pieno
                 </p>
@@ -259,48 +270,48 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                 <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-4 px-1 opacity-40 z-0">
                   <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
                     <span className="text-[9px] font-mono text-slate-400 -mt-2">
-                      {chartMetric === 'efficiency' ? `${maxEfficiency.toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(maxDistance)} km` : `${settings.currency} ${Math.round(maxSpent)}`)}
+                      {chartMetric === 'efficiency' ? `${chartHeadroomEfficiency.toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(chartHeadroomDistance)} km` : `${settings.currency} ${Math.round(chartHeadroomSpent)}`)}
                     </span>
                   </div>
                   <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
                     <span className="text-[9px] font-mono text-slate-400 -mt-2">
-                      {chartMetric === 'efficiency' ? `${(maxEfficiency * 0.5).toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(maxDistance * 0.5)} km` : `${settings.currency} ${Math.round(maxSpent * 0.5)}`)}
+                      {chartMetric === 'efficiency' ? `${(chartHeadroomEfficiency * 0.5).toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(chartHeadroomDistance * 0.5)} km` : `${settings.currency} ${Math.round(chartHeadroomSpent * 0.5)}`)}
                     </span>
                   </div>
                   <div className="w-full border-b border-slate-200" />
                 </div>
 
-                {/* Horizontal reference dashed line for average */}
+                {/* Horizontal reference dashed line for average (clean line without overlapping badge on bars) */}
                 {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
                   <div 
-                    className="absolute left-0 right-0 border-b-2 border-dashed border-indigo-400/80 pointer-events-none z-10 flex items-center justify-end pr-2 transition-all duration-300"
-                    style={{ bottom: `${Math.min(92, Math.max(10, (safeAverageKmPerUnit / maxEfficiency) * 100))}%` }}
+                    className="absolute left-0 right-0 border-b-2 border-dashed border-indigo-400/80 pointer-events-none z-10 transition-all duration-300"
+                    style={{ bottom: `${Math.min(80, Math.max(10, (safeAverageKmPerUnit / chartHeadroomEfficiency) * 100))}%` }}
                   >
-                    <span className="text-[9.5px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md shadow-2xs">
-                      Media: {safeAverageKmPerUnit.toFixed(1)} km/{unitLabel}
+                    <span className="absolute -top-4 left-2 text-[9px] font-bold text-indigo-600 bg-white/95 px-1.5 py-0.2 rounded border border-indigo-100 shadow-2xs">
+                      Media {safeAverageKmPerUnit.toFixed(1)}
                     </span>
                   </div>
                 )}
 
                 {chronologicalTrips.map((trip) => {
                   let value = trip.kmPerUnit;
-                  let maxVal = maxEfficiency;
+                  let maxVal = chartHeadroomEfficiency;
                   let valueDisplay = `${trip.kmPerUnit.toFixed(1)}`;
                   let unitDisplay = `km/${unitLabel}`;
                   
                   if (chartMetric === 'distance') {
                     value = trip.distanceKm;
-                    maxVal = maxDistance;
+                    maxVal = chartHeadroomDistance;
                     valueDisplay = `${Math.round(trip.distanceKm)}`;
                     unitDisplay = 'km';
                   } else if (chartMetric === 'spent') {
                     value = trip.totalSpent;
-                    maxVal = maxSpent;
+                    maxVal = chartHeadroomSpent;
                     valueDisplay = `${trip.totalSpent.toFixed(1)}`;
                     unitDisplay = settings.currency;
                   }
 
-                  const heightPercent = Math.min(94, Math.max(14, (value / maxVal) * 100));
+                  const heightPercent = Math.min(80, Math.max(12, (value / maxVal) * 100));
                   const isHovered = hoveredTripId === trip.id;
                   const isExpanded = expandedTripId === trip.id;
                   const dateFormatted = trip.endDate 
@@ -389,6 +400,12 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             {/* Chart Legend / Notes */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-500">
               <div className="flex items-center gap-3 flex-wrap font-medium">
+                {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
+                  <span className="flex items-center gap-1.5 font-bold text-indigo-700">
+                    <span className="w-4 border-b-2 border-dashed border-indigo-500 inline-block" />
+                    <span>Media ({safeAverageKmPerUnit.toFixed(1)} km/{unitLabel})</span>
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500" />
                   <span>Con Categoria Utilizzo</span>

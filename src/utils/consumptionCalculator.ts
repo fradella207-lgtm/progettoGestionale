@@ -114,12 +114,16 @@ export function calculateVehicleConsumptionMetrics(vehicle: Vehicle): DetailedCo
   const totalMaintSpent = rawMaints.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
   const totalOverallSpent = totalFuelSpent + totalMaintSpent;
 
-  // Starting base odometer
-  const minOdo = sortedRefuels.length > 0 
-    ? Math.min(Number(vehicle.initialKm) || Infinity, Number(sortedRefuels[0].km))
-    : (Number(vehicle.initialKm) || 0);
-  
-  const totalDistance = Math.max(0, currentKm - (minOdo === Infinity ? 0 : minOdo));
+  // Starting base odometer & recorded distance with app data
+  const allRecordedKm = [...refuelsKm, ...maintKm].filter(k => k > 0);
+  let totalDistance = 0;
+  if (allRecordedKm.length > 0) {
+    const minRecorded = Math.min(...allRecordedKm);
+    const baseOdo = (Number(vehicle.initialKm) > 0 && Number(vehicle.initialKm) <= minRecorded)
+      ? Number(vehicle.initialKm)
+      : minRecorded;
+    totalDistance = Math.max(0, currentKm - baseOdo);
+  }
 
   const costPerKm = totalDistance > 0 ? (totalOverallSpent / totalDistance).toFixed(3) : '0.000';
   const fuelCostPerKm = totalDistance > 0 ? (totalFuelSpent / totalDistance).toFixed(3) : '0.000';

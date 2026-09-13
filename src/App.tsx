@@ -22,6 +22,7 @@ import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './fi
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
 import { syncSharedVehicleToCloud, leaveOrRevokeSharedGarage, subscribeToSharedGarage } from './utils/sharedGarageService';
+import { motion, AnimatePresence } from 'motion/react';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
 function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[] {
@@ -951,95 +952,131 @@ export default function App() {
       />
 
       {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL MAP) */}
-      <main className="flex-1 flex flex-col pb-16">
-        {currentView === 'stations' ? (
-          <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2 animate-in fade-in duration-200">
-            <FuelAndChargingMap 
-              vehicles={vehicles}
-              selectedVehicle={selectedVehicle}
-              settings={settings}
-              userTier={userTier}
-              onOpenUpgradeModal={handleOpenUpgradeModal}
-              onOpenRefuelWithStation={handleOpenRefuelWithStation}
-            />
-          </div>
-        ) : currentView === 'my_car' ? (
-          <MyCarDashboard 
-            vehicles={vehicles}
-            selectedVehicleId={selectedCarId}
-            onSelectVehicle={(id) => setSelectedCarId(id)}
-            onUpdateVehicle={handleDirectUpdateVehicle}
-            onOpenAddVehicleModal={handleOpenAddCarRequest}
-          />
-        ) : currentView === 'garage' ? (
-          <GarageHome 
-            vehicles={vehicles}
-            settings={settings}
-            userTier={userTier}
-            onSelectVehicle={handleSelectVehicle}
-            onOpenAddCar={handleOpenAddCarRequest}
-            onOpenEditCar={(car) => {
-              setVehicleToEdit(car);
-              setIsAddCarModalOpen(true);
-            }}
-            onDeleteVehicle={handleDeleteVehicle}
-            onImportVehicles={handleImportVehicles}
-            onOpenRecap={handleOpenRecap}
-            onOpenUpgradeModal={handleOpenUpgradeModal}
-            onOpenSharedGarage={() => handleOpenSharedGarage()}
-          />
-        ) : (
-          selectedVehicle ? (
-            <VehicleDetail 
-              vehicle={selectedVehicle}
-              vehicles={vehicles}
-              settings={settings}
-              userTier={userTier}
-              initialTab={detailInitialTab}
-              onSelectVehicle={(id) => setSelectedCarId(id)}
-              onBackToGarage={() => setCurrentView('garage')}
-              onUpdateVehicle={handleDirectUpdateVehicle}
-              onOpenEditCar={() => {
-                setVehicleToEdit(selectedVehicle);
-                setIsAddCarModalOpen(true);
-              }}
-              onOpenAddRefuel={(energyType) => {
-                setEditingRefuel(null);
-                setRefuelDefaultEnergyType(energyType);
-                setIsRefuelModalOpen(true);
-              }}
-              onOpenEditRefuel={(refuel) => {
-                setEditingRefuel(refuel);
-                setIsRefuelModalOpen(true);
-              }}
-              onOpenAddMaintenance={() => {
-                setEditingMaintenance(null);
-                setIsMaintenanceModalOpen(true);
-              }}
-              onOpenEditMaintenance={(maint) => {
-                setEditingMaintenance(maint);
-                setIsMaintenanceModalOpen(true);
-              }}
-              onOpenFixTank={() => {
-                setVehicleToEdit(selectedVehicle);
-                setIsAddCarModalOpen(true);
-              }}
-              onOpenRecap={handleOpenRecap}
-              onOpenUpgradeModal={handleOpenUpgradeModal}
-              onOpenSharedGarage={(vehicleId) => handleOpenSharedGarage(vehicleId)}
-            />
+      <main className="flex-1 flex flex-col pb-16 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          {currentView === 'stations' ? (
+            <motion.div 
+              key="stations"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2"
+            >
+              <FuelAndChargingMap 
+                vehicles={vehicles}
+                selectedVehicle={selectedVehicle}
+                settings={settings}
+                userTier={userTier}
+                onOpenUpgradeModal={handleOpenUpgradeModal}
+                onOpenRefuelWithStation={handleOpenRefuelWithStation}
+              />
+            </motion.div>
+          ) : currentView === 'my_car' ? (
+            <motion.div 
+              key="my_car"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="flex-1 flex flex-col"
+            >
+              <MyCarDashboard 
+                vehicles={vehicles}
+                selectedVehicleId={selectedCarId}
+                onSelectVehicle={(id) => setSelectedCarId(id)}
+                onUpdateVehicle={handleDirectUpdateVehicle}
+                onOpenAddVehicleModal={handleOpenAddCarRequest}
+              />
+            </motion.div>
+          ) : currentView === 'garage' ? (
+            <motion.div 
+              key="garage"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="flex-1 flex flex-col"
+            >
+              <GarageHome 
+                vehicles={vehicles}
+                settings={settings}
+                userTier={userTier}
+                onSelectVehicle={handleSelectVehicle}
+                onOpenAddCar={handleOpenAddCarRequest}
+                onOpenEditCar={(car) => {
+                  setVehicleToEdit(car);
+                  setIsAddCarModalOpen(true);
+                }}
+                onDeleteVehicle={handleDeleteVehicle}
+                onImportVehicles={handleImportVehicles}
+                onOpenRecap={handleOpenRecap}
+                onOpenUpgradeModal={handleOpenUpgradeModal}
+                onOpenSharedGarage={() => handleOpenSharedGarage()}
+              />
+            </motion.div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-base text-[#64748b]">Nessun veicolo selezionato.</p>
-              <button 
-                onClick={() => setCurrentView('garage')}
-                className="mt-4 bg-[#2563eb] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
-              >
-                Torna al Garage
-              </button>
-            </div>
-          )
-        )}
+            <motion.div 
+              key={selectedVehicle ? `detail-${selectedVehicle.id}` : 'no-selection'}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="flex-1 flex flex-col"
+            >
+              {selectedVehicle ? (
+                <VehicleDetail 
+                  vehicle={selectedVehicle}
+                  vehicles={vehicles}
+                  settings={settings}
+                  userTier={userTier}
+                  initialTab={detailInitialTab}
+                  onSelectVehicle={(id) => setSelectedCarId(id)}
+                  onBackToGarage={() => setCurrentView('garage')}
+                  onUpdateVehicle={handleDirectUpdateVehicle}
+                  onOpenEditCar={() => {
+                    setVehicleToEdit(selectedVehicle);
+                    setIsAddCarModalOpen(true);
+                  }}
+                  onOpenAddRefuel={(energyType) => {
+                    setEditingRefuel(null);
+                    setRefuelDefaultEnergyType(energyType);
+                    setIsRefuelModalOpen(true);
+                  }}
+                  onOpenEditRefuel={(refuel) => {
+                    setEditingRefuel(refuel);
+                    setIsRefuelModalOpen(true);
+                  }}
+                  onOpenAddMaintenance={() => {
+                    setEditingMaintenance(null);
+                    setIsMaintenanceModalOpen(true);
+                  }}
+                  onOpenEditMaintenance={(maint) => {
+                    setEditingMaintenance(maint);
+                    setIsMaintenanceModalOpen(true);
+                  }}
+                  onOpenFixTank={() => {
+                    setVehicleToEdit(selectedVehicle);
+                    setIsAddCarModalOpen(true);
+                  }}
+                  onOpenRecap={handleOpenRecap}
+                  onOpenUpgradeModal={handleOpenUpgradeModal}
+                  onOpenSharedGarage={(vehicleId) => handleOpenSharedGarage(vehicleId)}
+                />
+              ) : (
+                <div className="text-center py-20">
+                  <p className="text-base text-[#64748b]">Nessun veicolo selezionato.</p>
+                  <button 
+                    onClick={() => setCurrentView('garage')}
+                    className="mt-4 bg-[#2563eb] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
+                  >
+                    Torna al Garage
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}
