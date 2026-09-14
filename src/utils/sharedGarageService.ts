@@ -10,6 +10,30 @@ import {
 import { Vehicle, UserAccount, SharedGarage, SharedGarageMember } from '../types';
 
 /**
+ * Strips undefined properties recursively from objects and arrays so Firestore never rejects payloads
+ */
+export function sanitizeForFirestore<T>(data: T): T {
+  if (data === undefined) {
+    return null as unknown as T;
+  }
+  if (data === null || typeof data !== 'object') {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter(item => item !== undefined)
+      .map(item => sanitizeForFirestore(item)) as unknown as T;
+  }
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      sanitized[key] = sanitizeForFirestore(value);
+    }
+  }
+  return sanitized as unknown as T;
+}
+
+/**
  * Generate a friendly, readable 6-character code (e.g. GARAGE-7K9M)
  */
 export function generateShareCode(): string {
@@ -76,10 +100,12 @@ export async function createOrUpdateSharedGarage(
       ...vehicle,
       isShared: true,
       sharedGarageCode: code,
-      sharedOwnerName: user.name,
-      sharedOwnerEmail: user.email,
+      sharedOwnerName: user.name || 'Proprietario',
+      sharedOwnerEmail: user.email || '',
       sharedRole: 'owner',
       sharedMembersCount: members.length,
+      sharedPermissionsLevel: vehicle.sharedPermissionsLevel || 'full',
+      sharedAllowDocumentView: vehicle.sharedAllowDocumentView ?? true,
       lastSyncTimestamp: now
     },
     members,
@@ -89,7 +115,7 @@ export async function createOrUpdateSharedGarage(
     active: true
   };
 
-  await setDoc(shareDocRef, sharedGarageData, { merge: true });
+  await setDoc(shareDocRef, sanitizeForFirestore(sharedGarageData), { merge: true });
   return sharedGarageData;
 }
 
@@ -158,11 +184,11 @@ export async function joinSharedGarage(
     updatedAt: now
   };
 
-  await setDoc(shareDocRef, {
+  await setDoc(shareDocRef, sanitizeForFirestore({
     members: currentMembers,
     allowedUids,
     updatedAt: now
-  }, { merge: true });
+  }), { merge: true });
 
   const vehicleWithShareInfo: Vehicle = {
     ...data.vehicle,
@@ -194,13 +220,15 @@ export async function syncSharedVehicleToCloud(vehicle: Vehicle): Promise<void> 
     const shareDocRef = doc(db, 'shared_garages', code);
     const now = new Date().toISOString();
 
-    await setDoc(shareDocRef, {
+    await setDoc(shareDocRef, sanitizeForFirestore({
       vehicle: {
         ...vehicle,
+        sharedPermissionsLevel: vehicle.sharedPermissionsLevel || 'full',
+        sharedAllowDocumentView: vehicle.sharedAllowDocumentView ?? true,
         lastSyncTimestamp: now
       },
       updatedAt: now
-    }, { merge: true });
+    }), { merge: true });
   } catch (err) {
     console.debug('Failed to sync shared vehicle to cloud:', err);
   }
@@ -227,11 +255,11 @@ export async function leaveOrRevokeSharedGarage(
     const data = snap.data() as SharedGarage;
     const remainingMembers = (data.members || []).filter(m => m.uid !== userId);
     const remainingUids = (data.allowedUids || []).filter(uid => uid !== userId);
-    await setDoc(shareDocRef, {
+    await setDoc(shareDocRef, sanitizeForFirestore({
       members: remainingMembers,
       allowedUids: remainingUids,
       updatedAt: new Date().toISOString()
-    }, { merge: true });
+    }), { merge: true });
   }
 }
 
@@ -269,11 +297,11 @@ export async function updateSharedGarageSettings(
     }
   }
 
-  await setDoc(shareDocRef, {
+  await setDoc(shareDocRef, sanitizeForFirestore({
     ...updates,
     ...(updatedVehicleData ? { vehicle: updatedVehicleData } : {}),
     updatedAt: now
-  }, { merge: true });
+  }), { merge: true });
 }
 
 /**
@@ -334,11 +362,11 @@ export async function removeMemberFromSharedGarage(
     updatedAt: now
   };
 
-  await setDoc(shareDocRef, {
+  await setDoc(shareDocRef, sanitizeForFirestore({
     members: filteredMembers,
     allowedUids: filteredUids,
     updatedAt: now
-  }, { merge: true });
+  }), { merge: true });
 
   return updated;
 }

@@ -110,13 +110,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         ) : (
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 flex items-center justify-center text-white shadow-xs shrink-0 border border-slate-800">
-              <Car className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-indigo-400" />
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="My360Garage" 
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl object-cover shadow-xs shrink-0 border border-slate-200 bg-slate-900"
+            />
 
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-950 leading-tight truncate">
-                {getTranslation(lang, 'garage_title')}
+              <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-950 leading-tight truncate flex items-center gap-1.5">
+                <span>My360Garage</span>
               </h1>
               <p className="text-[11px] text-slate-500 hidden sm:block truncate">
                 {getTranslation(lang, 'header_garage_subtitle')}

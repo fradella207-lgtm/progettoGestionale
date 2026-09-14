@@ -957,11 +957,11 @@ export default function App() {
           {currentView === 'stations' ? (
             <motion.div 
               key="stations"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2 transform-gpu will-change-[opacity]"
             >
               <FuelAndChargingMap 
                 vehicles={vehicles}
@@ -975,11 +975,11 @@ export default function App() {
           ) : currentView === 'my_car' ? (
             <motion.div 
               key="my_car"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="flex-1 flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
             >
               <MyCarDashboard 
                 vehicles={vehicles}
@@ -992,11 +992,11 @@ export default function App() {
           ) : currentView === 'garage' ? (
             <motion.div 
               key="garage"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="flex-1 flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
             >
               <GarageHome 
                 vehicles={vehicles}
@@ -1018,11 +1018,11 @@ export default function App() {
           ) : (
             <motion.div 
               key={selectedVehicle ? `detail-${selectedVehicle.id}` : 'no-selection'}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="flex-1 flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
             >
               {selectedVehicle ? (
                 <VehicleDetail 

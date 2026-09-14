@@ -22,7 +22,11 @@ import {
   Printer,
   Sparkles,
   Bell,
-  Cloud
+  Cloud,
+  Send,
+  Mail,
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage, UserTier, ProFeatureName } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
@@ -35,6 +39,7 @@ import {
 } from '../../utils/vehicleExportImport';
 import { ProBadge } from '../common/ProBadge';
 import { exportVehiclePassportCSV, openPrintableDigitalPassport } from '../../utils/digitalPassportExport';
+import { submitAppFeedback, buildOwnerMailtoLink, OWNER_EMAIL, AppFeedbackData } from '../../utils/feedbackService';
 
 const THEME_OPTIONS: { id: AppThemeColor; name: string; hex: string; bgClass: string; borderClass: string; desc: string }[] = [
   { id: 'indigo', name: 'Indaco Elegante', hex: '#4f46e5', bgClass: 'bg-indigo-600', borderClass: 'border-indigo-600', desc: 'Predefinito, sobrio e raffinato' },
@@ -80,6 +85,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [themeColor, setThemeColor] = useState<AppThemeColor>(settings.themeColor || 'indigo');
   const [themeMode, setThemeMode] = useState<AppThemeMode>(settings.themeMode || 'light');
   const [language, setLanguage] = useState<AppLanguage>(settings.language || 'it');
+
+  // Feedback state for application improvements & reports to owner (my360garage@gmail.com)
+  const [feedbackType, setFeedbackType] = useState<'improvement' | 'bug' | 'feature' | 'other'>('improvement');
+  const [feedbackSubject, setFeedbackSubject] = useState<string>('');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+  const [feedbackSenderEmail, setFeedbackSenderEmail] = useState<string>('');
+  const [feedbackSenderName, setFeedbackSenderName] = useState<string>('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState<boolean>(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  const handleSubmitFeedback = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!feedbackMessage.trim()) {
+      setFeedbackError('Inserisci un messaggio o una descrizione per il suggerimento.');
+      return;
+    }
+
+    setIsSubmittingFeedback(true);
+    setFeedbackError(null);
+
+    try {
+      const feedbackPayload: AppFeedbackData = {
+        type: feedbackType,
+        subject: feedbackSubject.trim() || 'Suggerimento per My360Garage',
+        message: feedbackMessage.trim(),
+        senderName: feedbackSenderName.trim(),
+        senderEmail: feedbackSenderEmail.trim()
+      };
+
+      await submitAppFeedback(feedbackPayload);
+      setFeedbackSubmitted(true);
+      setFeedbackMessage('');
+      setFeedbackSubject('');
+    } catch (err) {
+      console.error('Error submitting feedback:', err);
+      setFeedbackError('Errore durante l\'invio. Puoi comunque inviare un\'email diretta a my360garage@gmail.com.');
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
 
   // Support swipe right gesture to go back / close
   useSwipeBack({
@@ -667,6 +713,196 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <Trash2 className="w-3.5 h-3.5" />
               <span>Svuota / Azzera Dati Garage</span>
             </button>
+          </div>
+
+          {/* SECTION 5: SEGNALAZIONI & MIGLIORAMENTI PER IL PROPRIETARIO */}
+          <div className="flex flex-col gap-3.5 border-t border-[#e2e8f0] pt-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 shadow-2xs mt-0.5">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+                    <span>Segnalazioni & Miglioramenti</span>
+                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                      Filo Diretto
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
+                    Hai un suggerimento per migliorare My360Garage o hai riscontrato un'anomalia? Scrivi direttamente a me proprietario dell'applicazione (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 font-bold hover:underline">{OWNER_EMAIL}</a>).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {feedbackSubmitted ? (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-emerald-900">
+                      Grazie mille per la tua segnalazione!
+                    </h5>
+                    <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                      Il tuo messaggio è stato registrato ed è pronto per essere visionato per i prossimi aggiornamenti di My360Garage.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <a
+                    href={buildOwnerMailtoLink({
+                      type: feedbackType,
+                      subject: feedbackSubject,
+                      message: feedbackMessage,
+                      senderName: feedbackSenderName,
+                      senderEmail: feedbackSenderEmail
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100/70 border border-emerald-300 text-emerald-900 text-xs font-bold transition-all shadow-2xs"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Invia anche via Email</span>
+                    <ExternalLink className="w-3 h-3 text-emerald-600 opacity-60" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackSubmitted(false)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                  >
+                    Invia un altro suggerimento
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
+                {/* Tipo di segnalazione */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { id: 'improvement', label: 'Miglioramento', icon: '💡' },
+                    { id: 'bug', label: 'Errore / Bug', icon: '🐛' },
+                    { id: 'feature', label: 'Nuova Funzione', icon: '⚡' },
+                    { id: 'other', label: 'Altro', icon: '💬' }
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setFeedbackType(t.id as any)}
+                      className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
+                        feedbackType === t.id
+                          ? 'bg-white text-indigo-950 border-indigo-500 shadow-2xs ring-1 ring-indigo-500/20'
+                          : 'bg-slate-100/80 hover:bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <span>{t.icon}</span>
+                      <span className="truncate">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Oggetto */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-slate-600">Oggetto / Titolo breve</label>
+                  <input
+                    type="text"
+                    value={feedbackSubject}
+                    onChange={(e) => setFeedbackSubject(e.target.value)}
+                    placeholder="Es: Idea per la schermata home, o lentezza in..."
+                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                  />
+                </div>
+
+                {/* Messaggio */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-slate-600">
+                    Descrizione del miglioramento o problema <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    value={feedbackMessage}
+                    onChange={(e) => {
+                      setFeedbackMessage(e.target.value);
+                      if (feedbackError) setFeedbackError(null);
+                    }}
+                    rows={3}
+                    placeholder="Spiega cosa vorresti aggiungere, come migliorare l'usabilità o cosa non ha funzionato come previsto..."
+                    className="border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium resize-none"
+                  />
+                </div>
+
+                {/* Mittente opzionale */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">Tuo Nome (facoltativo)</label>
+                    <input
+                      type="text"
+                      value={feedbackSenderName}
+                      onChange={(e) => setFeedbackSenderName(e.target.value)}
+                      placeholder="Es: Marco"
+                      className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold text-slate-600">Tua Email (per eventuale risposta)</label>
+                    <input
+                      type="email"
+                      value={feedbackSenderEmail}
+                      onChange={(e) => setFeedbackSenderEmail(e.target.value)}
+                      placeholder="nome@email.com"
+                      className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                    />
+                  </div>
+                </div>
+
+                {feedbackError && (
+                  <p className="text-[11px] font-bold text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                    {feedbackError}
+                  </p>
+                )}
+
+                {/* Pulsanti invio */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/80">
+                  <a
+                    href={buildOwnerMailtoLink({
+                      type: feedbackType,
+                      subject: feedbackSubject || 'Segnalazione My360Garage',
+                      message: feedbackMessage || '(Scrivi qui il tuo messaggio...)',
+                      senderName: feedbackSenderName,
+                      senderEmail: feedbackSenderEmail
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-bold transition-all text-center"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Scrivi direttamente a {OWNER_EMAIL}</span>
+                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSubmitFeedback()}
+                    disabled={isSubmittingFeedback || !feedbackMessage.trim()}
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs ${
+                      isSubmittingFeedback || !feedbackMessage.trim()
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white shadow-indigo-600/20'
+                    }`}
+                  >
+                    {isSubmittingFeedback ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSubmittingFeedback ? 'Invio in corso...' : 'Invia al Proprietario'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ACTIONS */}

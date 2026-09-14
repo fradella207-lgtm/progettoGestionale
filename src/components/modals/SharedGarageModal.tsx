@@ -76,6 +76,7 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   const [currentSharedGarage, setCurrentSharedGarage] = useState<SharedGarage | null>(null);
 
   // Control Panel configurable options
+  const [controlSubTab, setControlSubTab] = useState<'invite' | 'rules' | 'members'>('invite');
   const [permLevel, setPermLevel] = useState<'full' | 'read_only' | 'refuel_only'>('full');
   const [allowDocView, setAllowDocView] = useState<boolean>(true);
   const [notifyExp, setNotifyExp] = useState<boolean>(true);
@@ -370,13 +371,13 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   const isGarageAdmin = !currentVehicle?.sharedRole || currentVehicle.sharedRole === 'owner' || (currentSharedGarage && currentSharedGarage.ownerId === userAccount.id);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 overflow-hidden animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col my-auto font-['Plus_Jakarta_Sans',sans-serif] animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] font-['Plus_Jakarta_Sans',sans-serif] animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* MODAL HEADER */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-7 overflow-hidden">
+        {/* MODAL HEADER (FIXED TOP) */}
+        <div className="shrink-0 relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-6 overflow-hidden">
           <div className="absolute -top-16 -right-16 w-56 h-56 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -385,61 +386,61 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Chiudi pannello di controllo"
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-sm"
+            className="absolute top-3.5 right-3.5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-sm"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Badge PRO */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[11px] font-black tracking-wide uppercase shadow-md shadow-amber-500/20">
-              <Crown className="w-3.5 h-3.5 fill-slate-950" />
-              <span>Pannello di Controllo PRO</span>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[10px] sm:text-[11px] font-black tracking-wide uppercase shadow-xs">
+              <Crown className="w-3 h-3 fill-slate-950" />
+              <span>Controllo Veicolo PRO</span>
             </span>
-            <span className="text-xs text-indigo-200 font-medium">
+            <span className="text-[11px] text-indigo-200 font-medium">
               Multi-Account Cloud Sync
             </span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-snug flex items-center gap-2.5">
-            <Sliders className="w-6 h-6 text-indigo-400" />
-            <span>Condivisione & Controllo Veicolo</span>
+          <h2 className="text-lg sm:text-xl font-black tracking-tight text-white leading-snug flex items-center gap-2">
+            <Sliders className="w-5 h-5 text-indigo-400 shrink-0" />
+            <span>Condivisione & Gestione Veicolo</span>
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-lg">
-            Decidi con chi condividere auto o moto, imposta i permessi e interrompi la condivisione istantaneamente quando vuoi tu.
+          <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 max-w-lg leading-relaxed">
+            Sincronizza in tempo reale, imposta i permessi e interrompi la condivisione quando vuoi.
           </p>
         </div>
 
-        {/* TAB SELECTOR */}
-        <div className="flex border-b border-slate-200 bg-slate-50/80 p-2 gap-2">
+        {/* TAB SELECTOR (FIXED) */}
+        <div className="shrink-0 flex border-b border-slate-200 bg-slate-50/90 p-1.5 sm:p-2 gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('share')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'share'
-                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200'
+                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <Sliders className="w-4 h-4" />
+            <Sliders className="w-3.5 h-3.5" />
             <span>Pannello di Controllo</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('join')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               activeTab === 'join'
-                ? 'bg-white text-indigo-700 shadow-sm border border-slate-200'
+                ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <LinkIcon className="w-4 h-4" />
+            <LinkIcon className="w-3.5 h-3.5" />
             <span>Unisciti con Codice</span>
           </button>
         </div>
 
-        {/* MODAL BODY */}
-        <div className="p-6 sm:p-7 space-y-6 max-h-[75vh] overflow-y-auto">
+        {/* MODAL BODY (THE ONLY SCROLL CONTAINER, TOUCH-FRIENDLY & NO OVERFLOW CRISIS) */}
+        <div className="flex-1 p-3.5 sm:p-5 space-y-4 overflow-y-auto overscroll-contain">
 
           {/* NON-PRO BANNER IF ON FREE TIER */}
           {!hasProAccess && (
@@ -600,292 +601,362 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
                       </div>
                     </div>
                   ) : (
-                    /* OWNER VIEW: Share Code, Controls, Members, Revoke */
-                    <div className="space-y-6">
-                      {/* Share Code and Direct Links */}
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                            Codice di Sincronizzazione
-                          </span>
-                          <button
-                            type="button"
-                            onClick={handleRegenerateCode}
-                            disabled={isLoading}
-                            className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
-                            title="Genera un nuovo codice per invalidare quello vecchio"
-                          >
-                            <KeyRound className="w-3.5 h-3.5" />
-                            <span>Rigenera codice</span>
-                          </button>
-                        </div>
+                    /* OWNER VIEW: Segmented Sub-Tabs for Mobile and Desktop (no scrolling crisis) */
+                    <div className="space-y-3.5">
+                      {/* Sub-Tab Navigation */}
+                      <div className="flex bg-slate-100/90 p-1 rounded-xl border border-slate-200/60 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setControlSubTab('invite')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            controlSubTab === 'invite'
+                              ? 'bg-white text-indigo-700 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span className="truncate">Invito & Codice</span>
+                        </button>
 
-                        <div className="flex flex-col sm:flex-row items-center gap-3">
-                          <div className="flex-1 w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white border-2 border-indigo-200 shadow-2xs">
-                            <span className="font-mono text-xl sm:text-2xl font-black text-indigo-700 tracking-widest">
-                              {currentShareCode}
-                            </span>
+                        <button
+                          type="button"
+                          onClick={() => setControlSubTab('rules')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            controlSubTab === 'rules'
+                              ? 'bg-white text-indigo-700 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span className="truncate">Regole & Accesso</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setControlSubTab('members')}
+                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            controlSubTab === 'members'
+                              ? 'bg-white text-indigo-700 shadow-2xs'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span className="truncate">Membri ({currentSharedGarage?.members?.length || 1})</span>
+                        </button>
+                      </div>
+
+                      {/* SUBTAB 1: INVITO & CODICE */}
+                      {controlSubTab === 'invite' && (
+                        <div className="space-y-3 animate-in fade-in duration-150">
+                          {/* Share Code and Direct Links */}
+                          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                Codice Veicolo
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleRegenerateCode}
+                                disabled={isLoading}
+                                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition-colors"
+                                title="Genera un nuovo codice per invalidare quello vecchio"
+                              >
+                                <KeyRound className="w-3.5 h-3.5" />
+                                <span>Rigenera</span>
+                              </button>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                              <div className="flex-1 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border-2 border-indigo-200 shadow-2xs">
+                                <span className="font-mono text-lg sm:text-xl font-black text-indigo-700 tracking-wider">
+                                  {currentShareCode}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleCopyCode}
+                                  className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                                >
+                                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                  <span>{copiedCode ? 'Copiato' : 'Copia'}</span>
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={handleShareWhatsApp}
+                                className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                <span>Invia WhatsApp</span>
+                              </button>
+                            </div>
+
+                            {/* Direct link */}
+                            <div className="flex items-center gap-2 pt-1">
+                              <input 
+                                type="text" 
+                                readOnly 
+                                value={shareUrl}
+                                className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-500 font-mono text-[11px] select-all focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleCopyLink}
+                                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1 transition-all cursor-pointer shrink-0"
+                              >
+                                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                <span>{copiedLink ? 'Copiato' : 'Copia Link'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Quick Permission Summary */}
+                          <div className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 min-w-0 pr-2">
+                              <Sliders className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <span className="text-slate-600 truncate">
+                                Permesso: <strong className="text-slate-800">{permLevel === 'full' ? 'Completo' : permLevel === 'refuel_only' ? 'Solo Rifornimenti' : 'Sola Lettura'}</strong>
+                              </span>
+                            </div>
                             <button
                               type="button"
-                              onClick={handleCopyCode}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                              onClick={() => setControlSubTab('rules')}
+                              className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer shrink-0"
                             >
-                              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                              <span>{copiedCode ? 'Copiato' : 'Copia'}</span>
+                              Modifica Regole →
                             </button>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleShareWhatsApp}
-                            className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer shrink-0"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            <span>Invia su WhatsApp</span>
-                          </button>
-                        </div>
-
-                        <div className="flex items-center gap-2 pt-1">
-                          <input 
-                            type="text" 
-                            readOnly 
-                            value={shareUrl}
-                            className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-500 font-mono text-[11px] select-all focus:outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleCopyLink}
-                            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
-                          >
-                            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedLink ? 'Copiato' : 'Copia Link'}</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 2. REALE PANNELLO DI CONTROLLO: REGOLE E PERMESSI */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                          <div className="flex items-center gap-2">
-                            <Sliders className="w-4 h-4 text-indigo-600" />
-                            <h4 className="text-sm font-black text-slate-900">
-                              Console Regole di Controllo
-                            </h4>
-                          </div>
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                            Controllo Totale
-                          </span>
-                        </div>
-
-                        {/* Livello di Accesso */}
-                        <div className="space-y-2">
-                          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                            Autorizzazioni Operative Partner
-                          </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            {[
-                              { 
-                                id: 'full', 
-                                title: 'Completo', 
-                                desc: 'Inserimento e modifica di rifornimenti, spese e tagliandi',
-                                icon: Edit3 
-                              },
-                              { 
-                                id: 'refuel_only', 
-                                title: 'Solo Rifornimenti', 
-                                desc: 'Registrazione carburante/ricarica e km. Tagliandi bloccati',
-                                icon: Fuel 
-                              },
-                              { 
-                                id: 'read_only', 
-                                title: 'Sola Lettura', 
-                                desc: 'Solo consultazione: blocca ogni inserimento o modifica',
-                                icon: Eye 
-                              }
-                            ].map(opt => {
-                              const Icon = opt.icon;
-                              const isSel = permLevel === opt.id;
-                              return (
-                                <button
-                                  key={opt.id}
-                                  type="button"
-                                  onClick={() => setPermLevel(opt.id as any)}
-                                  className={`p-3 rounded-xl border text-left flex flex-col justify-between gap-1.5 transition-all cursor-pointer ${
-                                    isSel
-                                      ? 'bg-indigo-50/90 border-indigo-600 text-indigo-950 shadow-2xs ring-1 ring-indigo-500/20'
-                                      : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700'
-                                  }`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-black flex items-center gap-1.5">
-                                      <Icon className="w-3.5 h-3.5 text-indigo-600" />
-                                      {opt.title}
-                                    </span>
-                                    {isSel && <Check className="w-3.5 h-3.5 text-indigo-700 stroke-[3]" />}
-                                  </div>
-                                  <span className="text-[10px] text-slate-500 leading-tight">
-                                    {opt.desc}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Opzioni Aggiuntive */}
-                        <div className="pt-2 space-y-2.5">
-                          <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
-                            <div className="flex items-center gap-2.5 pr-2">
-                              <FileText className="w-4 h-4 text-slate-600 shrink-0" />
-                              <div>
-                                <span className="text-xs font-bold text-slate-800 block">
-                                  Visualizzazione Documenti e Libretto
-                                </span>
-                                <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                                  Se disattivato, i documenti di bordo e il libretto restano privati e riservati solo a te.
-                                </span>
-                              </div>
-                            </div>
-                            <input 
-                              type="checkbox"
-                              checked={allowDocView}
-                              onChange={(e) => setAllowDocView(e.target.checked)}
-                              className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
-                            />
-                          </label>
-
-                          <label className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
-                            <div className="flex items-center gap-2.5 pr-2">
-                              <Bell className="w-4 h-4 text-slate-600 shrink-0" />
-                              <div>
-                                <span className="text-xs font-bold text-slate-800 block">
-                                  Notifiche di Nuove Spese & Pieni
-                                </span>
-                                <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                                  Ricevi un avviso ogni volta che il partner registra una spesa o un rifornimento.
-                                </span>
-                              </div>
-                            </div>
-                            <input 
-                              type="checkbox"
-                              checked={notifyExp}
-                              onChange={(e) => setNotifyExp(e.target.checked)}
-                              className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
-                            />
-                          </label>
-                        </div>
-
-                        <div className="flex justify-end pt-1">
-                          <button
-                            type="button"
-                            onClick={handleSaveControlSettings}
-                            disabled={isSavingSettings}
-                            className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
-                          >
-                            {isSavingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                            <span>Salva Regole di Controllo</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 3. ACCOUNT CONNESSI & GESTIONE DISPOSITIVI */}
-                      {currentSharedGarage?.members && currentSharedGarage.members.length > 0 && (
-                        <div className="border-t border-slate-200 pt-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                              Dispositivi e Account Connessi ({currentSharedGarage.members.length})
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              Live
-                            </span>
-                          </div>
-
-                          <div className="space-y-2">
-                            {currentSharedGarage.members.map((m, idx) => {
-                              const isMe = m.uid === userAccount.id;
-                              const isMemberOwner = m.role === 'owner';
-
-                              return (
-                                <div 
-                                  key={m.uid || idx} 
-                                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs"
-                                >
-                                  <div className="flex items-center gap-3 min-w-0 pr-2">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0">
-                                      {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-black text-slate-800 truncate">
-                                          {m.name || m.email || 'Utente Connesso'}
-                                        </span>
-                                        {isMe && (
-                                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded shrink-0">
-                                            (Tu)
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-[11px] text-slate-500 truncate block">
-                                        {m.email || 'Account sincronizzato'}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                                      isMemberOwner ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-800'
-                                    }`}>
-                                      {isMemberOwner ? 'Proprietario' : 'Partner'}
-                                    </span>
-
-                                    {/* Bottone Espulsione singolo membro per l'Admin */}
-                                    {!isMemberOwner && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleKickMember(m.uid, m.name || m.email)}
-                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                        title={`Disconnetti ${m.name || 'questo utente'}`}
-                                      >
-                                        <UserX className="w-4 h-4" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
                           </div>
                         </div>
                       )}
 
-                      {/* 4. TERMINA CONDIVISIONE QUANDO VUOLE LUI (PULSANTE DEFINITIVO DI REVOCA) */}
-                      <div className="pt-2">
-                        <div className="bg-rose-50/90 border-2 border-rose-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
-                              <AlertTriangle className="w-5 h-5" />
+                      {/* SUBTAB 2: REGOLE & ACCESSO */}
+                      {controlSubTab === 'rules' && (
+                        <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-2xs animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <Sliders className="w-4 h-4 text-indigo-600" />
+                              <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                Regole di Controllo
+                              </h4>
                             </div>
-                            <div>
-                              <span className="text-xs font-black text-rose-950 uppercase tracking-wide block">
-                                Termina Condivisione del Veicolo
-                              </span>
-                              <span className="text-[11px] text-rose-800 leading-tight block mt-0.5 max-w-md">
-                                Puoi interrompere la condivisione in qualsiasi momento. Tutti gli altri account connessi verranno disconnessi istantaneamente e il veicolo tornerà 100% privato nel tuo garage.
-                              </span>
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                              Controllo Totale
+                            </span>
+                          </div>
+
+                          {/* Livello di Accesso */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                              Autorizzazione Membri Partner
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                              {[
+                                { 
+                                  id: 'full', 
+                                  title: 'Completo', 
+                                  desc: 'Pieno controllo su rifornimenti, spese e tagliandi',
+                                  icon: Edit3 
+                                },
+                                { 
+                                  id: 'refuel_only', 
+                                  title: 'Solo Rifornimenti', 
+                                  desc: 'Solo carburante/ricarica. Tagliandi bloccati',
+                                  icon: Fuel 
+                                },
+                                { 
+                                  id: 'read_only', 
+                                  title: 'Sola Lettura', 
+                                  desc: 'Solo visualizzazione storico senza modifiche',
+                                  icon: Eye 
+                                }
+                              ].map(opt => {
+                                const Icon = opt.icon;
+                                const isSel = permLevel === opt.id;
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => setPermLevel(opt.id as any)}
+                                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between gap-1 transition-all cursor-pointer ${
+                                      isSel
+                                        ? 'bg-indigo-50/90 border-indigo-600 text-indigo-950 shadow-2xs ring-1 ring-indigo-500/20'
+                                        : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-black flex items-center gap-1.5">
+                                        <Icon className="w-3.5 h-3.5 text-indigo-600" />
+                                        {opt.title}
+                                      </span>
+                                      {isSel && <Check className="w-3.5 h-3.5 text-indigo-700 stroke-[3]" />}
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 leading-tight">
+                                      {opt.desc}
+                                    </span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            id="btn-terminate-sharing-admin"
-                            onClick={handleRevokeShare}
-                            disabled={isLoading}
-                            className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-sm active:scale-95"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span>Termina Condivisione</span>
-                          </button>
+                          {/* Opzioni Aggiuntive */}
+                          <div className="pt-1 space-y-2">
+                            <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
+                              <div className="flex items-center gap-2 pr-2">
+                                <FileText className="w-4 h-4 text-slate-600 shrink-0" />
+                                <div>
+                                  <span className="text-xs font-bold text-slate-800 block">
+                                    Visualizzazione Libretto & Documenti
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 leading-tight block">
+                                    I documenti restano riservati solo a te se disattivato
+                                  </span>
+                                </div>
+                              </div>
+                              <input 
+                                type="checkbox"
+                                checked={allowDocView}
+                                onChange={(e) => setAllowDocView(e.target.checked)}
+                                className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
+                              />
+                            </label>
+
+                            <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/60 transition-colors">
+                              <div className="flex items-center gap-2 pr-2">
+                                <Bell className="w-4 h-4 text-slate-600 shrink-0" />
+                                <div>
+                                  <span className="text-xs font-bold text-slate-800 block">
+                                    Notifiche Spese & Pieni
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 leading-tight block">
+                                    Avviso immediato quando il partner registra un evento
+                                  </span>
+                                </div>
+                              </div>
+                              <input 
+                                type="checkbox"
+                                checked={notifyExp}
+                                onChange={(e) => setNotifyExp(e.target.checked)}
+                                className="w-4 h-4 accent-indigo-600 cursor-pointer shrink-0"
+                              />
+                            </label>
+                          </div>
+
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              onClick={handleSaveControlSettings}
+                              disabled={isSavingSettings}
+                              className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                            >
+                              {isSavingSettings ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                              <span>Salva Regole di Controllo</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* SUBTAB 3: MEMBRI & REVOCA */}
+                      {controlSubTab === 'members' && (
+                        <div className="space-y-3 animate-in fade-in duration-150">
+                          {/* Dispositivi Connessi */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-2.5">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
+                                Account Sincronizzati ({currentSharedGarage?.members?.length || 1})
+                              </span>
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                Live Sync
+                              </span>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              {(currentSharedGarage?.members || [
+                                { uid: userAccount.id, name: userAccount.name || 'Tu', email: userAccount.email, role: 'owner' }
+                              ]).map((m, idx) => {
+                                const isMe = m.uid === userAccount.id;
+                                const isMemberOwner = m.role === 'owner';
+
+                                return (
+                                  <div 
+                                    key={m.uid || idx} 
+                                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs"
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                                      <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0">
+                                        {m.name ? m.name.charAt(0).toUpperCase() : 'U'}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1">
+                                          <span className="font-bold text-slate-800 truncate">
+                                            {m.name || m.email || 'Utente Connesso'}
+                                          </span>
+                                          {isMe && (
+                                            <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded shrink-0">
+                                              (Tu)
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 truncate block">
+                                          {m.email || 'Account collegato'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                        isMemberOwner ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-800'
+                                      }`}>
+                                        {isMemberOwner ? 'Proprietario' : 'Partner'}
+                                      </span>
+
+                                      {/* Bottone Espulsione singolo membro per l'Admin */}
+                                      {!isMemberOwner && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleKickMember(m.uid, m.name || m.email)}
+                                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                          title={`Disconnetti ${m.name || 'questo utente'}`}
+                                        >
+                                          <UserX className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Termina Condivisione - Danger Zone */}
+                          <div className="bg-rose-50/90 border border-rose-200 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                                <AlertTriangle className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <span className="text-xs font-black text-rose-950 uppercase tracking-wide block">
+                                  Termina Condivisione
+                                </span>
+                                <span className="text-[10px] text-rose-800 leading-tight block mt-0.5">
+                                  Disconnette istantaneamente tutti gli altri utenti. Il veicolo torna 100% privato.
+                                </span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              id="btn-terminate-sharing-admin"
+                              onClick={handleRevokeShare}
+                              disabled={isLoading}
+                              className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs active:scale-95"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Interrompi Ora</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

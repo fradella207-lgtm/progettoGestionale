@@ -1,6 +1,6 @@
 {
-  "name": "MyGarage",
-  "description": "Gestione completa del veicolo per auto e moto: consumi, rifornimenti, manutenzioni, scadenze, distributori carburante preferiti con andamento storico prezzi 30gg, sincronizzazione multi-account e recap in stile story.",
+  "name": "My360Garage",
+  "description": "Gestione completa del veicolo per auto e moto a 360°: consumi, rifornimenti, manutenzioni, scadenze, distributori carburante con andamento storico prezzi 30gg, sincronizzazione condivisa multi-account e feedback proprietario.",
   "requestFramePermissions": ["geolocation", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
