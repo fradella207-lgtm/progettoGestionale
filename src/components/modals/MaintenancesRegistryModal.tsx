@@ -12,7 +12,8 @@ import {
   Building2,
   Calendar,
   Sparkles,
-  FileText
+  FileText,
+  Lock
 } from 'lucide-react';
 import { Vehicle, MaintenanceRecord, AppSettings } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
@@ -59,6 +60,12 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
   });
 
   const rawMaints = vehicle.maintenances || [];
+
+  // Calcolo permessi se membro veicolo condiviso
+  const isMember = Boolean(vehicle.isShared && vehicle.sharedRole === 'member');
+  const isReadOnly = isMember && vehicle.sharedPermissionsLevel === 'read_only';
+  const isRefuelOnly = isMember && vehicle.sharedPermissionsLevel === 'refuel_only';
+  const isMaintenanceBlocked = isReadOnly || isRefuelOnly;
 
   // Available years
   const availableYears = useMemo(() => {
@@ -172,20 +179,45 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
 
         {/* Action Button on the Right */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onOpenAddMaintenance}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nuovo Intervento</span>
-          </button>
+          {isMaintenanceBlocked ? (
+            <button
+              type="button"
+              onClick={onOpenAddMaintenance}
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
+              title={isReadOnly ? "Il proprietario ha impostato l'accesso in sola lettura" : "Il proprietario consente solo l'inserimento di rifornimenti"}
+            >
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>{isReadOnly ? 'Sola Lettura' : 'Solo Rifornimenti'}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAddMaintenance}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Nuovo Intervento</span>
+            </button>
+          )}
         </div>
       </header>
 
       {/* MAIN PAGE BODY */}
       <main className="max-w-5xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6 flex-1 flex flex-col">
         
+        {/* Banner Permessi */}
+        {isMaintenanceBlocked && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>{isReadOnly ? 'Accesso in sola lettura:' : 'Permessi limitati:'}</strong>{' '}
+              {isReadOnly 
+                ? 'il proprietario ha dato solo la lettura. Non puoi inserire o modificare tagliandi e manutenzioni.' 
+                : 'il proprietario consente solo l\'inserimento di rifornimenti. La gestione degli interventi è bloccata.'}
+            </span>
+          </div>
+        )}
+
         {/* KPI Strip */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">

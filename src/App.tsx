@@ -291,17 +291,6 @@ export default function App() {
     setIsSharedGarageModalOpen(true);
   };
 
-  // URL Query listener for one-time join codes or links (?join=ABC1234 or ?share=ABC1234)
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('join') || params.get('share') || params.get('code');
-      if (code) {
-        setIsSharedGarageModalOpen(true);
-      }
-    } catch {}
-  }, []);
-
   // Sync to localStorage and Firestore
   useEffect(() => {
     if (account.isLoggedIn && account.id) {
@@ -522,8 +511,44 @@ export default function App() {
 
   const showToast = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // URL Query listener for Stripe payment return (?payment=success&tier=pro) and one-time join codes (?join=... or ?share=...)
+  useEffect(() => {
+    try {
+      const search = window.location.search;
+      if (!search) return;
+      const params = new URLSearchParams(search);
+
+      // 1. Ritorno da Stripe Checkout: ?payment=success&tier=pro
+      const paymentStatus = params.get('payment');
+      if (paymentStatus === 'success') {
+        localStorage.setItem('userTier', 'PRO');
+        saveUserTier('PRO');
+        setUserTier('PRO');
+
+        setAccount(prev => ({
+          ...prev,
+          plan: 'MyGarage360 PRO (Illimitato)'
+        }));
+
+        // Pulisci l'URL senza ricaricare la pagina
+        const cleanUrl = window.location.pathname + (window.location.hash || '');
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        showToast('🎉 Benvenuto in MyGarage360 PRO! Tutte le funzionalità sono state sbloccate.', 'success');
+      }
+
+      // 2. Codice Invito Auto Condivisa
+      const code = params.get('join') || params.get('share') || params.get('code');
+      if (code) {
+        setIsSharedGarageModalOpen(true);
+      }
+    } catch (e) {
+      console.debug('URL parameters check notice:', e);
+    }
+  }, []);
 
   // Selected Active Vehicle
   const selectedVehicle = useMemo(() => {
@@ -1035,33 +1060,70 @@ export default function App() {
                   onBackToGarage={() => setCurrentView('garage')}
                   onUpdateVehicle={handleDirectUpdateVehicle}
                   onOpenEditCar={() => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
+                      showToast('Operazione bloccata: solo il proprietario del veicolo può modificare i dati dell\'auto.', 'error');
+                      return;
+                    }
                     setVehicleToEdit(selectedVehicle);
                     setIsAddCarModalOpen(true);
                   }}
                   onOpenAddRefuel={(energyType) => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
+                      showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                      return;
+                    }
                     setEditingRefuel(null);
                     setRefuelDefaultEnergyType(energyType);
                     setIsRefuelModalOpen(true);
                   }}
                   onOpenEditRefuel={(refuel) => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
+                      showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                      return;
+                    }
                     setEditingRefuel(refuel);
                     setIsRefuelModalOpen(true);
                   }}
                   onOpenAddMaintenance={() => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
+                      if (selectedVehicle.sharedPermissionsLevel === 'read_only') {
+                        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                        return;
+                      }
+                      if (selectedVehicle.sharedPermissionsLevel === 'refuel_only') {
+                        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+                        return;
+                      }
+                    }
                     setEditingMaintenance(null);
                     setIsMaintenanceModalOpen(true);
                   }}
                   onOpenEditMaintenance={(maint) => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
+                      if (selectedVehicle.sharedPermissionsLevel === 'read_only') {
+                        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                        return;
+                      }
+                      if (selectedVehicle.sharedPermissionsLevel === 'refuel_only') {
+                        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+                        return;
+                      }
+                    }
                     setEditingMaintenance(maint);
                     setIsMaintenanceModalOpen(true);
                   }}
                   onOpenFixTank={() => {
+                    if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
+                      showToast('Operazione bloccata: solo il proprietario può calibrare il serbatoio.', 'error');
+                      return;
+                    }
                     setVehicleToEdit(selectedVehicle);
                     setIsAddCarModalOpen(true);
                   }}
                   onOpenRecap={handleOpenRecap}
                   onOpenUpgradeModal={handleOpenUpgradeModal}
                   onOpenSharedGarage={(vehicleId) => handleOpenSharedGarage(vehicleId)}
+                  showToast={showToast}
                 />
               ) : (
                 <div className="text-center py-20">

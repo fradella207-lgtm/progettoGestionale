@@ -3,14 +3,23 @@ import { UserTier, ProFeatureName, ProPricingOption } from '../types';
 export const USER_TIER_STORAGE_KEY = 'garage_user_tier';
 
 /**
+ * Official Stripe Payment Links for MyGarage360 PRO
+ */
+export const STRIPE_PAYMENT_URLS = {
+  annual: 'https://buy.stripe.com/9B628r3yi27w68N5XG8EM02',
+  lifetime: 'https://buy.stripe.com/4gM3cv8SCfYm1Sx5XG8EM01'
+} as const;
+
+/**
  * Get stored user tier from localStorage.
- * Defaults strictly to 'FREE' as requested.
+ * Checks both 'userTier' and 'garage_user_tier'.
+ * Defaults to 'FREE'.
  */
 export function getStoredUserTier(): UserTier {
   try {
-    const stored = localStorage.getItem(USER_TIER_STORAGE_KEY);
-    if (stored === 'PRO' || stored === 'FREE') {
-      return stored;
+    const rawTier = localStorage.getItem('userTier') || localStorage.getItem(USER_TIER_STORAGE_KEY);
+    if (rawTier === 'PRO' || rawTier === 'FREE') {
+      return rawTier;
     }
   } catch (e) {
     // ignore
@@ -19,10 +28,11 @@ export function getStoredUserTier(): UserTier {
 }
 
 /**
- * Save user tier to localStorage.
+ * Save user tier to localStorage (saving both keys for full compatibility).
  */
 export function setStoredUserTier(tier: UserTier): void {
   try {
+    localStorage.setItem('userTier', tier);
     localStorage.setItem(USER_TIER_STORAGE_KEY, tier);
   } catch (e) {
     // ignore
@@ -34,6 +44,11 @@ export const saveUserTier = setStoredUserTier;
 export function simulateUpgradeToPro(): UserTier {
   setStoredUserTier('PRO');
   return 'PRO';
+}
+
+export function simulateDowngradeToFree(): UserTier {
+  setStoredUserTier('FREE');
+  return 'FREE';
 }
 
 /**
@@ -176,22 +191,22 @@ export const PRO_PRICING_OPTIONS: ProPricingOption[] = [
   {
     id: 'annual',
     name: 'Abbonamento Annuale',
-    price: '4,99 €',
-    numericPrice: 4.99,
+    price: '3,99 €',
+    numericPrice: 3.99,
     period: '/ anno',
-    description: 'Fatturato annualmente (~0,41 € al mese). Disdici in qualsiasi momento con un clic.',
-    savings: 'Solo 0,41 €/mese'
+    description: 'Fatturato annualmente (solo 0,33 € al mese). Disdici in qualsiasi momento.',
+    savings: 'Solo 0,33 €/mese'
   },
   {
     id: 'lifetime',
     name: 'Pass a Vita (Lifetime)',
-    price: '12,99 €',
-    numericPrice: 12.99,
+    price: '14,99 €',
+    numericPrice: 14.99,
     period: 'una tantum',
     highlight: true,
-    badge: 'Più Popolare',
-    description: 'Paga una sola volta e ottieni MyGarage360 PRO per sempre, inclusi tutti i futuri aggiornamenti.',
-    savings: 'Miglior Valore • Zero Rinnovi'
+    badge: 'Più Scelto',
+    description: 'Paga una sola volta e ottieni MyGarage360 PRO per sempre, inclusi tutti gli aggiornamenti futuri.',
+    savings: 'Miglior Valore • Per Sempre'
   }
 ];
 

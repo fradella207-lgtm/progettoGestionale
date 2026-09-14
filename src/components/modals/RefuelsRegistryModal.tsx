@@ -10,7 +10,8 @@ import {
   Edit3, 
   ChevronRight, 
   ArrowUpDown,
-  Receipt
+  Receipt,
+  Lock
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, AppSettings, EnergySourceType } from '../../types';
 import { DetailedConsumptionMetrics } from '../../utils/consumptionCalculator';
@@ -63,6 +64,10 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   const isPHEV = vehicle.fuelType === 'Plug-in Hybrid (PHEV)';
   const isBEV = vehicle.fuelType.includes('Elettrica') || vehicle.fuelType.includes('BEV');
   const defaultFuelUnit = isBEV ? 'kWh' : (vehicle.fuelType.includes('Metano') ? 'Kg' : 'L');
+
+  // Calcolo permessi condivisione se membro
+  const isMember = Boolean(vehicle.isShared && vehicle.sharedRole === 'member');
+  const isReadOnly = isMember && vehicle.sharedPermissionsLevel === 'read_only';
 
   // Available years
   const availableYears = useMemo(() => {
@@ -178,7 +183,17 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
 
         {/* Action Button on the Right */}
         <div className="flex items-center gap-2 shrink-0">
-          {isPHEV ? (
+          {isReadOnly ? (
+            <button
+              type="button"
+              onClick={() => onOpenAddRefuel()}
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
+              title="Il proprietario ha impostato l'accesso in sola lettura"
+            >
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Sola Lettura</span>
+            </button>
+          ) : isPHEV ? (
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -213,6 +228,14 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
       {/* MAIN PAGE BODY */}
       <main className="max-w-5xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6 flex-1 flex flex-col">
         
+        {/* Banner Permessi Sola Lettura */}
+        {isReadOnly && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span><strong>Accesso in sola lettura:</strong> il proprietario del veicolo ha limitato i permessi. Non puoi aggiungere o modificare rifornimenti.</span>
+          </div>
+        )}
+
         {/* KPI Strip */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">

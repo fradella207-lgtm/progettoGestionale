@@ -12,13 +12,17 @@ import {
   ShieldCheck,
   ArrowRight,
   HelpCircle,
-  Sparkles
+  Sparkles,
+  ExternalLink,
+  Zap,
+  Code
 } from 'lucide-react';
 import { ProFeatureName } from '../../types';
 import { 
   PRO_PRICING_OPTIONS, 
   FREE_VS_PRO_COMPARISON, 
-  PRO_FEATURES_CATALOG 
+  PRO_FEATURES_CATALOG,
+  STRIPE_PAYMENT_URLS
 } from '../../utils/tierManager';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -39,7 +43,6 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 }) => {
   const activeFeature = triggerFeature || targetFeature;
   const [selectedPlanId, setSelectedPlanId] = useState<'annual' | 'lifetime'>('lifetime');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
 
   // Support swipe right gesture to go back / close
@@ -50,16 +53,25 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleActivatePro = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      onUpgradeSuccess(selectedPlanId);
-      onClose();
-    }, 600);
+  const handleOpenStripeLink = (planId: 'annual' | 'lifetime') => {
+    const url = STRIPE_PAYMENT_URLS[planId];
+    try {
+      const opened = window.open(url, '_blank');
+      if (!opened || opened.closed || typeof opened.closed === 'undefined') {
+        window.location.href = url;
+      }
+    } catch {
+      window.location.href = url;
+    }
+  };
+
+  const handleSimulateDevUpgrade = () => {
+    onUpgradeSuccess(selectedPlanId);
+    onClose();
   };
 
   const featureDetail = activeFeature ? PRO_FEATURES_CATALOG[activeFeature] : null;
+  const activePlan = PRO_PRICING_OPTIONS.find(p => p.id === selectedPlanId) || PRO_PRICING_OPTIONS[1];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200">
@@ -118,10 +130,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {PRO_PRICING_OPTIONS.map((plan) => {
               const isSelected = selectedPlanId === plan.id;
+              const isAnnual = plan.id === 'annual';
               return (
                 <div 
                   key={plan.id}
-                  onClick={() => setSelectedPlanId(plan.id)}
+                  id={`plan-card-${plan.id}`}
+                  onClick={() => setSelectedPlanId(plan.id as 'annual' | 'lifetime')}
                   className={`relative rounded-2xl p-4 border transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
                       ? 'border-indigo-600 bg-indigo-50/20 shadow-xs ring-1 ring-indigo-600'
@@ -153,6 +167,18 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
                       {plan.savings || plan.description}
                     </p>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenStripeLink(plan.id as 'annual' | 'lifetime');
+                    }}
+                    className="mt-3.5 w-full py-1.5 px-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 rounded-xl text-[11px] font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span>{isAnnual ? 'Paga Annuale (3,99 €)' : 'Paga Pass a Vita (14,99 €)'}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
                 </div>
               );
             })}
@@ -244,10 +270,26 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             )}
           </div>
 
-          {/* GARANZIA DIRETTA E SEMPLICE */}
-          <div className="flex items-center gap-2 text-[11px] text-slate-500 py-1">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Nessun vincolo né pubblicità. I tuoi dati restano sempre privati.</span>
+          {/* GARANZIA DIRETTA E SICUREZZA STRIPE */}
+          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 py-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Checkout sicuro crittografato elaborato su Stripe. Nessun vincolo né pubblicità.</span>
+            </div>
+          </div>
+
+          {/* SCORCIATOIA DEV MODE / TEST LOCALE */}
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              id="btn-dev-simulate-pro"
+              onClick={handleSimulateDevUpgrade}
+              className="text-[10px] text-slate-400 hover:text-indigo-600 inline-flex items-center gap-1 transition-colors cursor-pointer py-1 px-2 rounded-md hover:bg-slate-100"
+              title="Attiva PRO in locale per collaudo senza passare da Stripe"
+            >
+              <Code className="w-3 h-3 text-slate-400" />
+              <span>🛠️ Dev Mode: Simula Sblocco PRO Locale</span>
+            </button>
           </div>
 
         </div>
@@ -256,10 +298,10 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
         <div className="p-4 sm:p-5 bg-white border-t border-slate-100 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <span className="text-xs font-bold text-slate-900 block truncate">
-              {selectedPlanId === 'lifetime' ? 'Pass a Vita • 12,99 €' : 'Annuale • 4,99 € / anno'}
+              {activePlan.name} • {activePlan.price}
             </span>
             <span className="text-[10px] text-slate-400 block truncate">
-              {selectedPlanId === 'lifetime' ? 'Pagamento unico • Per sempre' : 'Rinnovo annuale • Disdici quando vuoi'}
+              {selectedPlanId === 'lifetime' ? 'Pagamento unico • Per sempre' : 'Rinnovo annuale (0,33 €/mese) • Disdici quando vuoi'}
             </span>
           </div>
 
@@ -275,18 +317,12 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
             <button
               type="button"
               id="btn-confirm-upgrade-pro"
-              onClick={handleActivatePro}
-              disabled={isProcessing}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-97 text-white text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
+              onClick={() => handleOpenStripeLink(selectedPlanId)}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-97 text-white text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              {isProcessing ? (
-                <span>Attivazione...</span>
-              ) : (
-                <>
-                  <span>Attiva PRO</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </>
-              )}
+              <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>Vai al Checkout Stripe</span>
+              <ExternalLink className="w-3.5 h-3.5 ml-0.5" />
             </button>
           </div>
         </div>

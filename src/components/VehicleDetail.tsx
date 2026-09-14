@@ -21,7 +21,8 @@ import {
   Printer,
   Download,
   Crown,
-  Users
+  Users,
+  Lock
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType, UserTier, ProFeatureName } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
@@ -53,6 +54,7 @@ interface VehicleDetailProps {
   onOpenRecap?: (vehicleId?: string) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onOpenSharedGarage?: (vehicleId: string) => void;
+  showToast?: (text: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export const VehicleDetail: React.FC<VehicleDetailProps> = ({
@@ -69,11 +71,54 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   onOpenFixTank,
   onOpenRecap,
   onOpenUpgradeModal,
-  onOpenSharedGarage
+  onOpenSharedGarage,
+  showToast
 }) => {
   const [mainTab, setMainTab] = useState<'overview' | 'documents' | 'ai'>(
     (initialTab === 'overview' || initialTab === 'documents' || initialTab === 'ai') ? initialTab : 'overview'
   );
+
+  // Calcolo permessi se veicolo condiviso (membro invitato)
+  const isSharedMember = Boolean(vehicle.isShared && vehicle.sharedRole === 'member');
+  const isReadOnly = isSharedMember && vehicle.sharedPermissionsLevel === 'read_only';
+  const isRefuelOnly = isSharedMember && vehicle.sharedPermissionsLevel === 'refuel_only';
+  const isDocHidden = isSharedMember && vehicle.sharedAllowDocumentView === false;
+
+  const handleRefuelClick = () => {
+    if (isReadOnly) {
+      if (showToast) {
+        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+      }
+      return;
+    }
+    onOpenAddRefuel(isPHEV ? 'fuel' : undefined);
+  };
+
+  const handleMaintenanceClick = () => {
+    if (isReadOnly) {
+      if (showToast) {
+        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+      }
+      return;
+    }
+    if (isRefuelOnly) {
+      if (showToast) {
+        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+      }
+      return;
+    }
+    onOpenAddMaintenance();
+  };
+
+  const handleEditCarClick = () => {
+    if (isSharedMember) {
+      if (showToast) {
+        showToast('Operazione bloccata: solo il proprietario del veicolo può modificare i dati dell\'auto.', 'error');
+      }
+      return;
+    }
+    onOpenEditCar();
+  };
 
   useEffect(() => {
     if (initialTab) setMainTab(initialTab);
@@ -143,9 +188,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         
         {/* Foto Veicolo con cambio rapido */}
         <div 
-          onClick={onOpenEditCar}
+          onClick={handleEditCarClick}
           className="w-full sm:w-48 h-36 sm:h-32 rounded-2xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group border border-slate-200"
-          title="Modifica dati veicolo"
+          title={isSharedMember ? 'Modifica non consentita per membri invitati' : 'Modifica dati veicolo'}
         >
           {vehicle.photoUrl ? (
             <>
@@ -423,22 +468,86 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </button>
           )}
 
+          {/* Banner Permessi Condivisione se membro invitato */}
+          {isSharedMember && (
+            <div className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs ${
+              isReadOnly 
+                ? 'bg-amber-50/90 border-amber-200 text-amber-900' 
+                : isRefuelOnly 
+                  ? 'bg-blue-50/90 border-blue-200 text-blue-900' 
+                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-900'
+            }`}>
+              <Shield className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="font-bold block">
+                  {isReadOnly 
+                    ? 'Veicolo Condiviso: Accesso in Sola Lettura' 
+                    : isRefuelOnly 
+                      ? 'Veicolo Condiviso: Solo Rifornimenti' 
+                      : 'Veicolo Condiviso: Accesso Completo'}
+                </span>
+                <span className="text-[11px] opacity-90 block mt-0.5 leading-relaxed">
+                  {isReadOnly 
+                    ? 'Il proprietario ha impostato il tuo accesso in sola lettura. I pulsanti per aggiungere o modificare rifornimenti e manutenzioni sono disattivati.' 
+                    : isRefuelOnly 
+                      ? 'Puoi registrare rifornimenti e ricariche. L\'inserimento di manutenzioni e tagliandi è riservato al proprietario.' 
+                      : 'Hai i permessi per inserire sia rifornimenti che interventi su questo veicolo.'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Pulsanti Azione Rapida */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
-              onClick={() => onOpenAddRefuel(isPHEV ? 'fuel' : undefined)}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              type="button"
+              id="btn-quick-refuel"
+              onClick={handleRefuelClick}
+              className={`font-bold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 ${
+                isReadOnly
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 active:scale-95 text-white cursor-pointer'
+              }`}
             >
-              {isBEV ? <Zap className="w-4 h-4 text-amber-300" /> : <Fuel className="w-4 h-4 text-blue-100" />}
-              <span>{isBEV ? 'Registra Ricarica' : 'Registra Rifornimento'}</span>
+              {isReadOnly ? (
+                <>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span>Rifornimento (Sola Lettura)</span>
+                </>
+              ) : (
+                <>
+                  {isBEV ? <Zap className="w-4 h-4 text-amber-300" /> : <Fuel className="w-4 h-4 text-blue-100" />}
+                  <span>{isBEV ? 'Registra Ricarica' : 'Registra Rifornimento'}</span>
+                </>
+              )}
             </button>
 
             <button
-              onClick={onOpenAddMaintenance}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              type="button"
+              id="btn-quick-maintenance"
+              onClick={handleMaintenanceClick}
+              className={`font-bold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 ${
+                isReadOnly || isRefuelOnly
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white cursor-pointer'
+              }`}
             >
-              <Wrench className="w-4 h-4 text-emerald-100" />
-              <span>Registra Tagliando / Manutenzione</span>
+              {isReadOnly ? (
+                <>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span>Manutenzione (Sola Lettura)</span>
+                </>
+              ) : isRefuelOnly ? (
+                <>
+                  <Lock className="w-4 h-4 text-slate-400" />
+                  <span>Manutenzione (Riservata Proprietario)</span>
+                </>
+              ) : (
+                <>
+                  <Wrench className="w-4 h-4 text-emerald-100" />
+                  <span>Registra Tagliando / Manutenzione</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -642,10 +751,22 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       {/* TAB 2: DOCUMENTI */}
       {mainTab === 'documents' && (
         <div className="animate-in fade-in duration-150">
-          <CarDocumentsVault 
-            vehicle={vehicle} 
-            onUpdateVehicle={onUpdateVehicle || (() => {})} 
-          />
+          {isDocHidden ? (
+            <div className="bg-white rounded-3xl border border-slate-200/90 p-8 sm:p-12 text-center flex flex-col items-center justify-center max-w-md mx-auto my-6 shadow-2xs">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mb-3">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-black text-slate-900">Documenti e Libretto Riservati</h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Il proprietario ha riservato l'accesso ai documenti di circolazione e alle polizze per questo veicolo condiviso.
+              </p>
+            </div>
+          ) : (
+            <CarDocumentsVault 
+              vehicle={vehicle} 
+              onUpdateVehicle={onUpdateVehicle || (() => {})} 
+            />
+          )}
         </div>
       )}
 
