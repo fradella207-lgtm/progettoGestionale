@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Suppress benign cross-origin frame SecurityErrors (such as reading '$$typeof' from parent/child Window)
+      window.addEventListener('error', function(event) {
+        if (
+          event &&
+          event.message &&
+          (event.message.indexOf('$$typeof') !== -1 ||
+           (event.message.indexOf('SecurityError') !== -1 && event.message.indexOf('cross-origin') !== -1))
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function(event) {
+        if (
+          event &&
+          event.reason &&
+          event.reason.message &&
+          (event.reason.message.indexOf('$$typeof') !== -1 ||
+           (event.reason.message.indexOf('SecurityError') !== -1 && event.reason.message.indexOf('cross-origin') !== -1))
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>My360Garage</title>
+    <meta name="description" content="Gestione completa del veicolo per auto e moto a 360°: consumi, rifornimenti, manutenzioni, scadenze, distributori carburante con andamento storico prezzi 30gg, sincronizzazione condivisa multi-account e feedback proprietario." />
+    <meta property="og:title" content="My360Garage" />
+    <meta property="og:description" content="Gestione completa del veicolo per auto e moto a 360°: consumi, rifornimenti, manutenzioni, scadenze, distributori carburante con andamento storico prezzi 30gg, sincronizzazione condivisa multi-account e feedback proprietario." />
+    <meta property="og:image" content="/logo.png" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="My360Garage" />
+    <meta name="theme-color" content="#1e3a8a" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-CJjLqIPb.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BfN26Uz-.css">
+  </head>
+  <body class="bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] antialiased min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>
+

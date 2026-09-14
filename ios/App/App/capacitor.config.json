@@ -1,0 +1,6 @@
+{
+	"appId": "com.garage.manager",
+	"appName": "Garage Manager",
+	"webDir": "dist",
+	"packageClassList": []
+}

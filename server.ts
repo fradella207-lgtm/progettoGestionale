@@ -1188,8 +1188,8 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       const mtime = stats.mtime.toISOString();
       const ageHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
 
-      // Se il file ha più di 20 ore, aggiorna automaticamente i prezzi in background
-      if (ageHours >= 20) {
+      // Se il file ha più di 6 ore, aggiorna automaticamente i prezzi in background
+      if (ageHours >= 6) {
         triggerBackgroundStationsSync();
       }
 
@@ -1335,8 +1335,8 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
       if (typeParam === 'all') {
         const evList = filtered.filter(isEvStation);
         const fuelList = filtered.filter(st => !isEvStation(st));
-        const evLimit = Math.min(evList.length, 3000);
-        const fuelLimit = Math.min(fuelList.length, limitParam - evLimit);
+        const evLimit = Math.min(evList.length, Math.max(1, Math.round(limitParam * 0.25)));
+        const fuelLimit = Math.min(fuelList.length, Math.max(0, limitParam - evLimit));
         dataToSend = [...evList.slice(0, evLimit), ...fuelList.slice(0, fuelLimit)];
       } else {
         dataToSend = filtered.slice(0, limitParam);
@@ -1371,6 +1371,200 @@ Estrai tutti i dati rilevanti visibili e restituisci un oggetto JSON con questi 
         error: err?.message || "Errore sincronizzazione"
       });
     }
+  });
+
+  // DEDICATED SECURE CHECKOUT PAGE (Tab Title: "My360Garage - Pagamento")
+  app.get("/payment", (req, res) => {
+    const plan = (req.query.plan as string) || 'lifetime';
+    const stripeUrl = plan === 'annual'
+      ? 'https://buy.stripe.com/9B628r3yi27w68N5XG8EM02'
+      : 'https://buy.stripe.com/4gM3cv8SCfYm1Sx5XG8EM01';
+    const planTitle = plan === 'annual' 
+      ? 'My360Garage PRO - Abbonamento Annuale (3,99 €/anno)' 
+      : 'My360Garage PRO - Licenza a Vita (14,99 € una tantum)';
+    const planSub = plan === 'annual'
+      ? '3,99 € all\'anno con fatturazione annuale sicura Stripe'
+      : '14,99 € una sola volta, nessun costo ricorrente';
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>My360Garage - Pagamento</title>
+  <meta name="description" content="Pagamento sicuro con Stripe Checkout per My360Garage PRO." />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      max-width: 460px;
+      width: 100%;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 28px;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6), 0 0 40px rgba(59,130,246,0.12);
+    }
+    .logo-container {
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 20px auto;
+      background: linear-gradient(135deg, rgba(30,58,138,0.7), rgba(15,23,42,0.9));
+      border: 1.5px solid rgba(59,130,246,0.4);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .logo-img {
+      width: 66px;
+      height: 66px;
+      object-fit: contain;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.025em;
+    }
+    p.brand-sub {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0 0 22px 0;
+    }
+    .plan-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 18px;
+      padding: 16px 18px;
+      margin: 0 0 22px 0;
+      text-align: left;
+    }
+    .plan-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+    .plan-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px auto;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    p.status-text {
+      color: #94a3b8;
+      font-size: 13px;
+      margin: 0 0 24px 0;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 16px;
+      text-decoration: none;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover {
+      background: #1e40af;
+      transform: translateY(-1px);
+    }
+    .footer-ssl {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-container">
+      <img src="/logo.png" alt="My360Garage" class="logo-img" />
+    </div>
+    <div class="badge">🔒 Pagamento Sicuro SSL 256-bit</div>
+    <h1>My360Garage - Pagamento</h1>
+    <p class="brand-sub">Transazione Ufficiale Stripe Checkout</p>
+    
+    <div class="plan-box">
+      <div class="plan-title">${planTitle}</div>
+      <div class="plan-desc">${planSub}</div>
+    </div>
+
+    <div class="spinner"></div>
+    <p class="status-text">Connessione sicura ai server Stripe in corso...<br><span style="font-size: 11px; color: #64748b;">(Se il reindirizzamento non avviene in automatico, clicca sotto)</span></p>
+
+    <a href="${stripeUrl}" class="btn" id="pay-btn">Procedi al Pagamento su Stripe →</a>
+
+    <div class="footer-ssl">
+      <span>Carta di Credito / Debito • Apple Pay • Google Pay • Klarna</span>
+      <span>Elaborato su server conformi PCI-DSS Level 1 di Stripe</span>
+    </div>
+  </div>
+
+  <script>
+    document.title = "My360Garage - Pagamento";
+    setTimeout(function() {
+      window.location.replace("${stripeUrl}");
+    }, 900);
+  </script>
+</body>
+</html>`);
   });
 
   // Dedicated Real Vehicle Photos Search endpoint (Wikipedia / Wikimedia Commons)
@@ -1738,8 +1932,10 @@ REGOLE DI OUTPUT:
 
       setTimeout(async () => {
         try {
-          console.log("[CRON ENGINE] Esecuzione aggiornamento automatico delle 08:30...");
+          console.log("[CRON ENGINE] Esecuzione aggiornamento automatico prezzi MIMIT & colonnine...");
           await sincronizzaMappaStazioni();
+          stationsMemoryCache = null;
+          console.log("[CRON ENGINE] Cache stazioni invalidata e ricaricata con successo.");
         } catch (e: any) {
           console.error("[CRON ENGINE] Errore aggiornamento programmato:", e.message);
         } finally {

@@ -553,7 +553,58 @@ async function elaboraColonnineElettriche(): Promise<OutputStazione[]> {
     { id: "ev_hub_73", nome: "Tesla Supercharger - Aosta Grand Chemin", via: "Grand Chemin 30, Saint-Christophe (AO)", comune: "Saint-Christophe", lat: 45.7412, lng: 7.3412, kw: 250, op: "Tesla" },
     { id: "ev_hub_74", nome: "Tesla Supercharger - Courmayeur Monte Bianco", via: "Strada Statale 26, Courmayeur (AO)", comune: "Courmayeur", lat: 45.7912, lng: 6.9681, kw: 250, op: "Tesla" },
     { id: "ev_hub_75", nome: "Tesla Supercharger - Trento Sud", via: "Via Stella 11, Trento (TN)", comune: "Trento", lat: 46.0312, lng: 11.1312, kw: 250, op: "Tesla" },
-    { id: "ev_hub_76", nome: "Tesla Supercharger - Udine Tavagnacco", via: "Via Nazionale 70, Tavagnacco (UD)", comune: "Tavagnacco", lat: 46.1012, lng: 13.2181, kw: 250, op: "Tesla" }
+    { id: "ev_hub_76", nome: "Tesla Supercharger - Udine Tavagnacco", via: "Via Nazionale 70, Tavagnacco (UD)", comune: "Tavagnacco", lat: 46.1012, lng: 13.2181, kw: 250, op: "Tesla" },
+    // Rete Autostradale Free To X e Ionity & Hub Iper-veloci Aggiuntivi
+    { id: "ev_hub_77", nome: "Free To X - Secchia Ovest (A1 Milano-Bologna)", via: "Autostrada A1 km 156, Modena (MO)", comune: "Modena", lat: 44.6612, lng: 10.8712, kw: 300, op: "Free To X" },
+    { id: "ev_hub_78", nome: "Free To X - San Zenone Ovest (A1 Milano)", via: "Autostrada A1 km 15, San Zenone al Lambro (MI)", comune: "San Zenone al Lambro", lat: 45.3212, lng: 9.3512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_79", nome: "Free To X - Somaglia Est (A1 Lodi)", via: "Autostrada A1 km 43, Somaglia (LO)", comune: "Somaglia", lat: 45.1512, lng: 9.6312, kw: 300, op: "Free To X" },
+    { id: "ev_hub_80", nome: "Free To X - Arno Ovest (A1 Firenze-Arezzo)", via: "Autostrada A1 km 321, Reggello (FI)", comune: "Reggello", lat: 43.6812, lng: 11.4512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_81", nome: "Free To X - Badia al Pino Ovest (A1 Arezzo)", via: "Autostrada A1 km 362, Civitella in Val di Chiana (AR)", comune: "Civitella in Val di Chiana", lat: 43.3912, lng: 11.7712, kw: 300, op: "Free To X" },
+    { id: "ev_hub_82", nome: "Free To X - Fabro Ovest (A1 Orvieto)", via: "Autostrada A1 km 427, Fabro (TR)", comune: "Fabro", lat: 42.8612, lng: 12.0112, kw: 300, op: "Free To X" },
+    { id: "ev_hub_83", nome: "Free To X - La Macchia Ovest (A1 Frosinone)", via: "Autostrada A1 km 609, Anagni (FR)", comune: "Anagni", lat: 41.7412, lng: 13.1512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_84", nome: "Free To X - Casilina Est (A1 Cassino)", via: "Autostrada A1 km 659, Castrocielo (FR)", comune: "Castrocielo", lat: 41.5312, lng: 13.6812, kw: 300, op: "Free To X" },
+    { id: "ev_hub_85", nome: "Free To X - San Nicola Est (A1 Caserta)", via: "Autostrada A1 km 737, San Nicola la Strada (CE)", comune: "San Nicola la Strada", lat: 41.0412, lng: 14.3212, kw: 300, op: "Free To X" },
+    { id: "ev_hub_86", nome: "Free To X - Rubicone Est (A14 Cesena)", via: "Autostrada A14 km 111, Savignano sul Rubicone (FC)", comune: "Savignano sul Rubicone", lat: 44.1112, lng: 12.3812, kw: 300, op: "Free To X" },
+    { id: "ev_hub_87", nome: "Free To X - Esino Est (A14 Ancona Nord)", via: "Autostrada A14 km 208, Chiaravalle (AN)", comune: "Chiaravalle", lat: 43.5912, lng: 13.3112, kw: 300, op: "Free To X" },
+    { id: "ev_hub_88", nome: "Free To X - Torre Fantine Est (A14 Foggia)", via: "Autostrada A14 km 493, Chieuti (FG)", comune: "Chieuti", lat: 41.9112, lng: 15.1512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_89", nome: "Free To X - Murgetta Est (A16 Bari-Canosa)", via: "Autostrada A14 km 617, Andria (BT)", comune: "Andria", lat: 41.2112, lng: 16.2912, kw: 300, op: "Free To X" },
+    { id: "ev_hub_90", nome: "Free To X - Brianza Sud (A4 Milano-Bergamo)", via: "Autostrada A4 km 148, Caponago (MB)", comune: "Caponago", lat: 45.5712, lng: 9.3812, kw: 300, op: "Free To X" },
+    { id: "ev_hub_91", nome: "Free To X - Dalmine Ovest (A4 Bergamo)", via: "Autostrada A4 km 168, Dalmine (BG)", comune: "Dalmine", lat: 45.6412, lng: 9.6012, kw: 300, op: "Free To X" },
+    { id: "ev_hub_92", nome: "Free To X - Monte Baldo Est (A4 Verona-Brescia)", via: "Autostrada A4 km 260, Sommacampagna (VR)", comune: "Sommacampagna", lat: 45.4112, lng: 10.8412, kw: 300, op: "Free To X" },
+    { id: "ev_hub_93", nome: "Free To X - Limena Est (A4 Padova Ovest)", via: "Autostrada A4 km 342, Limena (PD)", comune: "Limena", lat: 45.4512, lng: 11.8512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_94", nome: "Free To X - Gonars Sud (A4 Venezia-Trieste)", via: "Autostrada A4 km 499, Gonars (UD)", comune: "Gonars", lat: 45.8912, lng: 13.2412, kw: 300, op: "Free To X" },
+    { id: "ev_hub_95", nome: "Free To X - Brugnato Ovest (A12 Genova-Livorno)", via: "Autostrada A12 km 77, Brugnato (SP)", comune: "Brugnato", lat: 44.2312, lng: 9.7112, kw: 300, op: "Free To X" },
+    { id: "ev_hub_96", nome: "Free To X - Ceriale Ovest (A10 Savona-Ventimiglia)", via: "Autostrada A10 km 78, Ceriale (SV)", comune: "Ceriale", lat: 44.0512, lng: 8.2112, kw: 300, op: "Free To X" },
+    { id: "ev_hub_97", nome: "Free To X - Dorno Est (A7 Milano-Genova)", via: "Autostrada A7 km 33, Dorno (PV)", comune: "Dorno", lat: 45.1412, lng: 8.9512, kw: 300, op: "Free To X" },
+    { id: "ev_hub_98", nome: "Free To X - Villarboit Nord (A4 Torino-Milano)", via: "Autostrada A4 km 64, Villarboit (VC)", comune: "Villarboit", lat: 45.4212, lng: 8.3312, kw: 300, op: "Free To X" },
+    { id: "ev_hub_99", nome: "Ewiva Ultra-Fast - Piacenza Ovest", via: "Via Emilia Pavese 105, Piacenza (PC)", comune: "Piacenza", lat: 45.0512, lng: 9.6612, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_100", nome: "Ewiva Ultra-Fast - Cremona Centro", via: "Via Castelleone 108, Cremona (CR)", comune: "Cremona", lat: 45.1512, lng: 10.0112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_101", nome: "Ewiva Ultra-Fast - Alessandria Ovest", via: "Spalto Marengo 44, Alessandria (AL)", comune: "Alessandria", lat: 44.9112, lng: 8.6112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_102", nome: "Ewiva Ultra-Fast - Asti Est", via: "Corso Alessandria 250, Asti (AT)", comune: "Asti", lat: 44.8912, lng: 8.2412, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_103", nome: "Ewiva Ultra-Fast - Novara Est", via: "Corso Milano 62, Novara (NO)", comune: "Novara", lat: 45.4412, lng: 8.6512, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_104", nome: "Ewiva Ultra-Fast - Varese Belforte", via: "Viale Belforte 135, Varese (VA)", comune: "Varese", lat: 45.8112, lng: 8.8512, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_105", nome: "Ewiva Ultra-Fast - Como Grandate", via: "Strada Statale dei Giovi 35, Grandate (CO)", comune: "Grandate", lat: 45.7712, lng: 9.0612, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_106", nome: "Ewiva Ultra-Fast - Monza Brianza", via: "Viale delle Industrie 32, Monza (MB)", comune: "Monza", lat: 45.5712, lng: 9.2912, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_107", nome: "Ewiva Ultra-Fast - Reggio Emilia Stazione Mediopadana", via: "Via Città del Tricolore 1, Reggio Emilia (RE)", comune: "Reggio Emilia", lat: 44.7212, lng: 10.6512, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_108", nome: "Ewiva Ultra-Fast - Ferrara Nord", via: "Via Eridano 2, Ferrara (FE)", comune: "Ferrara", lat: 44.8612, lng: 11.6012, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_109", nome: "Ewiva Ultra-Fast - Ravenna Darsena", via: "Circonvallazione alla Rotonda dei Goti 15, Ravenna (RA)", comune: "Ravenna", lat: 44.4212, lng: 12.2112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_110", nome: "Ewiva Ultra-Fast - Lucca Est", via: "Viale Europa 800, Lucca (LU)", comune: "Lucca", lat: 43.8312, lng: 10.5012, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_111", nome: "Ewiva Ultra-Fast - Siena Ovest", via: "Strada Statale 73 Ponente, Siena (SI)", comune: "Siena", lat: 43.3212, lng: 11.3112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_112", nome: "Ewiva Ultra-Fast - Fano Porto", via: "Viale Adriatico 20, Fano (PU)", comune: "Fano", lat: 43.8412, lng: 13.0212, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_113", nome: "Ewiva Ultra-Fast - San Benedetto del Tronto", via: "Via Salaria 120, San Benedetto del Tronto (AP)", comune: "San Benedetto del Tronto", lat: 42.9312, lng: 13.8812, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_114", nome: "Ewiva Ultra-Fast - Terni Polymer", via: "Strada di Sabbione 35, Terni (TR)", comune: "Terni", lat: 42.5512, lng: 12.6312, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_115", nome: "Ewiva Ultra-Fast - Viterbo Nord", via: "Strada Cassia Nord km 86, Viterbo (VT)", comune: "Viterbo", lat: 42.4412, lng: 12.0912, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_116", nome: "Ewiva Ultra-Fast - Latina Borgo Piave", via: "Strada Statale 148 Pontina km 68, Latina (LT)", comune: "Latina", lat: 41.4812, lng: 12.8712, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_117", nome: "Ewiva Ultra-Fast - Benevento Appia", via: "Contrada San Vito, Benevento (BN)", comune: "Benevento", lat: 41.1312, lng: 14.7712, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_118", nome: "Ewiva Ultra-Fast - Brindisi Aeroporto", via: "Contrada Baroncino, Brindisi (BR)", comune: "Brindisi", lat: 40.6512, lng: 17.9412, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_119", nome: "Ewiva Ultra-Fast - Catanzaro Lido", via: "Viale Crotone 45, Catanzaro (CZ)", comune: "Catanzaro", lat: 38.8312, lng: 16.6112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_120", nome: "Ewiva Ultra-Fast - Crotone Porto", via: "Via Spiaggia delle Forche, Crotone (KR)", comune: "Crotone", lat: 39.0812, lng: 17.1312, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_121", nome: "Ewiva Ultra-Fast - Trapani Porto", via: "Via Ammiraglio Staiti 23, Trapani (TP)", comune: "Trapani", lat: 38.0162, lng: 12.5112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_122", nome: "Ewiva Ultra-Fast - Agrigento San Leone", via: "Viale delle Dune 12, Agrigento (AG)", comune: "Agrigento", lat: 37.2712, lng: 13.5812, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_123", nome: "Ewiva Ultra-Fast - Caltanissetta", via: "Via Due Fontane 80, Caltanissetta (CL)", comune: "Caltanissetta", lat: 37.4912, lng: 14.0512, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_124", nome: "Ewiva Ultra-Fast - Ragusa Centro", via: "Viale delle Americhe 150, Ragusa (RG)", comune: "Ragusa", lat: 36.9312, lng: 14.7112, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_125", nome: "Ewiva Ultra-Fast - Oristano Fenosu", via: "Via Cagliari 410, Oristano (OR)", comune: "Oristano", lat: 39.8912, lng: 8.6012, kw: 300, op: "Ewiva" },
+    { id: "ev_hub_126", nome: "Ewiva Ultra-Fast - Nuoro Pratosardo", via: "Via Badu 'e Carros, Nuoro (NU)", comune: "Nuoro", lat: 40.3212, lng: 9.3112, kw: 300, op: "Ewiva" }
   ];
 
   // Inserisci sempre i principali hub italiani consolidati (evitando duplicati per ID)
@@ -614,10 +665,11 @@ export async function sincronizzaMappaStazioni(): Promise<{ totale: number; carb
   // 2. Unisci tutti i punti in un unico array unificato (colonnine in prima linea per garantire sempre visibilità)
   const outputCompleto: OutputStazione[] = [...colonnine, ...distributori];
 
-  // 3. Assicura che le directory di destinazione esistano (src/data e public/data per web export)
+  // 3. Assicura che le directory di destinazione esistano (src/data, public/data e dist/data per web export)
   const pathsToSave = [
     OUTPUT_FILE_PATH,
-    path.join(process.cwd(), 'public', 'data', 'live_stations_output.json')
+    path.join(process.cwd(), 'public', 'data', 'live_stations_output.json'),
+    path.join(process.cwd(), 'dist', 'data', 'live_stations_output.json')
   ];
 
   for (const filePath of pathsToSave) {

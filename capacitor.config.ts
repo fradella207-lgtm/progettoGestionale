@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.garage.manager',
-  appName: 'Garage Manager',
+  appId: 'it.my360garage.app',
+  appName: 'My360Garage',
   webDir: 'dist'
 };
 

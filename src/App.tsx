@@ -18,6 +18,8 @@ import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { RecapStoryModal } from './components/modals/RecapStoryModal';
 import { PaywallModal } from './components/modals/PaywallModal';
 import { SharedGarageModal } from './components/modals/SharedGarageModal';
+import { StartupSplash } from './components/StartupSplash';
+import { PaymentPage } from './components/PaymentPage';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
@@ -111,6 +113,26 @@ function generateVehicleNotifications(vehicleList: Vehicle[]): AppNotification[]
 }
 
 export default function App() {
+  // 0. STARTUP SPLASH STATE (Smooth boot display with official logo)
+  const [isAppStarting, setIsAppStarting] = useState(true);
+
+  useEffect(() => {
+    // Remove static HTML splash screen if present in DOM
+    const staticSplash = document.getElementById('initial-splash-screen');
+    if (staticSplash) {
+      staticSplash.remove();
+    }
+    const timer = setTimeout(() => {
+      setIsAppStarting(false);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Dedicated Payment Page route (shows logo and sets document title to My360Garage - Pagamento)
+  if (typeof window !== 'undefined' && window.location.pathname === '/payment') {
+    return <PaymentPage />;
+  }
+
   // 1. ALL VEHICLES IN GARAGE STATE (Initialized cleanly per-user)
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     const cachedUser = localStorage.getItem('garage_user_account');
@@ -928,6 +950,11 @@ export default function App() {
       <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased">
         <AuthGate onLoginSuccess={handleLoginSuccess} />
         
+        {/* STARTUP SPLASH SCREEN */}
+        <AnimatePresence>
+          {isAppStarting && <StartupSplash key="startup-splash-auth" />}
+        </AnimatePresence>
+
         {/* TOAST NOTIFICATION */}
         {toastMessage && (
           <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5">
@@ -1290,6 +1317,11 @@ export default function App() {
         }}
         onShowToast={showToast}
       />
+
+      {/* STARTUP SPLASH SCREEN */}
+      <AnimatePresence>
+        {isAppStarting && <StartupSplash key="startup-splash-main" />}
+      </AnimatePresence>
 
     </div>
   );
