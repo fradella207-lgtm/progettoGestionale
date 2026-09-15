@@ -136,8 +136,8 @@ export default function App() {
   // 1. ALL VEHICLES IN GARAGE STATE (Initialized cleanly per-user)
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     const cachedUser = localStorage.getItem('garage_user_account');
-    let userId = 'user_master_my360garage';
-    let isMaster = true;
+    let userId = '';
+    let isMaster = false;
     if (cachedUser) {
       try {
         const parsed = JSON.parse(cachedUser);
@@ -156,7 +156,6 @@ export default function App() {
         } catch (e) {}
       }
     }
-    // Per l'account principale my360garage@gmail.com, se non ci sono ancora veicoli in cache, usiamo SEED_GARAGE di partenza
     if (isMaster) {
       return SEED_GARAGE;
     }
@@ -206,50 +205,37 @@ export default function App() {
     return generateVehicleNotifications(vehicles);
   });
 
-  // 5. ACCOUNT STATE (Default: Primary Master Account my360garage@gmail.com)
+  // 5. ACCOUNT STATE (Unauthenticated by default until login, persisted in localStorage)
   const [account, setAccount] = useState<UserAccount>(() => {
     const cached = localStorage.getItem('garage_user_account');
     if (cached) {
       try { 
         const parsed = JSON.parse(cached);
         if (parsed && parsed.email && parsed.isLoggedIn) {
-          // Se era un account precedente non aggiornato, migriamolo all'account principale
-          if (parsed.email.includes('alessandrini') || parsed.id === 'user_demo_session') {
-            return {
-              id: 'user_master_my360garage',
-              name: 'MyGarage360 Admin',
-              email: 'my360garage@gmail.com',
-              plan: 'Pro Garage Cloud (Account Principale)',
-              syncStatus: 'synced',
-              memberSince: 'Settembre 2026',
-              provider: 'google',
-              isLoggedIn: true
-            };
-          }
           return {
-            id: parsed.id || 'user_master_my360garage',
-            name: parsed.name || 'MyGarage360 Admin',
-            email: parsed.email || 'my360garage@gmail.com',
+            id: parsed.id || 'user_guest',
+            name: parsed.name || (parsed.email ? parsed.email.split('@')[0] : 'Utente Garage'),
+            email: parsed.email,
             plan: parsed.email?.toLowerCase() === 'my360garage@gmail.com' ? 'Pro Garage Cloud (Account Principale)' : (parsed.plan || 'Pro Garage Cloud'),
             syncStatus: parsed.syncStatus || 'synced',
             memberSince: parsed.memberSince || 'Settembre 2026',
-            provider: parsed.provider || 'google',
+            provider: parsed.provider || 'email',
             isLoggedIn: true,
             avatarUrl: parsed.avatarUrl
           };
         }
       } catch (e) {}
     }
-    // Default master account: my360garage@gmail.com
+    // Default: Not logged in (forces AuthGate login screen)
     return {
-      id: 'user_master_my360garage',
-      name: 'MyGarage360 Admin',
-      email: 'my360garage@gmail.com',
-      plan: 'Pro Garage Cloud (Account Principale)',
-      syncStatus: 'synced',
-      memberSince: 'Settembre 2026',
-      provider: 'google',
-      isLoggedIn: true
+      id: '',
+      name: '',
+      email: '',
+      plan: 'Free Garage',
+      syncStatus: 'local_only',
+      memberSince: '',
+      provider: 'email',
+      isLoggedIn: false
     };
   });
 
@@ -912,6 +898,7 @@ export default function App() {
   // Auth Login Handlers
   const handleLoginSuccess = (newAccount: UserAccount) => {
     setAccount(newAccount);
+    localStorage.setItem('garage_user_account', JSON.stringify(newAccount));
     setIsAuthModalOpen(false);
     if (newAccount.id) {
       loadUserFirestoreData(newAccount.id);

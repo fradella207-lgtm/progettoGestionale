@@ -244,17 +244,6 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
     }
   };
 
-  // Quick Master Account Auto-Fill
-  const handleFillDemo = (type: 'admin' | 'google') => {
-    if (type === 'google') {
-      handleGoogleLogin();
-    } else {
-      setEmail('my360garage@gmail.com');
-      setPassword('password123');
-      setName('MyGarage360 Admin');
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-[24px] w-full max-w-md p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[92vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in zoom-in-95 duration-200">
@@ -273,12 +262,14 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
               <span>Indietro</span>
             </button>
 
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100 shrink-0 hidden xs:flex">
-              <KeyRound className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="My360Garage" 
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover shadow-xs shrink-0 border border-slate-200 bg-slate-900 hidden xs:flex"
+            />
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] leading-tight truncate">
-                {authMode === 'login' ? 'Accedi al Garage' : authMode === 'register' ? 'Crea Account' : 'Password'}
+                {authMode === 'login' ? 'Accedi a My360Garage' : authMode === 'register' ? 'Crea Account' : 'Password'}
               </h3>
               <p className="text-xs text-[#64748b] truncate">
                 {authMode === 'login' 
@@ -442,14 +433,6 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
                 />
                 <span>Resta connesso</span>
               </label>
-
-              <button
-                type="button"
-                onClick={() => handleFillDemo('admin')}
-                className="text-[11px] font-bold text-[#2563eb] hover:underline"
-              >
-                Usa account master (my360garage)
-              </button>
             </div>
 
             <button
