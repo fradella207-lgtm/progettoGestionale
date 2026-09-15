@@ -15,7 +15,6 @@ import { SettingsModal } from './components/modals/SettingsModal';
 import { NotificationsModal } from './components/modals/NotificationsModal';
 import { AccountModal } from './components/modals/AccountModal';
 import { AuthLoginModal } from './components/modals/AuthLoginModal';
-import { DownloadAppModal } from './components/modals/DownloadAppModal';
 import { RecapStoryModal } from './components/modals/RecapStoryModal';
 import { PaywallModal } from './components/modals/PaywallModal';
 import { SharedGarageModal } from './components/modals/SharedGarageModal';
@@ -259,7 +258,6 @@ export default function App() {
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isDownloadAppModalOpen, setIsDownloadAppModalOpen] = useState(false);
   const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
   const [recapInitialVehicleId, setRecapInitialVehicleId] = useState<string | undefined>(undefined);
 
@@ -989,7 +987,6 @@ export default function App() {
         onMarkAllNotificationsRead={handleMarkAllNotificationsAsRead}
         onOpenRecap={handleOpenRecap}
         onOpenUpgradeModal={handleOpenUpgradeModal}
-        onOpenDownloadApp={() => setIsDownloadAppModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1239,7 +1236,6 @@ export default function App() {
         onResetGarage={handleResetGarage}
         onImportGarage={handleImportGarage}
         onOpenUpgradeModal={handleOpenUpgradeModal}
-        onOpenDownloadApp={() => setIsDownloadAppModalOpen(true)}
         onToggleUserTier={handleToggleUserTier}
       />
 
@@ -1272,11 +1268,6 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         currentAccount={account}
         onLoginSuccess={handleLoginSuccess}
-      />
-
-      <DownloadAppModal 
-        isOpen={isDownloadAppModalOpen}
-        onClose={() => setIsDownloadAppModalOpen(false)}
       />
 
       <RecapStoryModal 

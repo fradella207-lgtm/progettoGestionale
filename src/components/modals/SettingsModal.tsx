@@ -26,8 +26,7 @@ import {
   Send,
   Mail,
   MessageSquare,
-  ExternalLink,
-  Smartphone
+  ExternalLink
 } from 'lucide-react';
 import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage, UserTier, ProFeatureName } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
@@ -62,7 +61,6 @@ interface SettingsModalProps {
   onResetGarage: () => void;
   onImportGarage: (importedVehicles: Vehicle[]) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
-  onOpenDownloadApp?: () => void;
   onToggleUserTier?: () => void;
 }
 
@@ -76,7 +74,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onResetGarage,
   onImportGarage,
   onOpenUpgradeModal,
-  onOpenDownloadApp,
   onToggleUserTier
 }) => {
   const [unitDistance, setUnitDistance] = useState<'km' | 'mi'>(settings.unitDistance);
@@ -668,39 +665,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </label>
             </div>
-
-            {/* SEZIONE VERSIONI: APP ANDROID (APK) & WEB (PWA) */}
-            {onOpenDownloadApp && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-900 to-indigo-950 text-white flex items-center justify-between gap-3 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0">
-                    <Smartphone className="w-5 h-5 text-blue-300" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-extrabold text-white">App Android (APK) & Web PWA</span>
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-blue-400/20 text-blue-200 px-1.5 py-0.5 rounded">
-                        Multi-Piattaforma
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300 mt-0.5">
-                      Installa l'app o genera il file APK pronto per il rilascio
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onOpenDownloadApp();
-                  }}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
-                >
-                  Dettagli & APK
-                </button>
-              </div>
-            )}
 
             {/* DEV MODE: SWITCH USER TIER (FREE <-> PRO) */}
             <div className="mt-2 p-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 flex flex-col gap-2">

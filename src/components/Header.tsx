@@ -8,8 +8,7 @@ import {
   Moon,
   Globe,
   Sparkles,
-  Crown,
-  Smartphone
+  Crown
 } from 'lucide-react';
 import { Vehicle, AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 import { TopRightMenu } from './TopRightMenu';
@@ -32,7 +31,6 @@ interface HeaderProps {
   onMarkAllNotificationsRead: () => void;
   onOpenRecap?: () => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
-  onOpenDownloadApp?: () => void;
   onLogout: () => void;
   onToggleThemeMode?: () => void;
   onChangeLanguage?: (lang: 'it' | 'en') => void;
@@ -55,7 +53,6 @@ export const Header: React.FC<HeaderProps> = ({
   onMarkAllNotificationsRead,
   onOpenRecap,
   onOpenUpgradeModal,
-  onOpenDownloadApp,
   onLogout,
   onToggleThemeMode,
   onChangeLanguage
@@ -215,20 +212,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        {/* FAST DOWNLOAD / ANDROID APP BUTTON */}
-        {onOpenDownloadApp && (
-          <button
-            id="btn-header-download-app"
-            type="button"
-            onClick={onOpenDownloadApp}
-            className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 border border-blue-200 flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0"
-            title="Scarica APK Android o installa Web App"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-blue-600" />
-            <span className="hidden lg:inline">App & APK</span>
-          </button>
-        )}
-
         {/* UNIFIED TOP-RIGHT BUTTON (Settings, Notifications, Account) */}
         <TopRightMenu 
           notifications={notifications}
@@ -242,7 +225,6 @@ export const Header: React.FC<HeaderProps> = ({
           onMarkAllNotificationsRead={onMarkAllNotificationsRead}
           onOpenRecap={onOpenRecap}
           onOpenUpgradeModal={onOpenUpgradeModal}
-          onOpenDownloadApp={onOpenDownloadApp}
           onLogout={onLogout}
         />
       </div>
