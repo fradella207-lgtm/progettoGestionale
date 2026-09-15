@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft,
   Fuel, 
@@ -74,12 +75,12 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
 
   if (!isOpen || !data) return null;
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden font-['Plus_Jakarta_Sans',sans-serif] border border-[#e2e8f0]">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] my-auto min-h-0 shrink-0 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif] border border-[#e2e8f0]">
         
         {/* MODAL HEADER - Only Top-Left Indietro Button */}
-        <div className="px-4 sm:px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between gap-2 bg-[#fafbfc]">
+        <div className="px-4 sm:px-6 py-4 border-b border-[#e2e8f0] flex items-center justify-between gap-2 bg-[#fafbfc] shrink-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Top-Left Indietro Button */}
             <button
@@ -133,7 +134,7 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
         </div>
 
         {/* MODAL BODY */}
-        <div className="p-6 overflow-y-auto flex flex-col gap-4.5">
+        <div className="p-4 sm:p-6 overflow-y-auto min-h-0 flex-1 flex flex-col gap-4.5">
           
           {/* 1. REFUEL / ELECTRIC CHARGE DETAILS */}
           {data.type === 'refuel' && (() => {
@@ -229,11 +230,11 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
                 )}
 
                 {/* Notes & Station Location */}
-                <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0]">
+                <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0] overflow-hidden">
                   <span className="text-[10px] font-bold text-[#64748b] uppercase flex items-center gap-1.5 mb-1">
                     <MapPin className="w-3.5 h-3.5 text-slate-400" /> {isEV ? 'Punto Ricarica / Note' : 'Note & Distributore'}
                   </span>
-                  <p className="text-xs text-[#0f172a] font-medium leading-relaxed">
+                  <p className="text-xs text-[#0f172a] font-medium leading-relaxed break-words">
                     {refuel.notes || 'Nessuna nota o stazione indicata.'}
                   </p>
                 </div>
@@ -322,11 +323,11 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
                 </div>
 
                 {/* Description of work */}
-                <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0]">
+                <div className="bg-[#f8fafc] p-3.5 rounded-xl border border-[#e2e8f0] overflow-hidden">
                   <span className="text-[10px] font-bold text-[#64748b] uppercase block mb-1">
                     Descrizione Lavori & Ricambi
                   </span>
-                  <p className="text-xs text-[#0f172a] leading-relaxed whitespace-pre-line">
+                  <p className="text-xs text-[#0f172a] leading-relaxed whitespace-pre-line break-words">
                     {maint.description || 'Nessun dettaglio aggiuntivo specificato.'}
                   </p>
                 </div>
@@ -405,7 +406,7 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
 
         {/* MODAL FOOTER ACTIONS */}
         {((data.type === 'refuel' && onEditRefuel) || (data.type === 'maintenance' && onEditMaintenance) || (data.type === 'advice' && onAddMaintenanceFromAdvice)) && (
-          <div className="px-6 py-4 border-t border-[#e2e8f0] bg-[#fafbfc] flex items-center justify-end gap-3">
+          <div className="px-4 sm:px-6 py-3.5 border-t border-[#e2e8f0] bg-[#fafbfc] flex items-center justify-end gap-3 shrink-0">
             {data.type === 'refuel' && onEditRefuel && (
               isReadOnly ? (
                 <div className="text-xs text-slate-400 font-bold flex items-center gap-1.5 py-1.5 px-3 bg-slate-100 rounded-xl border border-slate-200 cursor-not-allowed">
@@ -461,6 +462,7 @@ export const DetailViewModal: React.FC<DetailViewModalProps> = ({
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

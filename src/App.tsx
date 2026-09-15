@@ -707,7 +707,7 @@ export default function App() {
 
     // Controllo effettivo permessi Shared Garage
     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
-      showToast('Operazione bloccata: il proprietario ha impostato il tuo profilo in Sola Lettura.', 'error');
+      showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito registrare nuovi rifornimenti.', 'error');
       return;
     }
 
@@ -741,7 +741,7 @@ export default function App() {
     }
 
     if (selectedVehicle?.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
-      showToast('Operazione bloccata: il proprietario ha impostato il tuo profilo in Sola Lettura.', 'error');
+      showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito registrare nuovi rifornimenti.', 'error');
       return;
     }
 
@@ -764,7 +764,7 @@ export default function App() {
     if (!selectedVehicle) return;
 
     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
-      showToast('Operazione bloccata: non hai i permessi per eliminare rifornimenti.', 'error');
+      showToast('Accesso in sola lettura: non disponi dei permessi per eliminare registrazioni di rifornimento.', 'error');
       return;
     }
 
@@ -788,8 +788,8 @@ export default function App() {
     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && (selectedVehicle.sharedPermissionsLevel === 'read_only' || selectedVehicle.sharedPermissionsLevel === 'refuel_only')) {
       showToast(
         selectedVehicle.sharedPermissionsLevel === 'read_only'
-          ? 'Operazione bloccata: il veicolo è impostato in sola lettura.'
-          : 'Operazione bloccata: i tuoi permessi consentono solo l\'inserimento di rifornimenti.',
+          ? 'Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito inserire interventi di manutenzione.'
+          : 'Permessi limitati: il proprietario consente esclusivamente la registrazione dei rifornimenti. Non è possibile inserire manutenzioni.',
         'error'
       );
       return;
@@ -822,7 +822,7 @@ export default function App() {
     if (!selectedVehicle) return;
 
     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && (selectedVehicle.sharedPermissionsLevel === 'read_only' || selectedVehicle.sharedPermissionsLevel === 'refuel_only')) {
-      showToast('Operazione bloccata: non hai i permessi per modificare gli interventi di manutenzione.', 'error');
+      showToast('Accesso in sola lettura: non disponi dei permessi per eliminare interventi di manutenzione.', 'error');
       return;
     }
 
@@ -1088,7 +1088,7 @@ export default function App() {
                   onUpdateVehicle={handleDirectUpdateVehicle}
                   onOpenEditCar={() => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
-                      showToast('Operazione bloccata: solo il proprietario del veicolo può modificare i dati dell\'auto.', 'error');
+                      showToast('Accesso limitato: solo il proprietario del veicolo può modificare i dati dell\'auto o la targa.', 'error');
                       return;
                     }
                     setVehicleToEdit(selectedVehicle);
@@ -1096,7 +1096,7 @@ export default function App() {
                   }}
                   onOpenAddRefuel={(energyType) => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
-                      showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                      showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito registrare nuovi rifornimenti o ricariche.', 'error');
                       return;
                     }
                     setEditingRefuel(null);
@@ -1105,7 +1105,7 @@ export default function App() {
                   }}
                   onOpenEditRefuel={(refuel) => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member' && selectedVehicle.sharedPermissionsLevel === 'read_only') {
-                      showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                      showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito registrare o modificare rifornimenti.', 'error');
                       return;
                     }
                     setEditingRefuel(refuel);
@@ -1114,11 +1114,11 @@ export default function App() {
                   onOpenAddMaintenance={() => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
                       if (selectedVehicle.sharedPermissionsLevel === 'read_only') {
-                        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                        showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito inserire interventi di manutenzione.', 'error');
                         return;
                       }
                       if (selectedVehicle.sharedPermissionsLevel === 'refuel_only') {
-                        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+                        showToast('Permessi limitati: il proprietario consente esclusivamente la registrazione dei rifornimenti. Non è possibile aggiungere manutenzioni.', 'error');
                         return;
                       }
                     }
@@ -1128,11 +1128,11 @@ export default function App() {
                   onOpenEditMaintenance={(maint) => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
                       if (selectedVehicle.sharedPermissionsLevel === 'read_only') {
-                        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+                        showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito modificare interventi di manutenzione.', 'error');
                         return;
                       }
                       if (selectedVehicle.sharedPermissionsLevel === 'refuel_only') {
-                        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+                        showToast('Permessi limitati: il proprietario consente esclusivamente la registrazione dei rifornimenti. Non è possibile modificare manutenzioni.', 'error');
                         return;
                       }
                     }
@@ -1141,7 +1141,7 @@ export default function App() {
                   }}
                   onOpenFixTank={() => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
-                      showToast('Operazione bloccata: solo il proprietario può calibrare il serbatoio.', 'error');
+                      showToast('Accesso limitato: solo il proprietario può calibrare la capienza del serbatoio.', 'error');
                       return;
                     }
                     setVehicleToEdit(selectedVehicle);

@@ -87,7 +87,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const handleRefuelClick = () => {
     if (isReadOnly) {
       if (showToast) {
-        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+        showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito registrare nuovi rifornimenti o ricariche.', 'error');
       }
       return;
     }
@@ -97,13 +97,13 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const handleMaintenanceClick = () => {
     if (isReadOnly) {
       if (showToast) {
-        showToast('Operazione bloccata: il proprietario ha dato solo la lettura.', 'error');
+        showToast('Accesso in sola lettura: il proprietario ha impostato permessi di sola consultazione. Non è consentito inserire interventi di manutenzione.', 'error');
       }
       return;
     }
     if (isRefuelOnly) {
       if (showToast) {
-        showToast('Operazione bloccata: il proprietario consente solo l\'inserimento di rifornimenti.', 'error');
+        showToast('Permessi limitati: il proprietario consente esclusivamente la registrazione dei rifornimenti. Non è possibile aggiungere manutenzioni.', 'error');
       }
       return;
     }
@@ -113,7 +113,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const handleEditCarClick = () => {
     if (isSharedMember) {
       if (showToast) {
-        showToast('Operazione bloccata: solo il proprietario del veicolo può modificare i dati dell\'auto.', 'error');
+        showToast('Accesso limitato: solo il proprietario del veicolo può modificare i dati dell\'auto o la targa.', 'error');
       }
       return;
     }
