@@ -1,7 +1,7 @@
 {
   "name": "My360Garage",
   "short_name": "My360Garage",
-  "description": "Gestione completa del veicolo per auto, moto ed elettriche a 360°.",
+  "description": "Gestione completa del veicolo a 360°",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090A0F",
