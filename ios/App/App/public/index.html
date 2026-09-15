@@ -37,23 +37,55 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
     
-    <!-- PWA Meta Tags -->
+    <!-- PWA & Mobile App Meta Tags (iOS & Android) -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="My360Garage" />
-    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="application-name" content="My360Garage" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-CJjLqIPb.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BfN26Uz-.css">
+    <style>
+      @keyframes splashPulse {
+        0%, 100% { opacity: 0.35; transform: scale(0.85); }
+        50% { opacity: 1; transform: scale(1.15); }
+      }
+      @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CWG6L8eQ.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Bs_kiH4X.css">
   </head>
   <body class="bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] antialiased min-h-screen">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Splash Screen Immediato all'Avvio (Native-like iOS & Android Boot) -->
+      <div id="initial-splash-screen" style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0f172a; z-index: 999999; color: #ffffff; text-align: center; padding: 24px; box-sizing: border-box; user-select: none;">
+        <div style="position: relative; margin-bottom: 24px; animation: logoFloat 2.4s ease-in-out infinite;">
+          <div style="width: 108px; height: 108px; border-radius: 28px; background: linear-gradient(135deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(59, 130, 246, 0.4); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 25px rgba(59, 130, 246, 0.2);">
+            <img src="/logo.png" alt="My360Garage" style="width: 82px; height: 82px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));" />
+          </div>
+        </div>
+        <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px 0; color: #ffffff;">My360Garage</h1>
+        <p style="font-size: 13px; font-weight: 500; color: #94a3b8; margin: 0 0 32px 0;">Gestione Veicolo a 360° • Auto, Moto & EV</p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; animation: splashPulse 1.2s ease-in-out infinite;"></div>
+          <div style="width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; animation: splashPulse 1.2s ease-in-out 0.25s infinite;"></div>
+          <div style="width: 8px; height: 8px; border-radius: 50%; background-color: #3b82f6; animation: splashPulse 1.2s ease-in-out 0.5s infinite;"></div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
 

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="it" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyGarage - Gestionale Semplice per Auto e Moto</title>
+  <meta name="description" content="Gestisci auto e moto senza stress: promemoria scadenze bollo e revisione, registro spese e rifornimenti, cassaforte documenti e prezzi carburanti." />
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white flex flex-col min-h-screen">
+
+  <!-- 1. NAVBAR FISSA E MINIMALE -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      
+      <!-- LOGO -->
+      <a href="#home" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-xs group-hover:scale-105 transition-transform">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+            <circle cx="7" cy="17" r="2"></circle>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17h6"></path>
+            <circle cx="17" cy="17" r="2"></circle>
+          </svg>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-base font-extrabold tracking-tight text-slate-900">MyGarage</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Auto & Moto</span>
+        </div>
+      </a>
+
+      <!-- LINK DI NAVIGAZIONE CONVENZIONALI -->
+      <nav class="hidden md:flex items-center gap-6 text-xs font-bold text-slate-600">
+        <a href="#home" class="hover:text-slate-900 transition-colors">Home</a>
+        <a href="#obiettivo" class="hover:text-slate-900 transition-colors">Obiettivo</a>
+        <a href="#funzionalita" class="hover:text-slate-900 transition-colors">Funzionalità</a>
+        <a href="#come-funziona" class="hover:text-slate-900 transition-colors">Come Funziona</a>
+        <a href="#contatti" class="hover:text-slate-900 transition-colors">Contatti</a>
+      </nav>
+
+      <!-- CTA APRI APP -->
+      <a 
+        href="/" 
+        class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+      >
+        <span>Apri l'App</span>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1">
+
+    <!-- SEZIONE 1: HOME (HERO) -->
+    <section id="home" class="pt-12 pb-16 sm:pt-16 sm:pb-20 border-b border-slate-200/80 bg-white">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center">
+        
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold mb-5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Gestionale Veicoli Semplice e Gratuito</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+          La gestione del tuo veicolo, finalmente senza pensieri.
+        </h1>
+
+        <p class="mt-4 text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed">
+          Tieni sotto controllo scadenze di bollo e revisione, consumi reali, rifornimenti, tagliandi e documenti di auto e moto in un unico posto pulito e sicuro.
+        </p>
+
+        <!-- PULSANTI HERO -->
+        <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <a 
+            href="/" 
+            class="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>Inizia Subito</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+            </svg>
+          </a>
+
+          <a 
+            href="#obiettivo" 
+            class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl transition-all"
+          >
+            Scopri l'Obiettivo
+          </a>
+        </div>
+
+        <!-- 3 PUNTI CHIAVE SINTETICI -->
+        <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left pt-6 border-t border-slate-100">
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Promemoria Puntuali</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Avvisi automatici prima della scadenza di bollo, revisione e assicurazione.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Spese e Consumi Reali</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Calcolo immediato di costo al chilometro e consumo effettivo di carburante o kWh.</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="text-xs font-bold text-slate-900 block">Sempre con Te</span>
+            <p class="text-[11px] text-slate-500 mt-0.5">Accessibile dal browser di qualsiasi smartphone o PC, senza app pesanti.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEZIONE 2: OBIETTIVO (IL PROBLEMA CHE RISOLVIAMO) -->
+    <section id="obiettivo" class="py-14 sm:py-18 border-b border-slate-200/80 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Il Nostro Obiettivo
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Eliminare lo stress e le dimenticanze legate al mantenimento dei veicoli.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- PROBLEMA -->
+          <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-col gap-3">
+            <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs">
+              ✕
+            </div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+              I problemi di ogni giorno
+            </h3>
+            <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Scadenze dimenticate:</strong> multe salate per mancata revisione o ritardo nel pagamento del bollo.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Documenti sparsi:</strong> libretto a casa, polizza in email e scontrini sbiaditi nel cassetto portaoggetti.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-500 font-bold">•</span>
+                <span><strong>Costi fuori controllo:</strong> nessuna idea chiara di quanto costi realmente mantenere l'auto o la moto ogni mese.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- SOLUZIONE -->
+          <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-900 shadow-2xs flex flex-col gap-3">
+            <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+              ✓
+            </div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+              La risposta di MyGarage
+            </h3>
+            <ul class="text-xs text-slate-600 space-y-2 leading-relaxed">
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Promemoria preventivi:</strong> notifiche chiare con largo anticipo per non rischiare mai sanzioni.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Cassaforte digitale:</strong> foto e dati del libretto sempre pronti dal tuo smartphone in caso di controlli.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">•</span>
+                <span><strong>Bilancio trasparente:</strong> storico completo di carburante, tagliandi e costo al chilometro con grafici immediati.</span>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEZIONE 3: FUNZIONALITÀ -->
+    <section id="funzionalita" class="py-14 sm:py-18 border-b border-slate-200/80 bg-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Funzionalità Principali
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Strumenti concreti per risolvere le esigenze reali del guidatore.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          
+          <!-- 1. Consumi & Rifornimenti -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              ⛽
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Rifornimenti e Consumi Reali</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Traccia ogni pieno (benzina, diesel, GPL, metano o ricarica EV). L'app calcola in tempo reale la resa chilometrica e il costo al chilometro.
+            </p>
+          </div>
+
+          <!-- 2. Scadenze Legali -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📅
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Scadenze e Revisione</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Calcolo automatico della revisione ministeriale in base all'anno di immatricolazione, promemoria bollo e scadenze polizza assicurativa.
+            </p>
+          </div>
+
+          <!-- 3. Cassaforte Documenti -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📁
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Cassaforte Documenti</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Salva copie digitali di libretto di circolazione, ricevute degli interventi e tagliandi per averli sempre a disposizione ovunque ti trovi.
+            </p>
+          </div>
+
+          <!-- 4. Mappa Carburanti MIMIT -->
+          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col gap-2">
+            <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-800 shadow-2xs font-bold text-xs">
+              📍
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Mappa Prezzi Carburanti</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Confronta i distributori vicini a te con i dati ufficiali del Ministero delle Imprese (MIMIT) e scegli la pompa più conveniente per fare il pieno.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEZIONE 4: COME FUNZIONA -->
+    <section id="come-funziona" class="py-14 sm:py-18 border-b border-slate-200/80 bg-slate-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-xl mx-auto mb-10">
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Come Funziona
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Tre semplici passi per avere il controllo completo del tuo garage.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- STEP 1 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              1
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Aggiungi il Veicolo</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Scegli tra auto o moto e inserisci la targa. Il sistema imposta automaticamente le prime scadenze e le specifiche di base.
+            </p>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              2
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Registra le Spese</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Quando fai il pieno o porti il veicolo dal meccanico, annota importo e chilometri in pochi secondi, anche dal telefono.
+            </p>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-2.5 shadow-2xs">
+            <div class="w-7 h-7 rounded-lg bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              3
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Tieni Tutto Sotto Controllo</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Consulta grafici di spesa, ricevi promemoria puntuali prima delle scadenze e trova le pompe di carburante più economiche.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEZIONE 5: CONTATTI -->
+    <section id="contatti" class="py-14 sm:py-18 bg-white">
+      <div class="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+        
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Contatti & Informazioni
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+          Progetto sviluppato per semplificare la gestione dei veicoli e rispondere alle necessità quotidiane di ogni guidatore.
+        </p>
+
+        <div class="mt-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-sm font-bold">
+            ✉
+          </div>
+          <div>
+            <span class="text-xs font-bold text-slate-900 block">Hai suggerimenti o domande?</span>
+            <a 
+              href="mailto:francesco.dellaquila@alessandrinimainardi.edu.it" 
+              class="text-xs sm:text-sm font-mono text-indigo-600 hover:text-indigo-700 hover:underline font-bold mt-1 inline-block"
+            >
+              francesco.dellaquila@alessandrinimainardi.edu.it
+            </a>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">
+            I.I.S. Alessandrini Mainardi • Privacy protetta e nessun dato ceduto a terzi
+          </p>
+
+          <a 
+            href="/" 
+            class="mt-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <span>Accedi all'Applicazione</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+            </svg>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-white py-6 border-t border-slate-800 text-xs">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white">MyGarage</span>
+        <span>•</span>
+        <span>Gestionale Auto & Moto</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px]">
+        <a href="#home" class="hover:text-white transition-colors">Home</a>
+        <a href="#obiettivo" class="hover:text-white transition-colors">Obiettivo</a>
+        <a href="#funzionalita" class="hover:text-white transition-colors">Funzionalità</a>
+        <a href="#come-funziona" class="hover:text-white transition-colors">Come Funziona</a>
+        <a href="#contatti" class="hover:text-white transition-colors">Contatti</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

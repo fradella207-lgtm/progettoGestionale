@@ -1,22 +1,35 @@
 {
+  "id": "it.my360garage.app",
   "name": "My360Garage",
   "short_name": "My360Garage",
-  "description": "Gestione completa del veicolo a 360°: consumi, rifornimenti, ricariche elettriche e manutenzioni.",
+  "description": "Gestione completa del veicolo per auto, moto ed elettriche a 360°: consumi, rifornimenti, prezzi carburanti MIMIT, colonnine EV e scadenze.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
   "background_color": "#0f172a",
   "theme_color": "#1e3a8a",
   "orientation": "portrait",
+  "lang": "it-IT",
+  "categories": ["utilities", "productivity", "navigation", "auto"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

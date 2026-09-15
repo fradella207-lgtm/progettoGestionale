@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Database,
   LogOut,
-  Crown
+  Crown,
+  Smartphone
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
@@ -27,6 +28,7 @@ interface TopRightMenuProps {
   onMarkAllNotificationsRead: () => void;
   onOpenRecap?: () => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
+  onOpenDownloadApp?: () => void;
   onLogout?: () => void;
 }
 
@@ -42,6 +44,7 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onMarkAllNotificationsRead,
   onOpenRecap,
   onOpenUpgradeModal,
+  onOpenDownloadApp,
   onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -303,6 +306,34 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
             </button>
+
+            {/* 3.5 DOWNLOAD APP / APK & WEB */}
+            {onOpenDownloadApp && (
+              <button
+                id="menu-item-download-app"
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenDownloadApp();
+                }}
+                className="w-full text-left p-3 rounded-xl hover:bg-blue-50/60 transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200 group-hover:bg-blue-100 transition-colors">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-[#0f172a]">App Android & Web PWA</span>
+                      <span className="text-[9px] font-black text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded uppercase">
+                        APK / Web
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#64748b]">Installa o compila l'APK per Android</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+              </button>
+            )}
 
 
             {/* 4. DISCONNETTI */}
