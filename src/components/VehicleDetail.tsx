@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
+  ArrowLeft,
   Car, 
   Bike,
   Plus, 
@@ -14,15 +15,15 @@ import {
   Camera, 
   FileText, 
   Check, 
-  Copy,
-  AlertTriangle,
-  Shield,
-  FileSpreadsheet,
-  Printer,
-  Download,
-  Crown,
-  Users,
-  Lock
+  Copy, 
+  AlertTriangle, 
+  Shield, 
+  FileSpreadsheet, 
+  Printer, 
+  Download, 
+  Crown, 
+  Users, 
+  Lock 
 } from 'lucide-react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AIAdvice, AppSettings, EnergySourceType, UserTier, ProFeatureName } from '../types';
 import { DetailViewModal, DetailModalData } from './modals/DetailViewModal';
@@ -35,6 +36,7 @@ import { CarAIAssistant } from './CarAIAssistant';
 import { formatVinForDisplay } from '../utils/vinValidator';
 import { exportVehiclePassportCSV, openPrintableDigitalPassport } from '../utils/digitalPassportExport';
 import { ProBadge } from './common/ProBadge';
+import { useSwipeBack } from '../hooks/useSwipeBack';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
@@ -62,6 +64,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   settings,
   userTier = 'FREE',
   initialTab = 'overview',
+  onBackToGarage,
   onUpdateVehicle,
   onOpenEditCar,
   onOpenAddRefuel,
@@ -131,8 +134,31 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const [isBoardTripsModalOpen, setIsBoardTripsModalOpen] = useState(false);
   const [isRefuelsRegistryOpen, setIsRefuelsRegistryOpen] = useState(false);
   const [isMaintenancesRegistryOpen, setIsMaintenancesRegistryOpen] = useState(false);
+  const [tripsReturnSource, setTripsReturnSource] = useState<'detail' | 'refuels'>('detail');
   const [copiedVin, setCopiedVin] = useState(false);
   const [showPassportMenu, setShowPassportMenu] = useState(false);
+
+  // Swipe back to garage when in vehicle detail and no modal is active
+  useSwipeBack({
+    onBack: () => {
+      if (onBackToGarage) onBackToGarage();
+    },
+    enabled: Boolean(onBackToGarage) && !isBoardTripsModalOpen && !isRefuelsRegistryOpen && !isMaintenancesRegistryOpen && !selectedDetailData
+  });
+
+  const handleCloseBoardTrips = () => {
+    setIsBoardTripsModalOpen(false);
+    if (tripsReturnSource === 'refuels') {
+      setIsRefuelsRegistryOpen(true);
+      setTripsReturnSource('detail');
+    }
+  };
+
+  const handleOpenBoardTripsFromRefuels = () => {
+    setTripsReturnSource('refuels');
+    setIsRefuelsRegistryOpen(false);
+    setIsBoardTripsModalOpen(true);
+  };
 
   const handleCopyVin = (vinStr: string) => {
     try {
@@ -183,6 +209,21 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto p-3.5 sm:p-6 flex flex-col gap-4 pb-20 font-['Plus_Jakarta_Sans',sans-serif]">
       
+      {/* Top Action Bar con Tasto Indietro al Garage */}
+      {onBackToGarage && (
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBackToGarage}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/90 text-xs font-black text-slate-700 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all cursor-pointer shadow-2xs group"
+            title="Torna alla lista del garage"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-600" />
+            <span>Torna al Garage</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. TESTATA VEICOLO COMPATTA ED ELEGANTE */}
       <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
         
@@ -802,10 +843,11 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
       {/* MODALI ESISTENTI */}
       <BoardTripsModal
         isOpen={isBoardTripsModalOpen}
-        onClose={() => setIsBoardTripsModalOpen(false)}
+        onClose={handleCloseBoardTrips}
         vehicle={vehicle}
         metrics={metrics}
         settings={settings}
+        returnTo={tripsReturnSource}
         onUpdateVehicle={onUpdateVehicle}
       />
 
@@ -817,6 +859,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         settings={settings}
         onOpenAddRefuel={onOpenAddRefuel}
         onOpenEditRefuel={onOpenEditRefuel}
+        onOpenBoardTrips={handleOpenBoardTripsFromRefuels}
         onSelectRefuelDetail={(r) => {
           setSelectedDetailData({ 
             type: 'refuel', 

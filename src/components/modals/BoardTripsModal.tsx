@@ -29,6 +29,7 @@ interface BoardTripsModalProps {
   vehicle: Vehicle;
   metrics: DetailedConsumptionMetrics;
   settings: AppSettings;
+  returnTo?: 'detail' | 'refuels';
   onUpdateVehicle?: (updated: Vehicle) => void;
 }
 
@@ -46,6 +47,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
   vehicle,
   metrics,
   settings,
+  returnTo = 'detail',
   onUpdateVehicle
 }) => {
   const [expandedTripId, setExpandedTripId] = useState<string | null>(null);
@@ -120,17 +122,17 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
       
-      {/* STICKY TOP APP BAR - Clean & Minimal */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* STICKY TOP APP BAR - Clean & Minimal with safe area padding */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-bold border border-slate-200 transition-all cursor-pointer shrink-0 group"
-            title="Torna alla scheda veicolo"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 group shadow-2xs"
+            title={returnTo === 'refuels' ? 'Torna al registro carburante' : 'Torna alla scheda veicolo'}
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-700" />
-            <span>Indietro</span>
+            <span>{returnTo === 'refuels' ? 'Carburante' : 'Indietro'}</span>
           </button>
 
           <div className="h-5 w-px bg-slate-200 hidden xs:block shrink-0" />
@@ -139,23 +141,23 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate flex items-center gap-2">
               <span>Computer di Bordo & Trip</span>
               <span className="bg-slate-100 text-slate-700 text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-slate-200">
-                {allTrips.length} {allTrips.length === 1 ? 'Trip' : 'Trip'}
+                {allTrips.length} {allTrips.length === 1 ? 'Ciclo' : 'Cicli'}
               </span>
             </h1>
-            <p className="text-xs text-slate-500 truncate">
-              {vehicle.brand} {vehicle.model} • <span className="font-semibold text-slate-700">{vehicle.plate}</span>
+            <p className="text-[11px] text-slate-500 truncate">
+              {vehicle.brand} {vehicle.model} {vehicle.plate ? `• ${vehicle.plate}` : ''}
             </p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 bg-slate-100/80 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 border border-slate-200/60">
+        <div className="flex items-center gap-1.5 bg-slate-100/80 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 border border-slate-200/60 shrink-0">
           <Route className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Intervallo Pieno-Pieno</span>
+          <span className="hidden xs:inline">Cicli Pieno-Pieno</span>
         </div>
       </header>
 
       {/* MAIN PAGE BODY */}
-      <main className="max-w-5xl mx-auto w-full px-3.5 sm:px-8 py-6 space-y-5 flex-1 flex flex-col">
+      <main className="max-w-5xl mx-auto w-full px-3.5 sm:px-8 pt-4 pb-28 sm:pb-16 space-y-5 flex-1 flex flex-col">
         
         {/* KPI CARDS (LIGHT & MINIMAL WITH CLEAN ROUNDING) */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
@@ -263,8 +265,8 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             </div>
 
             {/* Visual Enhanced Timeline Bar/Chart */}
-            <div className="w-full pt-6 pb-2">
-              <div className="h-48 sm:h-56 w-full flex items-end gap-2.5 sm:gap-4 px-3 sm:px-6 border-b border-slate-200 relative bg-gradient-to-b from-slate-50/50 to-transparent rounded-t-2xl">
+            <div className="w-full pt-6 pb-2 overflow-x-auto">
+              <div className="h-48 sm:h-56 min-w-[340px] w-full flex items-end gap-2.5 sm:gap-4 px-3 sm:px-6 border-b border-slate-200 relative bg-gradient-to-b from-slate-50/50 to-transparent rounded-t-2xl">
                 
                 {/* Horizontal grid lines for scale */}
                 <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-4 px-1 opacity-40 z-0">

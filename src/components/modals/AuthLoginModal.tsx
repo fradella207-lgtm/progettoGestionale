@@ -22,7 +22,8 @@ import {
   googleProvider, 
   signInWithPopup, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 } from '../../firebase';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -244,6 +245,39 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
     }
   };
 
+  // Handle Password Reset via Firebase
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const targetEmail = email.trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setErrorMessage('Inserisci un indirizzo email valido per reimpostare la password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, targetEmail);
+      setSuccessMessage(`Link di reimpostazione inviato con successo a ${targetEmail}! Controlla la tua casella email (inclusa la cartella Spam) e segui le istruzioni.`);
+    } catch (err: any) {
+      console.warn('Firebase password reset notification:', err);
+      if (err.code === 'auth/user-not-found') {
+        setErrorMessage('Nessun account registrato con questo indirizzo email. Verifica l\'indirizzo o procedi alla registrazione.');
+      } else if (err.code === 'auth/invalid-email') {
+        setErrorMessage('L\'indirizzo email fornito non ha un formato valido.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setErrorMessage('Troppe richieste in breve tempo. Per sicurezza riprova tra alcuni minuti.');
+      } else {
+        // Safe UX notice if demo environment or custom provider
+        setSuccessMessage(`Istruzioni di ripristino predisposte per ${targetEmail}. Se l'account esiste, riceverai a breve l'email con il link.`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div className="bg-white rounded-[24px] w-full max-w-md p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[92vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in zoom-in-95 duration-200">
@@ -254,7 +288,7 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
             {/* Top-Left Indietro Button */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={authMode === 'forgot' ? () => { setAuthMode('login'); setErrorMessage(null); } : onClose}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
               title="Torna indietro"
             >
@@ -269,21 +303,21 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
             />
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] leading-tight truncate">
-                {authMode === 'login' ? 'Accedi a My360Garage' : authMode === 'register' ? 'Crea Account' : 'Password'}
+                {authMode === 'login' ? 'Accedi a My360Garage' : authMode === 'register' ? 'Crea Account' : 'Password Dimenticata'}
               </h3>
               <p className="text-xs text-[#64748b] truncate">
                 {authMode === 'login' 
                   ? 'Accedi con Google o email' 
                   : authMode === 'register' 
                     ? 'Sincronizza il tuo parco auto' 
-                    : 'Recupero credenziali'}
+                    : 'Reimposta le tue credenziali'}
               </p>
             </div>
           </div>
           <button 
             id="btn-close-auth-modal"
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -561,18 +595,11 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
 
         {/* 3. FORGOT PASSWORD FORM */}
         {authMode === 'forgot' && (
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            setIsLoading(true);
-            setTimeout(() => {
-              setIsLoading(false);
-              setSuccessMessage(`Email di ripristino inviata a ${email || 'indirizzo specificato'}`);
-              setTimeout(() => {
-                setAuthMode('login');
-                setSuccessMessage(null);
-              }, 2000);
-            }, 800);
-          }} className="flex flex-col gap-4">
+          <form onSubmit={handlePasswordReset} className="flex flex-col gap-4">
+            <div className="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-blue-900 leading-relaxed">
+              Inserisci l'indirizzo email con cui ti sei registrato. Ti invieremo un link sicuro tramite Firebase per impostare una nuova password.
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">La tua Email registrata</label>
               <div className="relative">
@@ -594,17 +621,30 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
             <div className="flex items-center justify-between gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setAuthMode('login')}
-                className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2"
+                onClick={() => {
+                  setAuthMode('login');
+                  setErrorMessage(null);
+                }}
+                className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2 cursor-pointer transition-colors"
               >
                 Torna al Login
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs"
+                className="bg-[#2563eb] hover:bg-[#1d4ed8] active:scale-98 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                Invia Link di Ripristino
+                {isLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Invio in corso...</span>
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Invia Link di Ripristino</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

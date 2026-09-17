@@ -26,6 +26,7 @@ interface RefuelsRegistryModalProps {
   onOpenAddRefuel: (energyType?: EnergySourceType) => void;
   onOpenEditRefuel: (refuel: RefuelRecord) => void;
   onSelectRefuelDetail: (refuel: RefuelRecord) => void;
+  onOpenBoardTrips?: () => void;
 }
 
 export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
@@ -36,7 +37,8 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   settings,
   onOpenAddRefuel,
   onOpenEditRefuel,
-  onSelectRefuelDetail
+  onSelectRefuelDetail,
+  onOpenBoardTrips
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -150,83 +152,95 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-[#f8fafc] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
       
-      {/* STICKY TOP APP BAR - Clean & Minimal with ONLY the Top-Left Back Arrow */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* STICKY TOP APP BAR - Clean & Responsive with safe area padding */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs px-3 sm:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Top-Left Indietro Button */}
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
             title="Torna alla scheda veicolo"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-700" />
-            <span>Indietro</span>
+            <span className="hidden xs:inline">Indietro</span>
           </button>
 
-          <div className="h-6 w-px bg-slate-200 hidden xs:block shrink-0" />
+          <div className="h-6 w-px bg-slate-200 hidden sm:block shrink-0" />
 
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 hidden sm:flex">
-              {isPHEV ? <Zap className="w-5 h-5 text-amber-500" /> : <Fuel className="w-5 h-5" />}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 hidden sm:flex">
+              {isPHEV ? <Zap className="w-4 h-4 text-amber-500" /> : <Fuel className="w-4 h-4" />}
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">
-                {isPHEV ? 'Registro Rifornimenti & Ricariche' : (isBEV ? 'Registro Ricariche Elettriche' : 'Registro Rifornimenti')}
+              <h1 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                {isPHEV ? 'Rifornimenti & Ricariche' : (isBEV ? 'Ricariche Elettriche' : 'Registro Rifornimenti')}
               </h1>
-              <p className="text-xs text-slate-500 truncate">
-                {vehicle.brand} {vehicle.model} • <span className="font-bold text-slate-700">{vehicle.plate || 'Garage'}</span>
+              <p className="text-[11px] text-slate-500 truncate">
+                {vehicle.brand} {vehicle.model} {vehicle.plate ? `• ${vehicle.plate}` : ''}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Action Button on the Right */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Action Buttons on the Right */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {onOpenBoardTrips && (
+            <button
+              type="button"
+              onClick={onOpenBoardTrips}
+              className="px-2.5 sm:px-3 py-2 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-700 rounded-xl text-xs font-black flex items-center gap-1.5 border border-indigo-200 shadow-2xs transition-all cursor-pointer"
+              title="Visualizza cicli completi pieno-pieno e grafici di efficienza"
+            >
+              <Gauge className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Cicli &amp; Trip</span>
+            </button>
+          )}
+
           {isReadOnly ? (
             <button
               type="button"
               onClick={() => onOpenAddRefuel()}
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
+              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
               title="Il proprietario ha impostato l'accesso in sola lettura"
             >
               <Lock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Sola Lettura</span>
+              <span className="hidden xs:inline">Sola Lettura</span>
             </button>
           ) : isPHEV ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => onOpenAddRefuel('fuel')}
-                className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+                className="px-2.5 sm:px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Nuova</span> Benzina
+                <Plus className="w-3.5 h-3.5" />
+                <span>Benzina</span>
               </button>
               <button
                 type="button"
                 onClick={() => onOpenAddRefuel('electricity')}
-                className="px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 transition-all"
+                className="px-2.5 sm:px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-amber-950 rounded-xl text-xs font-black flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
               >
-                <Zap className="w-4 h-4" />
-                <span className="hidden sm:inline">Nuova</span> Ricarica
+                <Zap className="w-3.5 h-3.5" />
+                <span>Ricarica</span>
               </button>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => onOpenAddRefuel()}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Nuovo Rifornimento</span>
+              <span>Nuovo <span className="hidden xs:inline">Rifornimento</span></span>
             </button>
           )}
         </div>
       </header>
 
       {/* MAIN PAGE BODY */}
-      <main className="max-w-5xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6 flex-1 flex flex-col">
+      <main className="max-w-5xl mx-auto w-full px-3.5 sm:px-8 pt-4 pb-28 sm:pb-16 space-y-5 flex-1 flex flex-col">
         
         {/* Banner Permessi Sola Lettura */}
         {isReadOnly && (
@@ -237,43 +251,43 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
         )}
 
         {/* KPI Strip */}
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Spesa Filtrata</span>
-            <span className="text-xl sm:text-2xl font-black text-blue-600 block mt-1">
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs min-w-0">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider truncate">Spesa Filtrata</span>
+            <span className="text-lg sm:text-2xl font-black text-blue-600 block mt-1 truncate">
               {settings.currency} {currentFilteredSpend.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium truncate">
               {filteredRefuels.length} rifornimenti
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Quantità Totale</span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-1">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs min-w-0">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider truncate">Quantità Totale</span>
+            <span className="text-lg sm:text-2xl font-black text-slate-900 block mt-1 truncate">
               {currentFilteredQuantity.toLocaleString('it-IT', { maximumFractionDigits: 1 })} <span className="text-xs font-bold text-slate-500">{defaultFuelUnit}</span>
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium truncate">
               Volume erogato
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Consumo Medio</span>
-            <span className="text-xl sm:text-2xl font-black text-emerald-600 block mt-1">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs min-w-0">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider truncate">Consumo Medio</span>
+            <span className="text-lg sm:text-2xl font-black text-emerald-600 block mt-1 truncate">
               {metrics.kmPerUnit} <span className="text-xs font-bold text-emerald-600">km/{defaultFuelUnit}</span>
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium truncate">
               {metrics.unitPer100Km} {defaultFuelUnit}/100km
             </span>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Costo Chilometrico</span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-1">
+          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs min-w-0">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider truncate">Costo Chilometrico</span>
+            <span className="text-lg sm:text-2xl font-black text-slate-900 block mt-1 truncate">
               {metrics.fuelCostPerKm} <span className="text-xs font-bold text-slate-500">{settings.currency}/km</span>
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium truncate">
               Media globale
             </span>
           </div>

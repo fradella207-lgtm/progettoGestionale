@@ -54,14 +54,14 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   if (!isOpen) return null;
 
   const handleOpenStripeLink = (planId: 'annual' | 'lifetime') => {
-    const paymentUrl = `/payment?plan=${planId}`;
+    const stripeUrl = STRIPE_PAYMENT_URLS[planId] || STRIPE_PAYMENT_URLS.lifetime;
     try {
-      const opened = window.open(paymentUrl, 'My360Garage - Pagamento');
+      const opened = window.open(stripeUrl, '_blank', 'noopener,noreferrer');
       if (!opened || opened.closed || typeof opened.closed === 'undefined') {
-        window.location.href = paymentUrl;
+        window.location.href = stripeUrl;
       }
     } catch {
-      window.location.href = paymentUrl;
+      window.location.href = stripeUrl;
     }
   };
 

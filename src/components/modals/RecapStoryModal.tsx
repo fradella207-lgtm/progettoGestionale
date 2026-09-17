@@ -311,8 +311,14 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
       }
       img.onload = () => resolve(img);
       img.onerror = () => {
-        console.warn('Vehicle image could not be loaded via CORS for canvas export:', url);
-        resolve(null);
+        // Fallback without crossOrigin
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => resolve(fallbackImg);
+        fallbackImg.onerror = () => {
+          console.warn('Vehicle image could not be loaded via CORS for canvas export:', url);
+          resolve(null);
+        };
+        fallbackImg.src = url;
       };
       img.src = url;
     });
@@ -663,7 +669,7 @@ export const RecapStoryModal: React.FC<RecapStoryModalProps> = ({
 
     ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
     ctx.font = '600 20px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(`⛽ ${settings.currency} ${stats.fuelCost.toFixed(0)} | 🔧 ${settings.currency} ${stats.maintCost.toFixed(0)} • ${settings.currency} ${stats.costPerKm}/km`, 90 + halfW + 55, metricsY + 185);
+    ctx.fillText(`⛽ ${settings.currency} ${stats.fuelCost.toFixed(0)}  •  🔧 ${settings.currency} ${stats.maintCost.toFixed(0)}`, 90 + halfW + 55, metricsY + 185);
 
     // 7. Scadenze in Arrivo (Next 60 days)
     const deadY = 1335;
@@ -1026,7 +1032,10 @@ Creato con MyGarage 🚗💨`;
                       src={displayVehicles[0].photoUrl} 
                       alt={displayVehicles[0].title}
                       className="w-full h-full object-cover"
-                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent flex flex-col justify-end p-3 text-white">
                       <h3 className="text-base font-black tracking-tight leading-tight drop-shadow-sm">
@@ -1060,7 +1069,13 @@ Creato con MyGarage 🚗💨`;
                   {displayVehicles.map(v => (
                     <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
                       {v.photoUrl ? (
-                        <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                        <img 
+                          src={v.photoUrl} 
+                          alt={v.title} 
+                          className="w-full h-full object-cover" 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                        />
                       ) : (
                         <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-2xl text-white">
                           {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
@@ -1079,7 +1094,13 @@ Creato con MyGarage 🚗💨`;
                   {displayVehicles.map(v => (
                     <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
                       {v.photoUrl ? (
-                        <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                        <img 
+                          src={v.photoUrl} 
+                          alt={v.title} 
+                          className="w-full h-full object-cover" 
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                        />
                       ) : (
                         <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-xl text-white">
                           {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
@@ -1102,7 +1123,13 @@ Creato con MyGarage 🚗💨`;
                     return (
                       <div key={v.id} className="relative rounded-xl overflow-hidden bg-slate-800 h-full">
                         {v.photoUrl ? (
-                          <img src={v.photoUrl} alt={v.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                          <img 
+                            src={v.photoUrl} 
+                            alt={v.title} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                            onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                          />
                         ) : (
                           <div className="w-full h-full bg-linear-to-br from-indigo-700 to-slate-900 flex items-center justify-center text-lg text-white">
                             {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
