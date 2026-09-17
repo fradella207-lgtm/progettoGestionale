@@ -424,8 +424,10 @@ export default function App() {
     document.documentElement.setAttribute('lang', lang);
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
     }
   }, [settings.themeColor, settings.themeMode, settings.language]);
 
@@ -1018,7 +1020,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
-              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
+              className="flex-1 flex flex-col"
             >
               <MyCarDashboard 
                 vehicles={vehicles}
@@ -1035,7 +1037,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
-              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
+              className="flex-1 flex flex-col"
             >
               <GarageHome 
                 vehicles={vehicles}
@@ -1061,7 +1063,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.14, ease: "easeOut" }}
-              className="flex-1 flex flex-col transform-gpu will-change-[opacity]"
+              className="flex-1 flex flex-col"
             >
               {selectedVehicle ? (
                 <VehicleDetail 

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  ArrowLeft,
   Car, 
   Bike,
   Plus, 
@@ -209,21 +208,6 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto p-3.5 sm:p-6 flex flex-col gap-4 pb-20 font-['Plus_Jakarta_Sans',sans-serif]">
       
-      {/* Top Action Bar con Tasto Indietro al Garage */}
-      {onBackToGarage && (
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onBackToGarage}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/90 text-xs font-black text-slate-700 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all cursor-pointer shadow-2xs group"
-            title="Torna alla lista del garage"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-600" />
-            <span>Torna al Garage</span>
-          </button>
-        </div>
-      )}
-
       {/* 1. TESTATA VEICOLO COMPATTA ED ELEGANTE */}
       <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
         

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft,
   Wrench, 
@@ -41,10 +42,12 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'km-desc' | 'cost-desc'>('date-desc');
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Prevent background scrolling when page is active
+  // Prevent background scrolling and reset scroll to top when page is active
   useEffect(() => {
     if (isOpen) {
+      containerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
@@ -143,8 +146,11 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-[#f8fafc] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
+  const modalContent = (
+    <div 
+      ref={containerRef}
+      className="fixed inset-0 z-[70] bg-[#f8fafc] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150"
+    >
       
       {/* STICKY TOP APP BAR - Clean & Minimal with ONLY the Top-Left Back Arrow */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 shrink-0">
@@ -471,4 +477,6 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
       </main>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };

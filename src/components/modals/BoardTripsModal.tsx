@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft,
   TrendingUp, 
@@ -55,10 +56,12 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
   const [selectedUsageFilter, setSelectedUsageFilter] = useState<string>('all');
   const [editingUsageTripId, setEditingUsageTripId] = useState<string | null>(null);
   const [hoveredTripId, setHoveredTripId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Prevent background scrolling when page is active
+  // Prevent background scrolling and reset scroll to top when page is opened
   useEffect(() => {
     if (isOpen) {
+      containerRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
@@ -119,11 +122,14 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
   const maxSpent = Math.max(...chronologicalTrips.map(t => t.totalSpent || 0), 50);
   const chartHeadroomSpent = maxSpent * 1.2;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150">
+  const modalContent = (
+    <div 
+      ref={containerRef}
+      className="fixed inset-0 z-[70] bg-slate-50 dark:bg-[#090d16] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150"
+    >
       
       {/* STICKY TOP APP BAR - Clean & Minimal with safe area padding */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
@@ -570,12 +576,12 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right hidden sm:block">
-                        <span className="text-sm font-black text-slate-900 block">
+                    <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+                      <div className="text-right block">
+                        <span className="text-xs sm:text-sm font-black text-slate-900 block">
                           {settings.currency} {trip.totalSpent.toFixed(2)}
                         </span>
-                        <span className="text-[10.5px] font-semibold text-slate-400 block">
+                        <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 block">
                           {trip.costPerKm} {settings.currency}/km
                         </span>
                       </div>
@@ -669,4 +675,6 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
       </main>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
