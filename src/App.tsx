@@ -1003,26 +1003,26 @@ export default function App() {
 
       {/* 2. MAIN VIEW (HOME GARAGE, VEHICLE DETAIL, OR FUEL MAP) */}
       <main className="flex-1 flex flex-col pb-16 overflow-hidden">
-        <AnimatePresence mode="wait" initial={false}>
-          {currentView === 'stations' ? (
-            <motion.div 
-              key="stations"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14, ease: "easeOut" }}
-              className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-3 sm:pt-6 pb-2 transform-gpu will-change-[opacity]"
-            >
-              <FuelAndChargingMap 
-                vehicles={vehicles}
-                selectedVehicle={selectedVehicle}
-                settings={settings}
-                userTier={userTier}
-                onOpenUpgradeModal={handleOpenUpgradeModal}
-                onOpenRefuelWithStation={handleOpenRefuelWithStation}
-              />
-            </motion.div>
-          ) : currentView === 'my_car' ? (
+        {/* Persistent Fuel & Charging Map: stays mounted to prevent re-fetching and Leaflet re-init freeze */}
+        <div className={currentView === 'stations' ? 'flex-1 flex flex-col' : 'hidden'}>
+          <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 md:px-8 pt-2 sm:pt-6 pb-2 flex-1 flex flex-col">
+            <FuelAndChargingMap 
+              isActive={currentView === 'stations'}
+              vehicles={vehicles}
+              selectedVehicle={selectedVehicle}
+              settings={settings}
+              userTier={userTier}
+              onOpenUpgradeModal={handleOpenUpgradeModal}
+              onOpenRefuelWithStation={handleOpenRefuelWithStation}
+            />
+          </div>
+        </div>
+
+        {/* Garage, My Car, and Detail Views with instant zero-lag switching */}
+        {currentView !== 'stations' && (
+          <div className="flex-1 flex flex-col">
+            <AnimatePresence mode="wait" initial={false}>
+              {currentView === 'my_car' ? (
             <motion.div 
               key="my_car"
               initial={{ opacity: 0 }}
@@ -1163,7 +1163,9 @@ export default function App() {
               )}
             </motion.div>
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+          </div>
+        )}
       </main>
 
       {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}

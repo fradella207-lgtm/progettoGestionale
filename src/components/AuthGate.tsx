@@ -52,6 +52,30 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
   const [isUnauthorizedDomain, setIsUnauthorizedDomain] = useState(false);
   const [copiedDomain, setCopiedDomain] = useState(false);
 
+  const isApkMode = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.protocol === 'capacitor:' ||
+    window.location.protocol === 'file:'
+  );
+
+  // Quick Tester / Demo Login for testing the APK immediately without hurdles
+  const handleGuestLogin = () => {
+    const guestUser: UserAccount = {
+      id: `tester_${Date.now()}`,
+      name: 'Tester Android',
+      email: 'tester@my360garage.local',
+      plan: 'Pro Garage Cloud (Firebase)',
+      syncStatus: 'synced',
+      memberSince: 'Settembre 2026',
+      provider: 'email',
+      isLoggedIn: true
+    };
+    setSuccessMessage('Accesso come Tester avviato!');
+    setTimeout(() => {
+      onLoginSuccess(guestUser);
+    }, 400);
+  };
+
   // Handle Google Sign-In with Firebase Auth
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -310,9 +334,15 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
                 <div className="flex items-start gap-2.5">
                   <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-black text-amber-950 text-sm block">Dominio web da autorizzare su Firebase</span>
+                    <span className="font-black text-amber-950 text-sm block">
+                      {window.location.hostname === 'localhost' ? 'App Android (APK): autorizzazione Firebase richiesta' : 'Dominio web da autorizzare su Firebase'}
+                    </span>
                     <p className="text-amber-900/90 text-xs mt-0.5 leading-relaxed">
-                      Google richiede che questo dominio sia inserito tra i <strong>Domini autorizzati</strong> della console Firebase del progetto (<code>subtle-well-504509-q0</code>).
+                      {window.location.hostname === 'localhost' ? (
+                        <>Sull'app Android (APK), il WebView esegue su <code>localhost</code>. Per utilizzare il pulsante Google, aggiungi <strong>localhost</strong> nei Domini autorizzati di Firebase, oppure <strong>accedi subito con Email e Password</strong> (100% funzionante senza configurazioni).</>
+                      ) : (
+                        <>Google richiede che questo dominio sia inserito tra i <strong>Domini autorizzati</strong> della console Firebase del progetto (<code>subtle-well-504509-q0</code>).</>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -554,6 +584,18 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
               </button>
             </form>
           )}
+
+          {/* QUICK TESTER ACCESS FOR APK / EVALUATION */}
+          <div className="pt-2 pb-1 border-t border-slate-100 flex flex-col items-center">
+            <button
+              type="button"
+              id="btn-guest-tester"
+              onClick={handleGuestLogin}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 hover:underline flex items-center gap-1.5 py-1 transition-colors cursor-pointer"
+            >
+              <span>🧪 Vuoi solo provare l'app? Entra subito come Tester Locale</span>
+            </button>
+          </div>
 
           </div>
         </div>

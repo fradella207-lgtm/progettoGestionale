@@ -291,13 +291,21 @@
   }
 }
 
-/* Safe Area Inset Support for Modern Mobile Devices (iOS notch & Android gesture bars) */
+/* Safe Area Inset Support for Modern Mobile Devices (iOS notch & Android camera punch-hole / gesture bars) */
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 16px));
 }
 
 .pt-safe {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+}
+
+.header-safe-top {
+  padding-top: max(0.65rem, env(safe-area-inset-top, 0px));
+}
+
+.modal-safe-top {
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
 }
 
 /* Custom Sleek Scrollbar */

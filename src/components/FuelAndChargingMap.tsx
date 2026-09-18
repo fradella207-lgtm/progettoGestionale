@@ -39,7 +39,12 @@ import {
 import { StationPriceHistoryModal } from './modals/StationPriceHistoryModal';
 import { StationReportModal, StationReport } from './modals/StationReportModal';
 
+// Module-level persistent cache across component life-cycle (never re-fetch or re-parse 17MB on tab switches)
+let globalStaticCatalogCache: any[] | null = null;
+let staticCatalogFetchPromise: Promise<any[]> | null = null;
+
 interface FuelAndChargingMapProps {
+  isActive?: boolean;
   vehicles: Vehicle[];
   selectedVehicle?: Vehicle;
   settings?: AppSettings;
@@ -49,6 +54,7 @@ interface FuelAndChargingMapProps {
 }
 
 export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
+  isActive = true,
   vehicles,
   selectedVehicle,
   settings,
@@ -332,7 +338,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       if (activeType) {
         params.append('type', activeType);
       }
-      params.append('limit', '8000');
+      params.append('limit', '1500');
 
       const res = await fetch(`/api/stations?${params.toString()}`);
       if (res.ok) {
@@ -366,18 +372,20 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
 
     // 2. Livello 2: Fallback Static Asset (Ideale per progetti esportati, GitHub Pages, Vercel, Netlify, Capacitor)
     try {
-      if (!staticCatalogCacheRef.current) {
-        const staticRes = await fetch('/data/live_stations_output.json');
-        if (staticRes.ok) {
-          const staticData = await staticRes.json();
-          if (Array.isArray(staticData) && staticData.length > 0) {
-            staticCatalogCacheRef.current = staticData;
-          }
+      if (!globalStaticCatalogCache) {
+        if (!staticCatalogFetchPromise) {
+          staticCatalogFetchPromise = fetch('/data/live_stations_output.json')
+            .then(res => res.ok ? res.json() : [])
+            .catch(() => []);
+        }
+        const staticData = await staticCatalogFetchPromise;
+        if (Array.isArray(staticData) && staticData.length > 0) {
+          globalStaticCatalogCache = staticData;
         }
       }
 
-      if (staticCatalogCacheRef.current && staticCatalogCacheRef.current.length > 0) {
-        let items = staticCatalogCacheRef.current;
+      if (globalStaticCatalogCache && globalStaticCatalogCache.length > 0) {
+        let items = globalStaticCatalogCache;
         setTotalDbCount(items.length);
         setLastSyncTime('Oggi (Live MIMIT & EV)');
 
@@ -1195,6 +1203,16 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
       resizeObserver.disconnect();
     };
   }, []);
+
+  // Invalidate map size when tab becomes active (switching from garage or other tab)
+  useEffect(() => {
+    if (isActive && mapInstanceRef.current) {
+      const timer = setTimeout(() => {
+        mapInstanceRef.current?.invalidateSize();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive]);
 
   // UPDATE USER LOCATION MARKER
   useEffect(() => {

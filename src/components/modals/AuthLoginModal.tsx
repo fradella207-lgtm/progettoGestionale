@@ -339,9 +339,15 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
             <div className="flex items-start gap-2.5">
               <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-black text-amber-950 text-sm block">Dominio non autorizzato in Firebase</span>
+                <span className="font-black text-amber-950 text-sm block">
+                  {window.location.hostname === 'localhost' ? 'App Android (APK): autorizzazione Firebase richiesta' : 'Dominio non autorizzato in Firebase'}
+                </span>
                 <p className="text-amber-900/90 text-xs mt-0.5 leading-relaxed">
-                  Google blocca il login perché l'URL di questo ambiente non è ancora inserito tra i <strong>Domini autorizzati</strong> del tuo progetto Firebase (<code>subtle-well-504509-q0</code>).
+                  {window.location.hostname === 'localhost' ? (
+                    <>Sull'app Android (APK), il WebView esegue su <code>localhost</code>. Per utilizzare il pulsante Google, aggiungi <strong>localhost</strong> nei Domini autorizzati di Firebase, oppure <strong>accedi subito con Email e Password</strong> (100% funzionante senza configurazioni).</>
+                  ) : (
+                    <>Google blocca il login perché l'URL di questo ambiente non è ancora inserito tra i <strong>Domini autorizzati</strong> del tuo progetto Firebase (<code>subtle-well-504509-q0</code>).</>
+                  )}
                 </p>
               </div>
             </div>

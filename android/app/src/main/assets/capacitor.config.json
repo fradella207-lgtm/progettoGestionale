@@ -1,5 +1,12 @@
 {
 	"appId": "it.my360garage.app",
 	"appName": "My360Garage",
-	"webDir": "dist"
+	"webDir": "dist",
+	"android": {
+		"allowMixedContent": true,
+		"backgroundColor": "#f8fafc"
+	},
+	"server": {
+		"androidScheme": "https"
+	}
 }

@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isDark = settings.themeMode === 'dark';
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 shadow-xs flex items-center justify-between transition-all">
+    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 sm:pb-3 shadow-xs flex items-center justify-between transition-all">
       {/* LEFT SECTION */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
         {currentView === 'detail' ? (

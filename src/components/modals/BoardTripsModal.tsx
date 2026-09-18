@@ -155,11 +155,6 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-1.5 bg-slate-100/80 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 border border-slate-200/60 shrink-0">
-          <Route className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="hidden xs:inline">Cicli Pieno-Pieno</span>
-        </div>
       </header>
 
       {/* MAIN PAGE BODY */}
