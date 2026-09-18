@@ -16,7 +16,11 @@ import {
   Zap,
   Fuel,
   Wrench,
-  Gauge
+  Gauge,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldAlert
 } from 'lucide-react';
 import { UserAccount } from '../types';
 import { 
@@ -45,11 +49,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isUnauthorizedDomain, setIsUnauthorizedDomain] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
 
   // Handle Google Sign-In with Firebase Auth
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setIsUnauthorizedDomain(false);
 
     try {
       googleProvider.setCustomParameters({
@@ -80,6 +87,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
         setErrorMessage('Selezione account Google annullata.');
       } else if (err.code === 'auth/popup-blocked') {
         setErrorMessage('La finestra popup per Google è stata bloccata dal browser. Consenti i popup per accedere.');
+      } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        setIsUnauthorizedDomain(true);
+        setErrorMessage(null);
       } else {
         setErrorMessage(err.message || 'Accesso con Google non riuscito. Riprova.');
       }
@@ -295,6 +305,67 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onLoginSuccess }) => {
             </div>
 
             {/* FEEDBACK NOTICES */}
+            {isUnauthorizedDomain && (
+              <div className="p-4 bg-amber-50/90 border border-amber-300 rounded-2xl flex flex-col gap-3 text-xs text-amber-950 animate-in fade-in zoom-in-98 duration-150 shadow-xs">
+                <div className="flex items-start gap-2.5">
+                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-black text-amber-950 text-sm block">Dominio web da autorizzare su Firebase</span>
+                    <p className="text-amber-900/90 text-xs mt-0.5 leading-relaxed">
+                      Google richiede che questo dominio sia inserito tra i <strong>Domini autorizzati</strong> della console Firebase del progetto (<code>subtle-well-504509-q0</code>).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white p-2.5 rounded-xl border border-amber-200/80 flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="min-w-0 font-mono text-[11px] text-slate-800 font-bold truncate">
+                    {window.location.hostname}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.hostname);
+                      setCopiedDomain(true);
+                      setTimeout(() => setCopiedDomain(false), 2500);
+                    }}
+                    className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg font-bold text-[11px] flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                    title="Copia negli appunti"
+                  >
+                    {copiedDomain ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedDomain ? 'Copiato!' : 'Copia'}</span>
+                  </button>
+                </div>
+
+                <div className="space-y-1 text-[11px] text-amber-900/90 bg-amber-100/50 p-2.5 rounded-xl border border-amber-200/50">
+                  <span className="font-bold block text-amber-950">Come risolvere su Firebase Console:</span>
+                  <p>1. Vai su <strong>Authentication</strong> → <strong>Impostazioni</strong> → <strong>Domini autorizzati</strong>.</p>
+                  <p>2. Clicca <strong>Aggiungi dominio</strong> e incolla <code>{window.location.hostname}</code> (oppure <code>run.app</code>).</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-0.5">
+                  <a
+                    href="https://console.firebase.google.com/project/subtle-well-504509-q0/authentication/settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 active:scale-98 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all text-center shadow-xs"
+                  >
+                    <span>Apri Console Firebase</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUnauthorizedDomain(false);
+                      setAuthMode('login');
+                    }}
+                    className="py-2 px-3 bg-white border border-amber-300 hover:bg-amber-100 text-amber-950 rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
+                  >
+                    Accedi subito con Email
+                  </button>
+                </div>
+              </div>
+            )}
+
             {errorMessage && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5 text-xs text-red-700 font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />

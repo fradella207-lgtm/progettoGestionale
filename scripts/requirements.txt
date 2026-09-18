@@ -1,0 +1,5 @@
+# Dipendenze consigliate per scripts/mimit_fuel_processor.py
+# Installabili tramite: pip install -r scripts/requirements.txt
+requests>=2.31.0
+pandas>=2.0.0
+urllib3>=2.0.0
