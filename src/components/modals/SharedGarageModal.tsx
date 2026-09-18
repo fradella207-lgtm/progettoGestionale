@@ -371,13 +371,13 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
   const isGarageAdmin = !currentVehicle?.sharedRole || currentVehicle.sharedRole === 'owner' || (currentSharedGarage && currentSharedGarage.ownerId === userAccount.id);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-in fade-in duration-200">
       <div 
-        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[85vh] font-['Plus_Jakarta_Sans',sans-serif] animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[88vh] font-['Plus_Jakarta_Sans',sans-serif] animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* MODAL HEADER (FIXED TOP) */}
-        <div className="shrink-0 relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-6 overflow-hidden">
+        <div className="shrink-0 relative bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-3.5 sm:p-5 overflow-hidden">
           <div className="absolute -top-16 -right-16 w-56 h-56 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-56 h-56 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -386,27 +386,27 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Chiudi pannello di controllo"
-            className="absolute top-3.5 right-3.5 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-sm"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all cursor-pointer backdrop-blur-sm"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Badge PRO */}
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1 sm:mb-1.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[10px] sm:text-[11px] font-black tracking-wide uppercase shadow-xs">
               <Crown className="w-3 h-3 fill-slate-950" />
               <span>Controllo Veicolo PRO</span>
             </span>
-            <span className="text-[11px] text-indigo-200 font-medium">
+            <span className="text-[10px] sm:text-[11px] text-indigo-200 font-medium">
               Multi-Account Cloud Sync
             </span>
           </div>
 
-          <h2 className="text-lg sm:text-xl font-black tracking-tight text-white leading-snug flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-indigo-400 shrink-0" />
+          <h2 className="text-base sm:text-xl font-black tracking-tight text-white leading-snug flex items-center gap-2">
+            <Sliders className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 shrink-0" />
             <span>Condivisione & Gestione Veicolo</span>
           </h2>
-          <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 max-w-lg leading-relaxed">
+          <p className="text-[10px] sm:text-xs text-slate-300 mt-0.5 max-w-lg leading-relaxed">
             Sincronizza in tempo reale, imposta i permessi e interrompi la condivisione quando vuoi.
           </p>
         </div>
@@ -416,31 +416,31 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('share')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[38px] ${
               activeTab === 'share'
                 ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Pannello di Controllo</span>
+            <Sliders className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Pannello di Controllo</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('join')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[38px] ${
               activeTab === 'join'
                 ? 'bg-white text-indigo-700 shadow-xs border border-slate-200'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
             }`}
           >
-            <LinkIcon className="w-3.5 h-3.5" />
-            <span>Unisciti con Codice</span>
+            <LinkIcon className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Unisciti con Codice</span>
           </button>
         </div>
 
         {/* MODAL BODY (THE ONLY SCROLL CONTAINER, TOUCH-FRIENDLY & NO OVERFLOW CRISIS) */}
-        <div className="flex-1 p-3.5 sm:p-5 space-y-4 overflow-y-auto overscroll-contain">
+        <div className="flex-1 p-3 sm:p-5 space-y-3.5 sm:space-y-4 overflow-y-auto overscroll-contain">
 
           {/* NON-PRO BANNER IF ON FREE TIER */}
           {!hasProAccess && (
@@ -608,39 +608,39 @@ export const SharedGarageModal: React.FC<SharedGarageModalProps> = ({
                         <button
                           type="button"
                           onClick={() => setControlSubTab('invite')}
-                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`flex-1 py-2 sm:py-1.5 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[36px] ${
                             controlSubTab === 'invite'
                               ? 'bg-white text-indigo-700 shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          <Share2 className="w-3.5 h-3.5" />
+                          <Share2 className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">Invito & Codice</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setControlSubTab('rules')}
-                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`flex-1 py-2 sm:py-1.5 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[36px] ${
                             controlSubTab === 'rules'
                               ? 'bg-white text-indigo-700 shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          <Sliders className="w-3.5 h-3.5" />
+                          <Sliders className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">Regole & Accesso</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setControlSubTab('members')}
-                          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`flex-1 py-2 sm:py-1.5 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer min-h-[36px] ${
                             controlSubTab === 'members'
                               ? 'bg-white text-indigo-700 shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          <Users className="w-3.5 h-3.5" />
+                          <Users className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">Membri ({currentSharedGarage?.members?.length || 1})</span>
                         </button>
                       </div>

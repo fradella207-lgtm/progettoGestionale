@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Fuel, Zap, Trash2, BatteryCharging, Flame, Receipt, Camera, Upload } from 'lucide-react';
+import { X, ArrowLeft, Fuel, Zap, Trash2, BatteryCharging, Flame, Receipt, Camera, Upload, Lock } from 'lucide-react';
 import { RefuelRecord, Vehicle, EnergySourceType } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -23,6 +23,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
   onDelete
 }) => {
   const isEditing = !!editingRefuel;
+  const isReadOnly = vehicle.isShared && vehicle.sharedRole === 'member' && vehicle.sharedPermissionsLevel === 'read_only';
   const isPHEV = vehicle.fuelType === 'Plug-in Hybrid (PHEV)';
   const isBEV = vehicle.fuelType === 'Elettrica (BEV)';
   const isGPL = vehicle.fuelType === 'GPL (Benzina + GPL)' || vehicle.fuelType === 'GPL';
@@ -104,6 +105,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isReadOnly) {
+      alert('Accesso in sola lettura: non disponi dei permessi per salvare modifiche.');
+      return;
+    }
     if (!km || !quantity || !price) {
       alert('Compila tutti i campi obbligatori (Chilometri, Quantità, Spesa).');
       return;
@@ -164,6 +169,16 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* BANNER PERMESSI SOLA LETTURA */}
+        {isReadOnly && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Accesso in sola lettura:</strong> Il veicolo è condiviso con permessi di sola consultazione. Non è consentito inserire modifiche o eliminare registrazioni.
+            </span>
+          </div>
+        )}
 
         {/* DUAL FUEL / PHEV ENERGY SELECTOR */}
         {isDualFuel && (
@@ -482,7 +497,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
           {/* ACTIONS */}
           <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
-            {isEditing && onDelete ? (
+            {isEditing && onDelete && !isReadOnly ? (
               <button 
                 type="button" 
                 onClick={() => {
@@ -501,9 +516,14 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
             <button 
               type="submit" 
               id="btn-submit-refuel-form"
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer text-center"
+              disabled={isReadOnly}
+              className={`text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs text-center ${
+                isReadOnly 
+                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed' 
+                  : 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white cursor-pointer active:scale-98'
+              }`}
             >
-              {isEditing ? 'Salva Modifiche' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}
+              {isReadOnly ? 'Sola Lettura (Bloccato)' : isEditing ? 'Salva Modifiche' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}
             </button>
           </div>
 

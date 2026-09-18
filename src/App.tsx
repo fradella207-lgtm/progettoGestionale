@@ -363,6 +363,11 @@ export default function App() {
                   
                   // Se l'utente è un membro invitato, aggiorna i dati dal cloud
                   const isMember = v.sharedRole === 'member';
+                  const effectivePermLevel = sharedGarage.permissionsLevel || (sharedGarage.vehicle as any)?.sharedPermissionsLevel || 'full';
+                  const effectiveAllowDoc = typeof sharedGarage.allowDocumentView === 'boolean' 
+                    ? sharedGarage.allowDocumentView 
+                    : (typeof (sharedGarage.vehicle as any)?.sharedAllowDocumentView === 'boolean' ? (sharedGarage.vehicle as any).sharedAllowDocumentView : true);
+
                   return {
                     ...v,
                     ...(isMember ? {
@@ -375,15 +380,15 @@ export default function App() {
                       photoUrl: source.photoUrl || v.photoUrl,
                       refuels: source.refuels || v.refuels,
                       maintenances: source.maintenances || v.maintenances,
-                      documents: (sharedGarage.allowDocumentView !== false) ? (source.documents || v.documents) : [],
+                      documents: (effectiveAllowDoc !== false) ? (source.documents || v.documents) : [],
                     } : {
                       // Se l'utente è l'owner, sincronizza eventuali rifornimenti o modifiche apportate dai membri
                       refuels: source.refuels || v.refuels,
                       maintenances: source.maintenances || v.maintenances
                     }),
                     sharedMembersCount: sharedGarage.members?.length || 1,
-                    sharedPermissionsLevel: sharedGarage.permissionsLevel || 'full',
-                    sharedAllowDocumentView: typeof sharedGarage.allowDocumentView === 'boolean' ? sharedGarage.allowDocumentView : true,
+                    sharedPermissionsLevel: effectivePermLevel,
+                    sharedAllowDocumentView: effectiveAllowDoc,
                     lastSyncTimestamp: sharedGarage.updatedAt || new Date().toISOString()
                   };
                 }
@@ -611,6 +616,10 @@ export default function App() {
     }
 
     if (vehicleToEdit) {
+      if (vehicleToEdit.isShared && vehicleToEdit.sharedRole === 'member') {
+        showToast('Accesso limitato: solo il proprietario del veicolo può modificare i dati dell\'auto o la targa.', 'error');
+        return;
+      }
       // Update
       const updatedSpecs = {
         ...(vehicleData.technicalSpecs || vehicleToEdit.technicalSpecs),

@@ -50,13 +50,19 @@ export function generateShareCode(): string {
  */
 export async function createOrUpdateSharedGarage(
   vehicle: Vehicle,
-  user: UserAccount
+  user: UserAccount,
+  options?: {
+    permissionsLevel?: 'full' | 'read_only' | 'refuel_only';
+    allowDocumentView?: boolean;
+    notifyOnExpenses?: boolean;
+  }
 ): Promise<SharedGarage> {
   const code = vehicle.sharedGarageCode || generateShareCode();
   const shareDocRef = doc(db, 'shared_garages', code);
 
   const existingSnap = await getDoc(shareDocRef).catch(() => null);
   const now = new Date().toISOString();
+  const existingData = (existingSnap && existingSnap.exists()) ? (existingSnap.data() as SharedGarage) : null;
 
   let members: SharedGarageMember[] = [
     {
@@ -68,25 +74,41 @@ export async function createOrUpdateSharedGarage(
     }
   ];
 
-  if (existingSnap && existingSnap.exists()) {
-    const existingData = existingSnap.data() as SharedGarage;
-    if (Array.isArray(existingData.members)) {
-      members = existingData.members;
-      // Ensure current user is listed as owner
-      const hasCurrent = members.some(m => m.uid === (user.id || auth.currentUser?.uid));
-      if (!hasCurrent) {
-        members.push({
-          uid: user.id || auth.currentUser?.uid || 'user_owner',
-          name: user.name || 'Proprietario',
-          email: user.email || 'proprietario@garage.it',
-          role: 'owner',
-          joinedAt: now
-        });
-      }
+  if (existingData && Array.isArray(existingData.members)) {
+    members = existingData.members;
+    // Ensure current user is listed as owner
+    const hasCurrent = members.some(m => m.uid === (user.id || auth.currentUser?.uid));
+    if (!hasCurrent) {
+      members.push({
+        uid: user.id || auth.currentUser?.uid || 'user_owner',
+        name: user.name || 'Proprietario',
+        email: user.email || 'proprietario@garage.it',
+        role: 'owner',
+        joinedAt: now
+      });
     }
   }
 
   const allowedUids = members.map(m => m.uid);
+
+  const resolvedPermLevel: 'full' | 'read_only' | 'refuel_only' = 
+    options?.permissionsLevel || 
+    vehicle.sharedPermissionsLevel || 
+    existingData?.permissionsLevel || 
+    (existingData?.vehicle as any)?.sharedPermissionsLevel || 
+    'full';
+
+  const resolvedAllowDocView: boolean = 
+    typeof options?.allowDocumentView === 'boolean'
+      ? options.allowDocumentView
+      : (typeof vehicle.sharedAllowDocumentView === 'boolean'
+          ? vehicle.sharedAllowDocumentView
+          : (typeof existingData?.allowDocumentView === 'boolean' ? existingData.allowDocumentView : true));
+
+  const resolvedNotifyExp: boolean = 
+    typeof options?.notifyOnExpenses === 'boolean'
+      ? options.notifyOnExpenses
+      : (typeof existingData?.notifyOnExpenses === 'boolean' ? existingData.notifyOnExpenses : true);
 
   const sharedGarageData: SharedGarage = {
     id: code,
@@ -96,6 +118,9 @@ export async function createOrUpdateSharedGarage(
     ownerEmail: user.email || '',
     vehicleId: vehicle.id,
     vehicleName: `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`,
+    permissionsLevel: resolvedPermLevel,
+    allowDocumentView: resolvedAllowDocView,
+    notifyOnExpenses: resolvedNotifyExp,
     vehicle: {
       ...vehicle,
       isShared: true,
@@ -104,13 +129,13 @@ export async function createOrUpdateSharedGarage(
       sharedOwnerEmail: user.email || '',
       sharedRole: 'owner',
       sharedMembersCount: members.length,
-      sharedPermissionsLevel: vehicle.sharedPermissionsLevel || 'full',
-      sharedAllowDocumentView: vehicle.sharedAllowDocumentView ?? true,
+      sharedPermissionsLevel: resolvedPermLevel,
+      sharedAllowDocumentView: resolvedAllowDocView,
       lastSyncTimestamp: now
     },
     members,
     allowedUids,
-    createdAt: (existingSnap && existingSnap.exists() ? existingSnap.data()?.createdAt : null) || now,
+    createdAt: existingData?.createdAt || now,
     updatedAt: now,
     active: true
   };
@@ -190,6 +215,18 @@ export async function joinSharedGarage(
     updatedAt: now
   }), { merge: true });
 
+  const effectivePermLevel: 'full' | 'read_only' | 'refuel_only' = 
+    data.permissionsLevel || 
+    (data.vehicle as any)?.sharedPermissionsLevel || 
+    'full';
+
+  const effectiveAllowDoc: boolean = 
+    typeof data.allowDocumentView === 'boolean'
+      ? data.allowDocumentView
+      : (typeof (data.vehicle as any)?.sharedAllowDocumentView === 'boolean'
+          ? (data.vehicle as any).sharedAllowDocumentView
+          : true);
+
   const vehicleWithShareInfo: Vehicle = {
     ...data.vehicle,
     isShared: true,
@@ -198,8 +235,8 @@ export async function joinSharedGarage(
     sharedOwnerEmail: data.ownerEmail,
     sharedRole: data.ownerId === joiningUid ? 'owner' : 'member',
     sharedMembersCount: currentMembers.length,
-    sharedPermissionsLevel: data.permissionsLevel || 'full',
-    sharedAllowDocumentView: typeof data.allowDocumentView === 'boolean' ? data.allowDocumentView : true,
+    sharedPermissionsLevel: effectivePermLevel,
+    sharedAllowDocumentView: effectiveAllowDoc,
     lastSyncTimestamp: now
   };
 
@@ -215,12 +252,22 @@ export async function joinSharedGarage(
 export async function syncSharedVehicleToCloud(vehicle: Vehicle): Promise<void> {
   if (!vehicle.isShared || !vehicle.sharedGarageCode) return;
 
+  // Se l'utente è un membro in sola lettura, non può sincronizzare sovrascrivendo i dati
+  if (vehicle.sharedRole === 'member' && vehicle.sharedPermissionsLevel === 'read_only') {
+    console.warn('Sync bloccata: utente membro in modalità sola lettura.');
+    return;
+  }
+
   try {
     const code = vehicle.sharedGarageCode;
     const shareDocRef = doc(db, 'shared_garages', code);
     const now = new Date().toISOString();
 
+    const isOwner = vehicle.sharedRole !== 'member';
+
     await setDoc(shareDocRef, sanitizeForFirestore({
+      ...(isOwner && vehicle.sharedPermissionsLevel ? { permissionsLevel: vehicle.sharedPermissionsLevel } : {}),
+      ...(isOwner && typeof vehicle.sharedAllowDocumentView === 'boolean' ? { allowDocumentView: vehicle.sharedAllowDocumentView } : {}),
       vehicle: {
         ...vehicle,
         sharedPermissionsLevel: vehicle.sharedPermissionsLevel || 'full',

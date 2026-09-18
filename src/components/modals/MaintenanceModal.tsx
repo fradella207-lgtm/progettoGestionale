@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft, Wrench, Trash2, FileText, Camera, Upload, Receipt } from 'lucide-react';
+import { X, ArrowLeft, Wrench, Trash2, FileText, Camera, Upload, Receipt, Lock } from 'lucide-react';
 import { MaintenanceRecord, Vehicle } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
@@ -21,6 +21,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   onDelete
 }) => {
   const isEditing = !!editingMaintenance;
+  const isBlocked = vehicle.isShared && vehicle.sharedRole === 'member' && (vehicle.sharedPermissionsLevel === 'read_only' || vehicle.sharedPermissionsLevel === 'refuel_only');
+  const isReadOnly = vehicle.isShared && vehicle.sharedRole === 'member' && vehicle.sharedPermissionsLevel === 'read_only';
 
   const isMoto = vehicle.vehicleType === 'moto';
   const defaultCat = isMoto ? 'Tagliando Moto (Olio + Filtro)' : 'Tagliando Ordinario';
@@ -57,6 +59,10 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBlocked) {
+      alert('Permessi insufficienti: il proprietario ha bloccato l\'inserimento di manutenzioni per questo account.');
+      return;
+    }
     if (!km || !cost) {
       alert('Compila tutti i campi obbligatori (Chilometri, Costo).');
       return;
@@ -104,6 +110,19 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* BANNER PERMESSI */}
+        {isBlocked && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>{isReadOnly ? 'Accesso in sola lettura:' : 'Permessi limitati:'}</strong>{' '}
+              {isReadOnly 
+                ? 'Questo veicolo è condiviso con permessi di sola consultazione. Non puoi inserire modifiche o eliminare registrazioni.' 
+                : 'Il proprietario consente esclusivamente la registrazione dei rifornimenti. Gli interventi di manutenzione sono bloccati.'}
+            </span>
+          </div>
+        )}
 
         {/* FORM */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -276,7 +295,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
 
           {/* ACTIONS */}
           <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
-            {isEditing && onDelete ? (
+            {isEditing && onDelete && !isBlocked ? (
               <button 
                 type="button" 
                 onClick={() => {
@@ -295,9 +314,14 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
             <button 
               type="submit" 
               id="btn-submit-maint-form"
-              className="bg-[#059669] hover:bg-emerald-700 text-white text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer text-center"
+              disabled={isBlocked}
+              className={`text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs text-center ${
+                isBlocked
+                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
+                  : 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer active:scale-98'
+              }`}
             >
-              {isEditing ? 'Salva Modifiche' : 'Registra Intervento'}
+              {isBlocked ? 'Manutenzioni Bloccate' : isEditing ? 'Salva Modifiche' : 'Registra Intervento'}
             </button>
           </div>
 

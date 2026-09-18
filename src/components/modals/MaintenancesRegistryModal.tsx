@@ -186,15 +186,13 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
         {/* Action Button on the Right */}
         <div className="flex items-center gap-2 shrink-0">
           {isMaintenanceBlocked ? (
-            <button
-              type="button"
-              onClick={onOpenAddMaintenance}
-              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
+            <div
+              className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs select-none"
               title={isReadOnly ? "Il proprietario ha impostato l'accesso in sola lettura" : "Il proprietario consente solo l'inserimento di rifornimenti"}
             >
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>{isReadOnly ? 'Sola Lettura' : 'Solo Rifornimenti'}</span>
-            </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -379,13 +377,20 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
               <p className="text-xs text-slate-500 max-w-sm mt-1">
                 {searchTerm ? 'Nessun intervento corrisponde ai criteri di ricerca impostati.' : 'Non è stato ancora salvato alcun tagliando o manutenzione per questo veicolo.'}
               </p>
-              <button
-                type="button"
-                onClick={onOpenAddMaintenance}
-                className="mt-5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                Aggiungi Primo Intervento
-              </button>
+              {!isMaintenanceBlocked ? (
+                <button
+                  type="button"
+                  onClick={onOpenAddMaintenance}
+                  className="mt-5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  Aggiungi Primo Intervento
+                </button>
+              ) : (
+                <div className="mt-4 px-4 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-medium inline-flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>{isReadOnly ? 'Accesso in sola lettura: inserimento disabilitato' : 'Permessi limitati: inserimento manutenzione disabilitato'}</span>
+                </div>
+              )}
             </div>
           ) : (
             filteredMaints.map((maint, idx) => {
@@ -454,17 +459,19 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
                     </span>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenEditMaintenance(maint);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
-                        title="Modifica Intervento"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                      {!isMaintenanceBlocked && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenEditMaintenance(maint);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all cursor-pointer"
+                          title="Modifica Intervento"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      )}
                       <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
                     </div>
                   </div>

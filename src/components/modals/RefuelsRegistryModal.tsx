@@ -204,15 +204,13 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
           )}
 
           {isReadOnly ? (
-            <button
-              type="button"
-              onClick={() => onOpenAddRefuel()}
-              className="px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs"
+            <div
+              className="px-3 py-2 bg-slate-100 border border-slate-200 text-slate-400 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-not-allowed shadow-2xs select-none"
               title="Il proprietario ha impostato l'accesso in sola lettura"
             >
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="hidden xs:inline">Sola Lettura</span>
-            </button>
+            </div>
           ) : isPHEV ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -416,13 +414,20 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
               <p className="text-xs text-slate-500 max-w-sm mt-1">
                 {searchTerm ? 'Nessun risultato corrisponde ai filtri di ricerca applicati.' : 'Non è stato ancora registrato alcun rifornimento o ricarica per questo veicolo.'}
               </p>
-              <button
-                type="button"
-                onClick={() => onOpenAddRefuel()}
-                className="mt-5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                Registra Primo Rifornimento
-              </button>
+              {!isReadOnly ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenAddRefuel()}
+                  className="mt-5 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  Registra Primo Rifornimento
+                </button>
+              ) : (
+                <div className="mt-4 px-4 py-2 bg-slate-100 border border-slate-200 text-slate-500 rounded-xl text-xs font-medium inline-flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Accesso in sola lettura: inserimento disabilitato dal proprietario</span>
+                </div>
+              )}
             </div>
           ) : (
             filteredRefuels.map((refuel, idx) => {
@@ -513,17 +518,19 @@ export const RefuelsRegistryModal: React.FC<RefuelsRegistryModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenEditRefuel(refuel);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-                        title="Modifica Rifornimento"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                      {!isReadOnly && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenEditRefuel(refuel);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                          title="Modifica Rifornimento"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      )}
                       <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors" />
                     </div>
                   </div>
