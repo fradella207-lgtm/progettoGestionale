@@ -85,19 +85,19 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center border border-emerald-100 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-100 dark:border-emerald-900/60 shrink-0">
               <Wrench className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white truncate">
                 {isEditing ? 'Modifica Intervento' : 'Nuova Manutenzione'}
               </h3>
-              <p className="text-xs text-[#64748b] truncate">{vehicle.brand} {vehicle.model} ({vehicle.plate})</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{vehicle.brand} {vehicle.model} ({vehicle.plate})</p>
             </div>
           </div>
           <button 
@@ -105,7 +105,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
             type="button"
             onClick={onClose} 
             title="Chiudi"
-            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -113,8 +113,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
 
         {/* BANNER PERMESSI */}
         {isBlocked && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
-            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
               <strong>{isReadOnly ? 'Accesso in sola lettura:' : 'Permessi limitati:'}</strong>{' '}
               {isReadOnly 
@@ -129,19 +129,19 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Data Intervento</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Data Intervento</label>
               <input 
                 id="input-maint-date"
                 type="date" 
                 required 
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Chilometraggio (km)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Chilometraggio (km)</label>
               <input 
                 id="input-maint-km"
                 type="number" 
@@ -150,19 +150,19 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
                 placeholder="Es. 80000"
                 value={km}
                 onChange={(e) => setKm(e.target.value === '' ? '' : Number(e.target.value))}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Categoria</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Categoria</label>
               <select 
                 id="input-maint-category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669] bg-white"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
               >
                 {isMoto ? (
                   <>
@@ -195,7 +195,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Costo (€)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Costo (€)</label>
               <input 
                 id="input-maint-cost"
                 type="number" 
@@ -205,47 +205,47 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
                 placeholder="Es. 380.00"
                 value={cost}
                 onChange={(e) => setCost(e.target.value === '' ? '' : Number(e.target.value))}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Officina / Meccanico</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Officina / Meccanico</label>
             <input 
               id="input-maint-workshop"
               type="text" 
               placeholder="Es. Alfa Romeo Motor Village, Bosch Car Service"
               value={workshop}
               onChange={(e) => setWorkshop(e.target.value)}
-              className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669]"
+              className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Dettaglio Lavori e Ricambi</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Dettaglio Lavori e Ricambi</label>
             <textarea 
               id="input-maint-desc"
               rows={3} 
               placeholder="Olio motore 0W20, filtro olio, filtro aria, pastiglie Brembo..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#059669] resize-none"
+              className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500 resize-none"
             />
           </div>
 
           {/* FATTURA / DOCUMENTO INTERVENTO (OPZIONALE) */}
           <div className="flex flex-col gap-2 pt-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>Fattura / Ricevuta Intervento (Opzionale)</span>
               </label>
               {documentPhoto && (
                 <button
                   type="button"
                   onClick={() => { setDocumentPhoto(undefined); setDocumentFileName(undefined); }}
-                  className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                  className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
                 >
                   Rimuovi allegato
                 </button>
@@ -253,24 +253,24 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
             </div>
 
             {documentPhoto ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-2.5 flex items-center gap-3">
                 <img 
                   src={documentPhoto} 
                   alt="Fattura manutenzione" 
-                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0 bg-white" 
+                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shrink-0 bg-white" 
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-800 truncate">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
                     {documentFileName || 'Fattura_intervento.jpg'}
                   </p>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
                     ✓ Documento allegato
                   </span>
                 </div>
               </div>
             ) : (
-              <label className="border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 hover:text-emerald-700 bg-slate-50/60 hover:bg-emerald-50/30 transition-all cursor-pointer">
-                <Camera className="w-4 h-4 text-emerald-600" />
+              <label className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-emerald-50/30 transition-all cursor-pointer">
+                <Camera className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Carica o scatta foto della ricevuta / fattura (opzionale)</span>
                 <input
                   type="file"
@@ -294,7 +294,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
             {isEditing && onDelete && !isBlocked ? (
               <button 
                 type="button" 
@@ -304,7 +304,7 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
                     onClose();
                   }
                 }}
-                className="bg-red-50 hover:bg-red-100 text-[#dc2626] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Elimina</span>
@@ -317,8 +317,8 @@ export const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
               disabled={isBlocked}
               className={`text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs text-center ${
                 isBlocked
-                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed'
-                  : 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer active:scale-98'
+                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-98'
               }`}
             >
               {isBlocked ? 'Manutenzioni Bloccate' : isEditing ? 'Salva Modifiche' : 'Registra Intervento'}

@@ -138,24 +138,24 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[92vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5 max-h-[92vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 ${
               energyType === 'electricity' 
-                ? 'bg-amber-50 text-amber-600 border-amber-200' 
-                : 'bg-blue-50 text-[#2563eb] border-blue-100'
+                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/60' 
+                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/60'
             }`}>
               {energyType === 'electricity' ? <Zap className="w-5 h-5" /> : <Fuel className="w-5 h-5" />}
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white truncate">
                 {isEditing ? 'Modifica Registrazione' : (energyType === 'electricity' ? 'Nuova Ricarica' : 'Nuovo Rifornimento')}
               </h3>
-              <p className="text-xs text-[#64748b] truncate">
-                {vehicle.brand} {vehicle.model} • <span className="font-semibold text-slate-700">{vehicle.fuelType}</span> ({vehicle.plate})
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {vehicle.brand} {vehicle.model} • <span className="font-semibold text-slate-700 dark:text-slate-300">{vehicle.fuelType}</span> ({vehicle.plate})
               </p>
             </div>
           </div>
@@ -164,7 +164,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
             type="button"
             onClick={onClose} 
             title="Chiudi"
-            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -172,8 +172,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
         {/* BANNER PERMESSI SOLA LETTURA */}
         {isReadOnly && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
-            <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 px-4 py-3 rounded-2xl flex items-center gap-2.5 text-xs font-medium">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
               <strong>Accesso in sola lettura:</strong> Il veicolo è condiviso con permessi di sola consultazione. Non è consentito inserire modifiche o eliminare registrazioni.
             </span>
@@ -182,8 +182,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
         {/* DUAL FUEL / PHEV ENERGY SELECTOR */}
         {isDualFuel && (
-          <div className="p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200 flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 pt-1">
+          <div className="p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-1">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2 pt-1">
               {isPHEV ? 'Seleziona Tipologia di Ricarica / Rifornimento' : 'Seleziona Alimentazione Erogata'}
             </span>
             <div className="grid grid-cols-2 gap-1.5">
@@ -192,10 +192,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('electricity')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'electricity'
                         ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <BatteryCharging className="w-4 h-4" />
@@ -204,10 +204,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('fuel')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'fuel'
-                        ? 'bg-[#2563eb] text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Fuel className="w-4 h-4" />
@@ -221,10 +221,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('lpg')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'lpg'
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Flame className="w-4 h-4" />
@@ -233,10 +233,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('fuel')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'fuel'
-                        ? 'bg-[#2563eb] text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Fuel className="w-4 h-4" />
@@ -250,10 +250,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('cng')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'cng'
                         ? 'bg-teal-600 text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Flame className="w-4 h-4" />
@@ -262,10 +262,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setEnergyType('fuel')}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                       energyType === 'fuel'
-                        ? 'bg-[#2563eb] text-white shadow-xs'
-                        : 'bg-white text-slate-700 hover:bg-slate-50'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
                     <Fuel className="w-4 h-4" />
@@ -282,7 +282,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 {energyType === 'electricity' ? 'Data Ricarica' : 'Data Rifornimento'}
               </label>
               <input 
@@ -291,12 +291,12 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                 required 
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Chilometraggio Odometro (km)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Chilometraggio Odometro (km)</label>
               <input 
                 id="input-refuel-km"
                 type="number" 
@@ -305,7 +305,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                 placeholder="Es. 84500"
                 value={km}
                 onChange={(e) => setKm(e.target.value === '' ? '' : Number(e.target.value))}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -313,11 +313,11 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Quantità ({fuelUnit})
                 </label>
                 {referenceCapacity > 0 && (
-                  <span className="text-[11px] text-slate-400 font-medium">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                     Capacità: {referenceCapacity} {fuelUnit}
                   </span>
                 )}
@@ -331,12 +331,12 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                 placeholder={placeholderQty}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value === '' ? '' : Number(e.target.value))}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Spesa Totale (€)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Spesa Totale (€)</label>
               <input 
                 id="input-refuel-price"
                 type="number" 
@@ -346,35 +346,35 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                 placeholder="Es. 18.50"
                 value={price}
                 onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* UNIT PRICE INDICATOR */}
-          <div className="bg-[#f8fafc] border border-[#e2e8f0] p-3 rounded-xl flex items-center justify-between text-xs">
-            <span className="text-[#64748b] font-medium">Prezzo Unitario Calcolato:</span>
-            <span className="font-extrabold text-[#0f172a] flex items-center gap-1">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-3 rounded-xl flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400 font-medium">Prezzo Unitario Calcolato:</span>
+            <span className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1">
               <span>{calculatedUnitPrice} € / {fuelUnit}</span>
               {energyType === 'electricity' && (
-                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">Tariffa EV</span>
+                <span className="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">Tariffa EV</span>
               )}
             </span>
           </div>
 
           {/* TYPE (FULL VS PARTIAL) */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               {energyType === 'electricity' ? 'Livello di Ricarica' : 'Tipo di Pieno'}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setType('full')}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   type === 'full'
-                    ? (energyType === 'electricity' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-blue-50 border-[#2563eb] text-[#2563eb]')
-                    : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-slate-50'
+                    ? (energyType === 'electricity' ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 shadow-2xs' : 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-300 shadow-2xs')
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750'
                 }`}
               >
                 {energyType === 'electricity' ? '✓ Ricarica Completa 100%' : '✓ Pieno Completo'}
@@ -382,10 +382,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
               <button
                 type="button"
                 onClick={() => setType('partial')}
-                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all ${
+                className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                   type === 'partial'
-                    ? (energyType === 'electricity' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-blue-50 border-[#2563eb] text-[#2563eb]')
-                    : 'bg-white border-[#e2e8f0] text-[#64748b] hover:bg-slate-50'
+                    ? (energyType === 'electricity' ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 shadow-2xs' : 'bg-blue-50 dark:bg-blue-950/50 border-blue-600 dark:border-blue-500 text-blue-700 dark:text-blue-300 shadow-2xs')
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-750'
                 }`}
               >
                 {energyType === 'electricity' ? 'Biberonaggio / Parziale' : 'Rifornimento Parziale'}
@@ -396,7 +396,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           {/* EV CHARGE POWER PRESET FOR ELECTRIC / PHEV */}
           {energyType === 'electricity' && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">Potenza Colonnina / Caricatore (kW)</label>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Potenza Colonnina / Caricatore (kW)</label>
               <div className="grid grid-cols-4 gap-2 mb-1">
                 {[
                   { label: 'Casa (2.3 kW)', val: 2.3 },
@@ -408,10 +408,10 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                     key={p.val}
                     type="button"
                     onClick={() => setChargingPowerKw(p.val)}
-                    className={`text-[10px] py-1.5 px-1 rounded-lg border font-semibold transition-colors ${
+                    className={`text-[10px] py-1.5 px-1 rounded-lg border font-semibold transition-colors cursor-pointer ${
                       chargingPowerKw === p.val
-                        ? 'bg-amber-100 border-amber-400 text-amber-900 font-bold'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-400 dark:border-amber-700 text-amber-900 dark:text-amber-300 font-bold'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     {p.label}
@@ -423,7 +423,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
 
           {/* NOTES */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               {energyType === 'electricity' ? 'Punto di Ricarica / Note' : 'Distributore / Note'}
             </label>
             <input 
@@ -432,22 +432,22 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
               placeholder={energyType === 'electricity' ? 'Es. Wallbox Domestica Notturna, Enel X Way, Be Charge' : 'Es. Q8 Easy Autostrada A1, Eni Station'}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="border border-[#e2e8f0] rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#2563eb]"
+              className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
 
           {/* RICEVUTA / SCONTRINO (OPZIONALE) */}
           <div className="flex flex-col gap-2 pt-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>Scontrino / Ricevuta (Opzionale)</span>
               </label>
               {receiptPhoto && (
                 <button
                   type="button"
                   onClick={() => { setReceiptPhoto(undefined); setReceiptFileName(undefined); }}
-                  className="text-[11px] font-bold text-red-600 hover:underline cursor-pointer"
+                  className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
                 >
                   Rimuovi foto
                 </button>
@@ -455,24 +455,24 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
             </div>
 
             {receiptPhoto ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2.5 flex items-center gap-3">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 p-2.5 flex items-center gap-3">
                 <img 
                   src={receiptPhoto} 
                   alt="Scontrino rifornimento" 
-                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 shrink-0 bg-white" 
+                  className="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shrink-0 bg-white" 
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-800 truncate">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
                     {receiptFileName || 'Scontrino_allegato.jpg'}
                   </p>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
                     ✓ Foto allegata
                   </span>
                 </div>
               </div>
             ) : (
-              <label className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50/60 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                <Camera className="w-4 h-4 text-indigo-500" />
+              <label className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50/60 dark:bg-slate-800/40 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 transition-all cursor-pointer">
+                <Camera className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 <span>Carica o scatta foto dello scontrino (opzionale)</span>
                 <input
                   type="file"
@@ -496,7 +496,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
             {isEditing && onDelete && !isReadOnly ? (
               <button 
                 type="button" 
@@ -506,7 +506,7 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
                     onClose();
                   }
                 }}
-                className="bg-red-50 hover:bg-red-100 text-[#dc2626] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Elimina</span>
@@ -519,8 +519,8 @@ export const RefuelModal: React.FC<RefuelModalProps> = ({
               disabled={isReadOnly}
               className={`text-sm font-bold px-6 py-2.5 rounded-xl transition-all shadow-xs text-center ${
                 isReadOnly 
-                  ? 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed' 
-                  : 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white cursor-pointer active:scale-98'
+                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer active:scale-98'
               }`}
             >
               {isReadOnly ? 'Sola Lettura (Bloccato)' : isEditing ? 'Salva Modifiche' : (energyType === 'electricity' ? 'Registra Ricarica' : 'Registra Rifornimento')}

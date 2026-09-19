@@ -18,6 +18,7 @@ import { AuthLoginModal } from './components/modals/AuthLoginModal';
 import { RecapStoryModal } from './components/modals/RecapStoryModal';
 import { PaywallModal } from './components/modals/PaywallModal';
 import { SharedGarageModal } from './components/modals/SharedGarageModal';
+import { DigitalPassportModal } from './components/modals/DigitalPassportModal';
 import { StartupSplash } from './components/StartupSplash';
 import { PaymentPage } from './components/PaymentPage';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
@@ -265,6 +266,14 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
   const [recapInitialVehicleId, setRecapInitialVehicleId] = useState<string | undefined>(undefined);
+
+  const [isPassportModalOpen, setIsPassportModalOpen] = useState(false);
+  const [passportInitialVehicleId, setPassportInitialVehicleId] = useState<string | undefined>(undefined);
+
+  const handleOpenDigitalPassport = (vehicleId?: string) => {
+    setPassportInitialVehicleId(vehicleId || selectedCarId);
+    setIsPassportModalOpen(true);
+  };
 
   const handleOpenSettings = () => {
     setSettingsInitialSection('general');
@@ -1265,14 +1274,15 @@ export default function App() {
                   onOpenRecap={handleOpenRecap}
                   onOpenUpgradeModal={handleOpenUpgradeModal}
                   onOpenSharedGarage={(vehicleId) => handleOpenSharedGarage(vehicleId)}
+                  onOpenDigitalPassport={handleOpenDigitalPassport}
                   showToast={showToast}
                 />
               ) : (
                 <div className="text-center py-20">
-                  <p className="text-base text-[#64748b]">Nessun veicolo selezionato.</p>
+                  <p className="text-base text-slate-500 dark:text-slate-400">Nessun veicolo selezionato.</p>
                   <button 
                     onClick={() => setCurrentView('garage')}
-                    className="mt-4 bg-[#2563eb] text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
+                    className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer"
                   >
                     Torna al Garage
                   </button>
@@ -1436,6 +1446,15 @@ export default function App() {
           showToast(`Veicolo ${newVehicle.brand} ${newVehicle.model} aggiunto al tuo garage!`, 'success');
         }}
         onShowToast={showToast}
+      />
+
+      <DigitalPassportModal 
+        isOpen={isPassportModalOpen}
+        onClose={() => setIsPassportModalOpen(false)}
+        vehicles={vehicles}
+        initialVehicleId={passportInitialVehicleId || selectedCarId}
+        userTier={userTier}
+        onOpenUpgradeModal={() => handleOpenUpgradeModal('export_pdf')}
       />
 
       {/* STARTUP SPLASH SCREEN */}

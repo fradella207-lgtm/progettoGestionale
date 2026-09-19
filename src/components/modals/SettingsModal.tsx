@@ -262,34 +262,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-5 max-h-[90vh] overflow-y-auto font-['Plus_Jakarta_Sans',sans-serif]">
         
         {/* HEADER */}
-        <div className="flex items-center justify-between gap-2 border-b border-[#e2e8f0] pb-4">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             {/* Top-Left Indietro Button */}
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 shadow-2xs group"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-100 text-xs font-black border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shrink-0 shadow-2xs group"
               title="Torna indietro"
             >
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
               <span>Indietro</span>
             </button>
 
-            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center border border-blue-100 shrink-0 hidden xs:flex">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/60 shrink-0 hidden xs:flex">
               <Settings className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-extrabold text-[#0f172a] truncate">Impostazioni</h3>
-              <p className="text-xs text-[#64748b] truncate">Personalizza unità, notifiche e dati</p>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white truncate">Impostazioni</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Personalizza unità, notifiche e dati</p>
             </div>
           </div>
           <button 
             id="btn-close-settings-modal"
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -300,15 +300,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           
           {/* SECTION 1: UNIT & CURRENCY */}
           <div className="flex flex-col gap-3">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Unità di Misura & Valuta</h4>
+            <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Unità di Misura & Valuta</h4>
             
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-[#64748b] font-semibold">Distanza</label>
+                <label className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Distanza</label>
                 <select
                   value={unitDistance}
                   onChange={(e) => setUnitDistance(e.target.value as 'km' | 'mi')}
-                  className="border border-[#e2e8f0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563eb] bg-white font-medium"
+                  className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium cursor-pointer"
                 >
                   <option value="km">Chilometri (km)</option>
                   <option value="mi">Miglia (mi)</option>
@@ -316,11 +316,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-[#64748b] font-semibold">Valuta</label>
+                <label className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Valuta</label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value as '€' | '$' | '£')}
-                  className="border border-[#e2e8f0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563eb] bg-white font-medium"
+                  className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium cursor-pointer"
                 >
                   <option value="€">Euro (€)</option>
                   <option value="$">Dollaro ($)</option>
@@ -331,12 +331,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* SECTION 2: TEMA APPLICAZIONE (CHIARO O SCURO) & LINGUA */}
-          <div className="flex flex-col gap-4 border-t border-[#e2e8f0] pt-4">
+          <div className="flex flex-col gap-4 border-t border-slate-200 dark:border-slate-800 pt-4">
             
             {/* 2A. MODALITÀ TEMA: CHIARO O SCURO */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                   {themeMode === 'dark' ? (
                     <Moon className="w-3.5 h-3.5 text-indigo-400" />
                   ) : (
@@ -344,7 +344,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                   <span>Tema dell'App</span>
                 </h4>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                   {themeMode === 'dark' ? 'Modalità Scura attiva' : 'Modalità Chiara attiva'}
                 </span>
               </div>
@@ -356,7 +356,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                     themeMode === 'light'
                       ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 ring-2 ring-indigo-600/20 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <Sun className="w-4 h-4 text-amber-500 shrink-0" />
@@ -370,7 +370,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                     themeMode === 'dark'
                       ? 'border-indigo-500 bg-slate-900 text-white ring-2 ring-indigo-500/30 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <Moon className="w-4 h-4 text-indigo-300 shrink-0" />
@@ -383,11 +383,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* 2B. SELETTORE LINGUA: ITALIANO O INGLESE */}
             <div className="flex flex-col gap-2 pt-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                  <Languages className="w-3.5 h-3.5 text-blue-600" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Languages className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   <span>Lingua / Language</span>
                 </h4>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                   {language === 'it' ? 'Italiano predefinito' : 'English active'}
                 </span>
               </div>
@@ -398,13 +398,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClick={() => handleSelectLanguage('it')}
                   className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                     language === 'it'
-                      ? 'border-blue-600 bg-blue-50/70 text-blue-950 ring-2 ring-blue-600/20 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                      ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 text-blue-950 dark:text-blue-200 ring-2 ring-blue-600/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <span className="text-base leading-none">🇮🇹</span>
                   <span>Italiano (IT)</span>
-                  {language === 'it' && <Check className="w-3.5 h-3.5 text-blue-600 ml-auto" />}
+                  {language === 'it' && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-auto" />}
                 </button>
 
                 <button
@@ -412,13 +412,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClick={() => handleSelectLanguage('en')}
                   className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                     language === 'en'
-                      ? 'border-blue-600 bg-blue-50/70 text-blue-950 ring-2 ring-blue-600/20 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                      ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 text-blue-950 dark:text-blue-200 ring-2 ring-blue-600/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                   }`}
                 >
                   <span className="text-base leading-none">🇬🇧</span>
                   <span>English (EN)</span>
-                  {language === 'en' && <Check className="w-3.5 h-3.5 text-blue-600 ml-auto" />}
+                  {language === 'en' && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-auto" />}
                 </button>
               </div>
             </div>
@@ -426,11 +426,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* 2C. PALETTE COLORI ACCENTO */}
             <div className="flex flex-col gap-2 pt-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   <span>Colore Accento</span>
                 </h4>
-                <span className="text-[11px] font-bold text-slate-500">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                   {THEME_OPTIONS.find(t => t.id === themeColor)?.name}
                 </span>
               </div>
@@ -445,8 +445,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={() => handleSelectThemeColor(t.id)}
                       className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'border-slate-900 bg-slate-50 shadow-2xs ring-2 ring-slate-900/10 font-bold'
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+                          ? 'border-slate-900 dark:border-slate-100 bg-slate-50 dark:bg-slate-800 shadow-2xs ring-2 ring-slate-900/10 dark:ring-white/10 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/60 dark:hover:bg-slate-800/60'
                       }`}
                     >
                       <span 
@@ -456,8 +456,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </span>
                       <div className="min-w-0">
-                        <span className="text-xs font-bold text-slate-900 block truncate">{t.name}</span>
-                        <span className="text-[10px] text-slate-400 block truncate leading-tight">{t.desc.split(',')[0]}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">{t.name}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate leading-tight">{t.desc.split(',')[0]}</span>
                       </div>
                     </button>
                   );
@@ -466,23 +466,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-            {/* SECTION 2: MAP & STATIONS PREFERENCES */}
-          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Mappa Distributori & Colonnine</h4>
+          {/* SECTION 2: MAP & STATIONS PREFERENCES */}
+          <div className="flex flex-col gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Mappa Distributori & Colonnine</h4>
             
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-[#64748b] font-semibold">Filtro Automatico Stazioni</label>
+              <label className="text-xs text-slate-600 dark:text-slate-400 font-semibold">Filtro Automatico Stazioni</label>
               <select
                 value={stationDisplayMode}
                 onChange={(e) => setStationDisplayMode(e.target.value as 'auto' | 'fuel_only' | 'ev_only' | 'all')}
-                className="border border-[#e2e8f0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#2563eb] bg-white font-medium"
+                className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium cursor-pointer"
               >
                 <option value="auto">Automatico (in base ai veicoli nel tuo Garage)</option>
                 <option value="fuel_only">Mostra solo Distributori Carburante (Benzina/Diesel/GPL/Metano)</option>
                 <option value="ev_only">Mostra solo Colonnine Elettriche (EV / Tesla / Fast DC)</option>
                 <option value="all">Mostra sempre tutto (Distributori + Colonnine)</option>
               </select>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {stationDisplayMode === 'auto'
                   ? 'Se hai solo auto termiche/ibride nasconde di default le colonnine. Se hai solo elettriche BEV mostra solo colonnine.'
                   : 'Preferenza fissa per la mappa distributori.'}
@@ -491,35 +491,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* SECTION 3: AI & NOTIFICATIONS PREFERENCES */}
-          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center justify-between">
+          <div className="flex flex-col gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center justify-between">
               <span>Funzionalità Smart & Notifiche</span>
               {userTier === 'FREE' && <ProBadge variant="pill" />}
             </h4>
             
-            <label className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:bg-white transition-colors cursor-pointer">
+            <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <div>
-                <span className="text-sm font-bold text-[#0f172a] block">Avvisi Manutenzione Predittiva</span>
-                <span className="text-xs text-[#64748b]">Suggerimenti basati su età veicolo, carburante e chilometri</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white block">Avvisi Manutenzione Predittiva</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Suggerimenti basati su età veicolo, carburante e chilometri</span>
               </div>
               <input 
                 type="checkbox" 
                 checked={predictiveAlerts}
                 onChange={(e) => setPredictiveAlerts(e.target.checked)}
-                className="w-4 h-4 text-[#2563eb] rounded-sm focus:ring-[#2563eb]"
+                className="w-4 h-4 text-blue-600 rounded-sm focus:ring-blue-500"
               />
             </label>
 
-            <label className="flex items-center justify-between p-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] hover:bg-white transition-colors cursor-pointer">
+            <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors cursor-pointer">
               <div>
-                <span className="text-sm font-bold text-[#0f172a] block">Notifiche Scadenze e Tagliandi</span>
-                <span className="text-xs text-[#64748b]">Avvisi su revisione, bollo, assicurazione e controllo liquidi</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white block">Notifiche Scadenze e Tagliandi</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Avvisi su revisione, bollo, assicurazione e controllo liquidi</span>
               </div>
               <input 
                 type="checkbox" 
                 checked={fuelPriceAlerts}
                 onChange={(e) => setFuelPriceAlerts(e.target.checked)}
-                className="w-4 h-4 text-[#2563eb] rounded-sm focus:ring-[#2563eb]"
+                className="w-4 h-4 text-blue-600 rounded-sm focus:ring-blue-500"
               />
             </label>
 
@@ -532,16 +532,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
               className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${
                 userTier === 'FREE' 
-                  ? 'border-amber-200 bg-amber-50/50 hover:bg-amber-50 cursor-pointer' 
-                  : 'border-slate-200 bg-slate-50'
+                  ? 'border-amber-200 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/40 hover:bg-amber-50 dark:hover:bg-amber-950/60 cursor-pointer' 
+                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60'
               }`}
             >
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-slate-900 block">Avvisi Prezzi Carburante di Zona</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white block">Avvisi Prezzi Carburante di Zona</span>
                   {userTier === 'FREE' ? <ProBadge variant="lock" /> : <ProBadge variant="mini" />}
                 </div>
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-slate-600 dark:text-slate-400">
                   Notifica automatica quando i distributori vicini abbassano i prezzi sotto la media
                 </span>
               </div>
@@ -553,12 +553,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       e.stopPropagation();
                       onOpenUpgradeModal?.('fuel_alerts');
                     }}
-                    className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                    className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     Sblocca
                   </button>
                 ) : (
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
                     Attivo
                   </span>
                 )}
@@ -567,15 +567,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* SECTION 4: DATI, BACKUP & PASSAPORTO DIGITALE */}
-          <div className="flex flex-col gap-3 border-t border-[#e2e8f0] pt-4">
-            <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">Dati, Backup & Passaporto</h4>
+          <div className="flex flex-col gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+            <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">Dati, Backup & Passaporto</h4>
             
             {/* Cloud Backup (PRO vs Local FREE) */}
-            <div className={`p-3 rounded-xl border ${userTier === 'FREE' ? 'border-indigo-100 bg-indigo-50/40' : 'border-emerald-200 bg-emerald-50/50'}`}>
+            <div className={`p-3 rounded-xl border ${userTier === 'FREE' ? 'border-indigo-100 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/40' : 'border-emerald-200 dark:border-emerald-850 bg-emerald-50/50 dark:bg-emerald-950/40'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Cloud className={`w-4 h-4 ${userTier === 'FREE' ? 'text-indigo-600' : 'text-emerald-600'}`} />
-                  <span className="text-xs font-bold text-slate-900">
+                  <Cloud className={`w-4 h-4 ${userTier === 'FREE' ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'}`} />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
                     {userTier === 'FREE' ? 'Salvataggio Dati Locale (FREE)' : 'Cloud Backup & Sincronizzazione (PRO)'}
                   </span>
                 </div>
@@ -583,17 +583,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenUpgradeModal?.('cloud_backup')}
-                    className="text-[11px] font-bold text-indigo-600 hover:underline cursor-pointer"
+                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                   >
                     Attiva Cloud PRO
                   </button>
                 ) : (
-                  <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full">
                     Sincronizzato
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-600 mt-1">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
                 {userTier === 'FREE' 
                   ? 'I tuoi dati sono memorizzati in locale su questo dispositivo. Passa a PRO per backup su cloud e sync automatico.'
                   : 'I tuoi veicoli e registri sono salvati in sicurezza e sincronizzati su tutti i tuoi dispositivi.'}
@@ -601,32 +601,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Passaporto Digitale Certificato (PRO Feature: PDF / CSV) */}
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex flex-col gap-2">
+            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-900">Passaporto Digitale (PDF & CSV)</span>
+                  <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Passaporto Digitale (PDF & CSV)</span>
                   {userTier === 'FREE' && <ProBadge variant="mini" />}
                 </div>
                 {userTier === 'FREE' && (
                   <button
                     type="button"
                     onClick={() => onOpenUpgradeModal?.('export_pdf')}
-                    className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md hover:bg-amber-200 cursor-pointer"
+                    className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md hover:bg-amber-200 dark:hover:bg-amber-900/60 cursor-pointer"
                   >
                     Solo PRO
                   </button>
                 )}
               </div>
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
                 Esporta lo storico completo del veicolo certificato per compravendita, assicurazione o contabilità personale.
               </p>
 
               {vehicles.length > 0 && (
                 <div className="flex flex-col gap-1.5 pt-1">
                   {vehicles.map(v => (
-                    <div key={v.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200 text-xs">
-                      <span className="font-bold text-slate-800 truncate">{v.brand} {v.model} ({v.plate})</span>
+                    <div key={v.id} className="flex items-center justify-between p-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
+                      <span className="font-bold text-slate-800 dark:text-slate-100 truncate">{v.brand} {v.model} ({v.plate})</span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
@@ -637,9 +637,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               openPrintableDigitalPassport(v);
                             }
                           }}
-                          className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          className="px-2 py-1 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
                         >
-                          <Printer className="w-3 h-3 text-indigo-600" />
+                          <Printer className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                           <span>PDF</span>
                         </button>
                         <button
@@ -651,9 +651,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               exportVehiclePassportCSV(v);
                             }
                           }}
-                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 font-bold text-[11px] rounded-md inline-flex items-center gap-1 cursor-pointer transition-colors"
                         >
-                          <FileSpreadsheet className="w-3 h-3 text-emerald-600" />
+                          <FileSpreadsheet className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                           <span>CSV</span>
                         </button>
                       </div>
@@ -668,14 +668,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 type="button"
                 onClick={handleExportJSON}
-                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-xs font-bold text-slate-900 dark:text-white transition-colors cursor-pointer"
               >
-                <Download className="w-4 h-4 text-[#2563eb]" />
+                <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span>Esporta Garage JSON ({vehicles.length})</span>
               </button>
 
-              <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-[#e2e8f0] hover:bg-slate-50 text-xs font-bold text-[#0f172a] transition-colors cursor-pointer">
-                <Upload className="w-4 h-4 text-[#059669]" />
+              <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-xs font-bold text-slate-900 dark:text-white transition-colors cursor-pointer">
+                <Upload className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Importa File JSON</span>
                 <input 
                   type="file" 
@@ -687,19 +687,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* DEV MODE: SWITCH USER TIER (FREE <-> PRO) */}
-            <div className="mt-2 p-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 flex flex-col gap-2">
+            <div className="mt-2 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Crown className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                    Stato Account: <span className={userTier === 'PRO' ? 'text-amber-600' : 'text-slate-600'}>{userTier}</span>
+                  <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                    Stato Account: <span className={userTier === 'PRO' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}>{userTier}</span>
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-slate-400">DEV MODE</span>
               </div>
 
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-slate-600">
+                <span className="text-[11px] text-slate-600 dark:text-slate-400">
                   {userTier === 'FREE' 
                     ? 'Attualmente su piano FREE (max 1 veicolo). Puoi simulare il passaggio a PRO.' 
                     : 'Attualmente su piano PRO (Garage illimitato, AI, PDF/CSV). Puoi testare il piano FREE.'}
@@ -712,7 +712,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs ${
                     userTier === 'FREE'
                       ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
-                      : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                      : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100'
                   }`}
                 >
                   {userTier === 'FREE' ? '⚡ Simula Upgrade a PRO' : '↩ Torna a Piano FREE'}
@@ -728,7 +728,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   onClose();
                 }
               }}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-red-200 bg-red-50/60 hover:bg-red-100 text-xs font-bold text-[#dc2626] transition-colors"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-xs font-bold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Svuota / Azzera Dati Garage</span>
@@ -736,47 +736,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* SECTION 5: ACCOUNT & CLOUD SYNC */}
-          <div className="flex flex-col gap-3.5 border-t border-[#e2e8f0] pt-4">
+          <div className="flex flex-col gap-3.5 border-t border-slate-200 dark:border-slate-800 pt-4">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 shadow-2xs mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-900/60 shadow-2xs mt-0.5">
                   <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                     <span>Account & Cloud Sync</span>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                       account?.isLoggedIn 
-                        ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
-                        : 'text-purple-700 bg-purple-50 border border-purple-200'
+                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800' 
+                        : 'text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-900/60'
                     }`}>
                       {account?.isLoggedIn ? 'Cloud Connesso' : 'Profilo Locale'}
                     </span>
                   </h4>
-                  <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
                     Gestione profilo conducente, credenziali di accesso e sincronizzazione dei dati del garage su cloud.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50 flex items-center justify-between gap-3">
+            <div className="p-3.5 rounded-2xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-sm text-purple-700 shrink-0 shadow-2xs">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-black text-sm text-purple-700 dark:text-purple-300 shrink-0 shadow-2xs">
                   {account?.name ? account.name.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-extrabold text-slate-900 truncate">
+                    <span className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
                       {account?.name || 'Utente My360Garage'}
                     </span>
                     <span className={`text-[9.5px] font-black px-1.5 py-0.2 rounded uppercase ${
-                      userTier === 'PRO' ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-700'
+                      userTier === 'PRO' ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                     }`}>
                       {userTier === 'PRO' ? 'PRO ATTIVO' : 'FREE'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {account?.email || 'Nessun account cloud collegato (salvataggio locale offline)'}
                   </p>
                 </div>
@@ -789,7 +789,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClose();
                     onOpenAccount();
                   }}
-                  className="px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
                 >
                   <span>Gestisci</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -799,37 +799,37 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* SECTION 6: SEGNALAZIONI & MIGLIORAMENTI PER IL PROPRIETARIO (POSIZIONATO DOPO ACCOUNT & CLOUD SYNC) */}
-          <div id="section-feedback" className="flex flex-col gap-3.5 border-t border-[#e2e8f0] pt-4 scroll-mt-6">
+          <div id="section-feedback" className="flex flex-col gap-3.5 border-t border-slate-200 dark:border-slate-800 pt-4 scroll-mt-6">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 shadow-2xs mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/60 shadow-2xs mt-0.5">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                     <span>Segnalazioni & Miglioramenti</span>
-                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-900/60">
                       Filo Diretto
                     </span>
                   </h4>
-                  <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
-                    Hai un suggerimento per migliorare My360Garage o hai riscontrato un&apos;anomalia? Scrivi direttamente a me proprietario dell&apos;applicazione (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 font-bold hover:underline">{OWNER_EMAIL}</a>).
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                    Hai un suggerimento per migliorare My360Garage o hai riscontrato un&apos;anomalia? Scrivi direttamente a me proprietario dell&apos;applicazione (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">{OWNER_EMAIL}</a>).
                   </p>
                 </div>
               </div>
             </div>
 
             {feedbackSubmitted ? (
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-black text-emerald-900">
+                    <h5 className="text-xs font-black text-emerald-900 dark:text-emerald-200">
                       Grazie mille per la tua segnalazione!
                     </h5>
-                    <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
                       Il tuo messaggio è stato registrato ed è pronto per essere visionato per i prossimi aggiornamenti di My360Garage.
                     </p>
                   </div>
@@ -846,11 +846,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     })}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-100/70 border border-emerald-300 text-emerald-900 text-xs font-bold transition-all shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 text-xs font-bold transition-all shadow-2xs"
                   >
-                    <Mail className="w-3.5 h-3.5 text-emerald-600" />
+                    <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Invia anche via Email</span>
-                    <ExternalLink className="w-3 h-3 text-emerald-600 opacity-60" />
+                    <ExternalLink className="w-3 h-3 text-emerald-600 dark:text-emerald-400 opacity-60" />
                   </a>
 
                   <button
@@ -863,7 +863,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
+              <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3">
                 {/* Tipo di segnalazione */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {[
@@ -878,8 +878,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={() => setFeedbackType(t.id as any)}
                       className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 border ${
                         feedbackType === t.id
-                          ? 'bg-white text-indigo-950 border-indigo-500 shadow-2xs ring-1 ring-indigo-500/20'
-                          : 'bg-slate-100/80 hover:bg-white text-slate-700 border-slate-200'
+                          ? 'bg-white dark:bg-slate-700 text-indigo-950 dark:text-white border-indigo-500 shadow-2xs ring-1 ring-indigo-500/20'
+                          : 'bg-slate-100/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                       }`}
                     >
                       <span>{t.icon}</span>
@@ -890,19 +890,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 {/* Oggetto */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-600">Oggetto / Titolo breve</label>
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Oggetto / Titolo breve</label>
                   <input
                     type="text"
                     value={feedbackSubject}
                     onChange={(e) => setFeedbackSubject(e.target.value)}
                     placeholder="Es: Idea per la schermata home, o lentezza in..."
-                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                    className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
                   />
                 </div>
 
                 {/* Messaggio */}
                 <div className="flex flex-col gap-1">
-                  <label className="text-[11px] font-bold text-slate-600">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
                     Descrizione del miglioramento o problema <span className="text-rose-500">*</span>
                   </label>
                   <textarea
@@ -913,42 +913,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }}
                     rows={3}
                     placeholder="Spiega cosa vorresti aggiungere, come migliorare l'usabilità o cosa non ha funzionato come previsto..."
-                    className="border border-slate-200 rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium resize-none"
+                    className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium resize-none"
                   />
                 </div>
 
                 {/* Mittente opzionale */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">Tuo Nome (facoltativo)</label>
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Tuo Nome (facoltativo)</label>
                     <input
                       type="text"
                       value={feedbackSenderName}
                       onChange={(e) => setFeedbackSenderName(e.target.value)}
                       placeholder="Es: Marco"
-                      className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                      className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-bold text-slate-600">Tua Email (per eventuale risposta)</label>
+                    <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Tua Email (per eventuale risposta)</label>
                     <input
                       type="email"
                       value={feedbackSenderEmail}
                       onChange={(e) => setFeedbackSenderEmail(e.target.value)}
                       placeholder="nome@email.com"
-                      className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white font-medium"
+                      className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
                     />
                   </div>
                 </div>
 
                 {feedbackError && (
-                  <p className="text-[11px] font-bold text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                  <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-2 rounded-lg border border-rose-200 dark:border-rose-900/60">
                     {feedbackError}
                   </p>
                 )}
 
                 {/* Pulsanti invio */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/80">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/80 dark:border-slate-700">
                   <a
                     href={buildOwnerMailtoLink({
                       type: feedbackType,
@@ -959,11 +959,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     })}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-bold transition-all text-center"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition-all text-center"
                   >
-                    <Mail className="w-3.5 h-3.5 text-slate-500" />
+                    <Mail className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     <span>Scrivi direttamente a {OWNER_EMAIL}</span>
-                    <ExternalLink className="w-3 h-3 text-slate-400" />
+                    <ExternalLink className="w-3 h-3 text-slate-400 opacity-80" />
                   </a>
 
                   <button
@@ -972,7 +972,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     disabled={isSubmittingFeedback || !feedbackMessage.trim()}
                     className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs ${
                       isSubmittingFeedback || !feedbackMessage.trim()
-                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                         : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white shadow-indigo-600/20'
                     }`}
                   >
@@ -989,18 +989,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#e2e8f0]">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button 
               type="button" 
               onClick={onClose}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
             >
               Chiudi
             </button>
             <button 
               type="submit" 
               id="btn-save-settings-submit"
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors shadow-xs"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-colors shadow-xs cursor-pointer"
             >
               Salva Impostazioni
             </button>

@@ -19,7 +19,9 @@ import {
   Gauge,
   Sun,
   Moon,
-  Coins
+  Coins,
+  Calendar,
+  Layers
 } from 'lucide-react';
 import { Vehicle, AppSettings } from '../../types';
 import { calculateRecapMetrics, RecapPeriodMetrics } from '../../utils/consumptionCalculator';
@@ -840,149 +842,180 @@ Creato con MyGarage 🚗💨`;
           </button>
         </div>
 
-        {/* CONTROLLI DI FILTRO (PERIODO & TEMA CARD) */}
-        <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        {/* CONTROLLI DI FILTRO PULITI ED ELEGANTI (PERIODO & SELEZIONE TUTTI / SINGOLO) */}
+        <div className="p-3 sm:p-4 bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 text-xs">
           
-          {/* Switch Mese / Anno / Tutto */}
-          <div className="inline-flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 font-bold shadow-2xs">
-            <button
-              onClick={() => setPeriodType('month')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodType === 'month' 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Mese
-            </button>
-            <button
-              onClick={() => setPeriodType('year')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodType === 'year' 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Anno
-            </button>
-            <button
-              onClick={() => setPeriodType('all')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodType === 'all' 
-                  ? 'bg-indigo-600 text-white shadow-xs' 
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Tutto
-            </button>
+          {/* RIGA 1: SELETTORE PERIODO (MESE / ANNO / TUTTO) & TEMA STORY */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            
+            {/* Segmented Switch: Mese | Anno | Tutto lo storico */}
+            <div className="inline-flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 font-bold shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setPeriodType('month')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer text-xs ${
+                  periodType === 'month' 
+                    ? 'bg-indigo-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Mese
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodType('year')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer text-xs ${
+                  periodType === 'year' 
+                    ? 'bg-indigo-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Anno
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodType('all')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer text-xs ${
+                  periodType === 'all' 
+                    ? 'bg-indigo-600 text-white shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Tutto
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Selettore Mese / Anno */}
+              {periodType === 'month' && (
+                <div className="relative flex items-center">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 absolute left-2.5 pointer-events-none" />
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs font-bold focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                  >
+                    {availableMonths.map(m => {
+                      const [y, mo] = m.split('-');
+                      const d = new Date(parseInt(y, 10), parseInt(mo, 10) - 1, 1);
+                      const label = d.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+                      return (
+                        <option key={m} value={m}>
+                          {label.charAt(0).toUpperCase() + label.slice(1)}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+
+              {periodType === 'year' && (
+                <div className="relative flex items-center">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 absolute left-2.5 pointer-events-none" />
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+                    className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-xl pl-8 pr-3 py-1.5 text-xs font-bold focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+                  >
+                    {availableYears.map(y => (
+                      <option key={y} value={y}>
+                        Anno {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {periodType === 'all' && (
+                <span className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 font-bold text-xs flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Cronologia Completa</span>
+                </span>
+              )}
+
+              {/* Selettore Tema Card Story */}
+              <button
+                type="button"
+                onClick={() => setCardTheme(t => t === 'light' ? 'dark' : 'light')}
+                className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+                title={cardTheme === 'light' ? 'Passa la Story Card a tema Scuro' : 'Passa la Story Card a tema Chiaro'}
+              >
+                {cardTheme === 'light' ? <Moon className="w-4 h-4 text-slate-600 dark:text-slate-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Selettore Mese / Anno */}
-            {periodType === 'month' && (
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
-              >
-                {availableMonths.map(m => {
-                  const [y, mo] = m.split('-');
-                  const d = new Date(parseInt(y, 10), parseInt(mo, 10) - 1, 1);
-                  const label = d.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' });
-                  return (
-                    <option key={m} value={m}>
-                      {label.toUpperCase()}
-                    </option>
-                  );
-                })}
-              </select>
-            )}
+          {/* RIGA 2: SELEZIONE PULITA VEICOLO / SELEZIONA TUTTI (Se più di 1 veicolo) */}
+          {vehicles.length > 1 && (
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-200/80 dark:border-slate-800 overflow-x-auto no-scrollbar py-0.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1">
+                <Car className="w-3.5 h-3.5" />
+                <span>Garage:</span>
+              </span>
 
-            {periodType === 'year' && (
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-                className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:border-indigo-500 cursor-pointer shadow-2xs"
+              {/* Tasto Pulito ed Evidente "Tutti i veicoli" */}
+              <button
+                type="button"
+                id="btn-recap-select-all-vehicles"
+                onClick={() => setSelectedVehicleId('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-2 cursor-pointer border ${
+                  selectedVehicleId === 'all'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-300 dark:ring-indigo-700'
+                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
               >
-                {availableYears.map(y => (
-                  <option key={y} value={y}>
-                    Anno {y}
-                  </option>
-                ))}
-              </select>
-            )}
+                <span>Tutti i veicoli</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  selectedVehicleId === 'all' 
+                    ? 'bg-indigo-800 text-indigo-100' 
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                }`}>
+                  {vehicles.length}
+                </span>
+              </button>
 
-            {/* Selettore Tema Card (Chiaro coerente vs Dark) */}
-            <button
-              onClick={() => setCardTheme(t => t === 'light' ? 'dark' : 'light')}
-              className="p-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 transition-colors shadow-2xs cursor-pointer"
-              title={cardTheme === 'light' ? 'Passa a tema Scuro' : 'Passa a tema Chiaro (Stile App)'}
-            >
-              {cardTheme === 'light' ? <Moon className="w-4 h-4 text-slate-600" /> : <Sun className="w-4 h-4 text-amber-400" />}
-            </button>
-          </div>
+              {/* Singoli veicoli con pill raffinate */}
+              {vehicles.map(v => {
+                const isSelected = selectedVehicleId === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVehicleId(v.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-2 cursor-pointer border ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-300 dark:ring-indigo-700'
+                        : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                  >
+                    {v.photoUrl ? (
+                      <img
+                        src={v.photoUrl}
+                        alt={v.brand}
+                        className="w-4 h-4 rounded-md object-cover border border-white/40 shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <span className="text-xs shrink-0">
+                        {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
+                      </span>
+                    )}
+                    <span className="truncate max-w-[130px]">{v.brand} {v.model}</span>
+                    {v.plate && (
+                      <span className={`text-[9.5px] px-1.5 py-0.2 rounded font-mono ${
+                        isSelected 
+                          ? 'bg-indigo-800 text-indigo-100' 
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {v.plate}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-
-        {/* BARRA DI SELEZIONE DEL VEICOLO CON ANTEPRIME FOTOGRAFICHE */}
-        {vehicles.length > 1 && (
-          <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0 mr-1 flex items-center gap-1">
-              <Car className="w-3.5 h-3.5" />
-              <span>Recap:</span>
-            </span>
-
-            {/* Opzione: Garage Completo / Tutti i veicoli */}
-            <button
-              type="button"
-              onClick={() => setSelectedVehicleId('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer border ${
-                selectedVehicleId === 'all'
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                  : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <span>Tutti i veicoli ({vehicles.length})</span>
-            </button>
-
-            {/* Chip fotografici per ciascun veicolo */}
-            {vehicles.map(v => {
-              const isSelected = selectedVehicleId === v.id;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setSelectedVehicleId(v.id)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-2 cursor-pointer border ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-300 dark:ring-indigo-700'
-                      : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  {v.photoUrl ? (
-                    <img
-                      src={v.photoUrl}
-                      alt={v.brand}
-                      className="w-5 h-5 rounded-md object-cover border border-white/30 shrink-0"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <span className="w-5 h-5 rounded-md bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] shrink-0">
-                      {v.vehicleType === 'moto' ? '🏍️' : '🚗'}
-                    </span>
-                  )}
-                  <span className="truncate max-w-[120px]">{v.brand} {v.model}</span>
-                  {v.plate && (
-                    <span className={`text-[9.5px] px-1.5 py-0.2 rounded font-mono ${
-                      isSelected ? 'bg-indigo-700/80 text-indigo-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                    }`}>
-                      {v.plate}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* FEEDBACK STATUS BANNER */}
         {statusMessage && (
@@ -1182,16 +1215,16 @@ Creato con MyGarage 🚗💨`;
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
+                    <span className={`text-[9px] font-bold uppercase tracking-tight ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       Consumo
                     </span>
                     <Gauge className="w-3 h-3 text-indigo-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                    <span className={`text-xs font-black block truncate ${cardTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       {stats.avgConsumptionStr}
                     </span>
-                    <span className="text-[9px] text-indigo-600 dark:text-indigo-400 font-bold block truncate">
+                    <span className="text-[9px] text-indigo-600 font-bold block truncate">
                       {stats.avgKmPerLStr}
                     </span>
                   </div>
@@ -1202,16 +1235,16 @@ Creato con MyGarage 🚗💨`;
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
+                    <span className={`text-[9px] font-bold uppercase tracking-tight ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       Costo/Km
                     </span>
                     <Coins className="w-3 h-3 text-emerald-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                    <span className={`text-xs font-black block truncate ${cardTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       {stats.costPerKm !== '--' ? `${settings.currency} ${stats.costPerKm}` : '--'}
                     </span>
-                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold block truncate">
+                    <span className="text-[9px] text-emerald-600 font-bold block truncate">
                       {stats.costPerKm !== '--' ? 'al km percorso' : 'Dato non disp.'}
                     </span>
                   </div>
@@ -1222,16 +1255,16 @@ Creato con MyGarage 🚗💨`;
                   cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400">
+                    <span className={`text-[9px] font-bold uppercase tracking-tight ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                       Soste
                     </span>
                     <Fuel className="w-3 h-3 text-sky-500" />
                   </div>
                   <div className="my-1">
-                    <span className="text-xs font-black block truncate text-slate-900 dark:text-white">
+                    <span className={`text-xs font-black block truncate ${cardTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                       {stats.refuelStopsCount} {stats.refuelStopsCount === 1 ? 'sosta' : 'soste'}
                     </span>
-                    <span className="text-[9px] text-sky-600 dark:text-sky-400 font-bold block truncate">
+                    <span className="text-[9px] text-sky-600 font-bold block truncate">
                       {stats.totalVolume > 0 ? `${stats.totalVolume.toFixed(1)} ${stats.fuelUnit}` : 'Nessuna sosta'}
                     </span>
                   </div>
@@ -1247,24 +1280,24 @@ Creato con MyGarage 🚗💨`;
               <div className={`p-3 rounded-2xl border ${
                 cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
               }`}>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                <span className={`text-[9px] font-bold uppercase tracking-wider block ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   Strada Percorsa
                 </span>
                 <div className="flex items-baseline gap-1 my-0.5">
-                  <span className="text-xl font-black text-slate-900 dark:text-white">
+                  <span className={`text-xl font-black ${cardTheme === 'dark' ? 'text-white' : 'text-slate-900'}`}>
                     {stats.totalKm > 0 ? stats.totalKm.toLocaleString('it-IT') : '0'}
                   </span>
-                  <span className="text-xs font-bold text-slate-500">km</span>
+                  <span className="text-xs font-bold text-slate-400">km</span>
                 </div>
                 {stats.kmTrendPercent !== 0 ? (
                   <span className={`text-[9px] font-bold flex items-center gap-0.5 ${
-                    stats.kmTrendPercent > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-sky-600 dark:text-sky-400'
+                    stats.kmTrendPercent > 0 ? 'text-emerald-500' : 'text-sky-500'
                   }`}>
                     {stats.kmTrendPercent > 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                     <span>{stats.kmTrendPercent > 0 ? `+${stats.kmTrendPercent}%` : `${stats.kmTrendPercent}%`}</span>
                   </span>
                 ) : stats.odometer > 0 ? (
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium block truncate">
+                  <span className={`text-[9px] font-medium block truncate ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                     Odo: {stats.odometer.toLocaleString('it-IT')} km
                   </span>
                 ) : (
@@ -1278,13 +1311,13 @@ Creato con MyGarage 🚗💨`;
               <div className={`p-3 rounded-2xl border ${
                 cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
               }`}>
-                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
+                <span className={`text-[9px] font-bold uppercase tracking-wider block ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   Spesa Totale
                 </span>
                 <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 my-0.5 block">
                   {settings.currency} {stats.totalCost < 1000 ? stats.totalCost.toFixed(2) : stats.totalCost.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
-                <span className="text-[9px] text-slate-500 dark:text-slate-400 block truncate">
+                <span className={`text-[9px] block truncate ${cardTheme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>
                   ⛽ {settings.currency} {stats.fuelCost.toFixed(0)} • 🔧 {settings.currency} {stats.maintCost.toFixed(0)}
                 </span>
               </div>
@@ -1296,7 +1329,7 @@ Creato con MyGarage 🚗💨`;
               cardTheme === 'dark' ? 'bg-slate-800/60 border-slate-700/80' : 'bg-slate-50/80 border-slate-200/80'
             }`}>
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   <span>Rinnovi & Scadenze</span>
                 </span>
@@ -1306,7 +1339,7 @@ Creato con MyGarage 🚗💨`;
                 <div className="space-y-1">
                   {stats.upcomingRenewals.slice(0, 2).map((r, idx) => (
                     <div key={idx} className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-slate-700 dark:text-slate-200 truncate">{r.label}</span>
+                      <span className={`font-semibold truncate ${cardTheme === 'dark' ? 'text-slate-200' : 'text-slate-700'}`}>{r.label}</span>
                       <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0 ${
                         r.daysLeft <= 15 ? 'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                       }`}>
@@ -1316,7 +1349,7 @@ Creato con MyGarage 🚗💨`;
                   ))}
                 </div>
               ) : (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 shrink-0" />
                   <span>Nessuna scadenza urgente prevista a breve!</span>
                 </span>
