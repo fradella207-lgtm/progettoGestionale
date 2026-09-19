@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Database,
   LogOut,
-  Crown
+  Crown,
+  Mail
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
@@ -28,6 +29,7 @@ interface TopRightMenuProps {
   onOpenRecap?: () => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onLogout?: () => void;
+  onOpenFeedback?: () => void;
 }
 
 export const TopRightMenu: React.FC<TopRightMenuProps> = ({
@@ -42,7 +44,8 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onMarkAllNotificationsRead,
   onOpenRecap,
   onOpenUpgradeModal,
-  onLogout
+  onLogout,
+  onOpenFeedback
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -304,7 +307,37 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#2563eb] transition-colors" />
             </button>
 
-            {/* 4. DISCONNETTI */}
+            {/* 4. SEGNALAZIONI & MIGLIORAMENTI (Posizionato subito dopo Account & Cloud Sync) */}
+            <button
+              id="menu-item-feedback"
+              onClick={() => {
+                setIsOpen(false);
+                if (onOpenFeedback) {
+                  onOpenFeedback();
+                } else {
+                  onOpenSettings();
+                }
+              }}
+              className="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 group-hover:bg-indigo-100 transition-colors">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-[#0f172a]">Segnalazioni & Miglioramenti</span>
+                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded uppercase border border-indigo-100">
+                      Filo Diretto
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#64748b]">Suggerimenti e anomalie al proprietario</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+            </button>
+
+            {/* 5. DISCONNETTI */}
             {onLogout && (
               <button
                 id="menu-item-logout"

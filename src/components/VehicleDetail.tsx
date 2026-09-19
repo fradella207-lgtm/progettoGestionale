@@ -655,17 +655,33 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             {metrics.boardTrips.length > 0 && (
               <div 
                 onClick={() => setEffectiveSubModal('trips')}
-                className="mt-3 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between gap-3 text-xs cursor-pointer hover:bg-slate-100 transition-colors"
+                className="mt-3.5 p-3.5 sm:p-4 bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/20 dark:hover:bg-slate-900 transition-all shadow-2xs group select-none"
               >
-                <div className="flex items-center gap-2">
-                  <Gauge className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span className="font-semibold text-slate-700">
-                    {metrics.boardTrips.length} Cicli Pieno-Pieno calcolati: media <strong>{metrics.kmPerUnit} km/{fuelUnit}</strong>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                    <Gauge className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                        Cicli del Pieno (Pieno-Pieno)
+                      </span>
+                      <span className="text-[10px] font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                        {metrics.boardTrips.length} {metrics.boardTrips.length === 1 ? 'Ciclo' : 'Cicli'}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                      Media reale certificata: <strong className="text-slate-800 dark:text-slate-200 font-extrabold">{metrics.kmPerUnit} km/{fuelUnit}</strong> ({metrics.unitPer100Km} {fuelUnit}/100km)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-auto pt-1 sm:pt-0">
+                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 flex items-center gap-1 transition-colors">
+                    <span>Analisi & Grafici</span>
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </div>
-                <span className="text-indigo-600 font-bold flex items-center gap-0.5">
-                  Vedi dettagli <ChevronRight className="w-3.5 h-3.5" />
-                </span>
               </div>
             )}
           </div>

@@ -259,11 +259,22 @@ export default function App() {
   const [editingMaintenance, setEditingMaintenance] = useState<MaintenanceRecord | null>(null);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState<'general' | 'feedback' | 'account'>('general');
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
   const [recapInitialVehicleId, setRecapInitialVehicleId] = useState<string | undefined>(undefined);
+
+  const handleOpenSettings = () => {
+    setSettingsInitialSection('general');
+    setIsSettingsModalOpen(true);
+  };
+
+  const handleOpenFeedback = () => {
+    setSettingsInitialSection('feedback');
+    setIsSettingsModalOpen(true);
+  };
 
   // 8. USER TIER & PAYWALL STATE (FREEMIUM: FREE vs PRO)
   const [userTier, setUserTier] = useState<UserTier>(() => getStoredUserTier());
@@ -1094,7 +1105,8 @@ export default function App() {
           setVehicleToEdit(selectedVehicle);
           setIsAddCarModalOpen(true);
         }}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onOpenSettings={handleOpenSettings}
+        onOpenFeedback={handleOpenFeedback}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenAccount={() => setIsAccountModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -1344,6 +1356,8 @@ export default function App() {
         settings={settings}
         vehicles={vehicles}
         userTier={userTier}
+        account={account}
+        initialSection={settingsInitialSection}
         onSaveSettings={(newSettings) => {
           setSettings(newSettings);
           showToast('Impostazioni salvate con successo!', 'success');
@@ -1352,6 +1366,10 @@ export default function App() {
         onImportGarage={handleImportGarage}
         onOpenUpgradeModal={handleOpenUpgradeModal}
         onToggleUserTier={handleToggleUserTier}
+        onOpenAccount={() => {
+          setIsSettingsModalOpen(false);
+          setIsAccountModalOpen(true);
+        }}
       />
 
       <NotificationsModal 

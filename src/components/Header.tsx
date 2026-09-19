@@ -34,6 +34,7 @@ interface HeaderProps {
   onLogout: () => void;
   onToggleThemeMode?: () => void;
   onChangeLanguage?: (lang: 'it' | 'en') => void;
+  onOpenFeedback?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -55,7 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUpgradeModal,
   onLogout,
   onToggleThemeMode,
-  onChangeLanguage
+  onChangeLanguage,
+  onOpenFeedback
 }) => {
   const lang = settings.language || 'it';
   const isDark = settings.themeMode === 'dark';
@@ -226,6 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
           onOpenRecap={onOpenRecap}
           onOpenUpgradeModal={onOpenUpgradeModal}
           onLogout={onLogout}
+          onOpenFeedback={onOpenFeedback}
         />
       </div>
     </nav>

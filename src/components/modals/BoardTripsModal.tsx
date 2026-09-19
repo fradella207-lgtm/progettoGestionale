@@ -129,29 +129,29 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
     >
       
       {/* STICKY TOP APP BAR - Clean & Solid with safe area padding, no blur */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2.5 sm:pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs select-none">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3.5 sm:px-8 pt-[max(0.6rem,env(safe-area-inset-top))] pb-3 sm:pb-3.5 flex items-center justify-between gap-2 shrink-0 shadow-2xs select-none">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 text-xs font-black border border-slate-200 transition-all cursor-pointer shrink-0 group shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 text-xs font-black border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shrink-0 group shadow-2xs"
             title={returnTo === 'refuels' ? 'Torna al registro carburante' : 'Torna alla scheda veicolo'}
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-700" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform text-slate-700 dark:text-slate-300" />
             <span>{returnTo === 'refuels' ? 'Carburante' : 'Indietro'}</span>
           </button>
 
-          <div className="h-5 w-px bg-slate-200 hidden xs:block shrink-0" />
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 hidden xs:block shrink-0" />
 
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate flex items-center gap-2">
-              <span>Computer di Bordo & Trip</span>
-              <span className="bg-slate-100 text-slate-700 text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-slate-200">
+            <h1 className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-tight truncate flex items-center gap-2">
+              <span>Cicli del Pieno (Pieno-Pieno)</span>
+              <span className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10.5px] font-black px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
                 {allTrips.length} {allTrips.length === 1 ? 'Ciclo' : 'Cicli'}
               </span>
             </h1>
-            <p className="text-[11px] text-slate-500 truncate">
-              {vehicle.brand} {vehicle.model} {vehicle.plate ? `• ${vehicle.plate}` : ''}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              {vehicle.brand} {vehicle.model} {vehicle.plate ? `• ${vehicle.plate}` : ''} • Calcolo consumi reali da contachilometri
             </p>
           </div>
         </div>
@@ -160,46 +160,46 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
       {/* MAIN PAGE BODY */}
       <main className="max-w-5xl mx-auto w-full px-3.5 sm:px-8 pt-4 pb-28 sm:pb-16 space-y-5 flex-1 flex flex-col">
         
-        {/* KPI CARDS (LIGHT & MINIMAL WITH CLEAN ROUNDING) */}
+        {/* KPI CARDS (CLEAN, ELEGANT, BALANCED NEUTRALS) */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/70 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Cicli Pieno</span>
-            <span className="text-xl sm:text-2xl font-black text-slate-900 block mt-1">
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">Cicli Certificati</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white block mt-1">
               {allTrips.length}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
-              Intervalli certificati
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
+              Intervalli pieno-pieno
             </span>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/70 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-indigo-600 block tracking-wider">Consumo Medio</span>
-            <span className="text-xl sm:text-2xl font-black text-indigo-600 block mt-1">
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 block tracking-wider">Consumo Medio</span>
+            <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 block mt-1">
               {safeAverageKmPerUnit > 0 ? safeAverageKmPerUnit.toFixed(1) : '--'}{' '}
-              <span className="text-xs font-bold text-indigo-500">km/{unitLabel}</span>
+              <span className="text-xs font-bold text-blue-500 dark:text-blue-400">km/{unitLabel}</span>
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
               {safeAverageUnitPer100Km > 0 ? safeAverageUnitPer100Km.toFixed(2) : '--'} {unitLabel}/100km
             </span>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/70 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-emerald-600 block tracking-wider">Autonomia Media</span>
-            <span className="text-xl sm:text-2xl font-black text-emerald-600 block mt-1">
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-300 block tracking-wider">Autonomia Media</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white block mt-1">
               {Math.round(metrics.avgTripDistanceKm).toLocaleString('it-IT')}{' '}
-              <span className="text-xs font-bold text-emerald-500">km</span>
+              <span className="text-xs font-bold text-slate-500">km</span>
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
-              Distanza per pieno
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
+              Distanza media per ciclo
             </span>
           </div>
 
-          <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/70 shadow-2xs">
-            <span className="text-[10px] uppercase font-bold text-amber-600 block tracking-wider">Spesa Media Trip</span>
-            <span className="text-xl sm:text-2xl font-black text-amber-600 block mt-1">
+          <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-300 block tracking-wider">Costo Medio Ciclo</span>
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white block mt-1">
               {settings.currency} {metrics.avgTripCost.toFixed(2)}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
               {metrics.fuelCostPerKm} {settings.currency}/km
             </span>
           </div>
@@ -207,46 +207,46 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
         {/* INTERACTIVE DAILY / CHRONOLOGICAL TREND CHART */}
         {chronologicalTrips.length > 0 && (
-          <section className="bg-white border border-slate-200/70 rounded-2xl p-4 sm:p-6 shadow-2xs flex flex-col gap-4">
+          <section className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xs flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-indigo-600" />
-                    Andamento Cronologico dei Viaggi
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    Andamento Cronologico dei Cicli
                   </h3>
                   {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-lg shadow-2xs">
-                      <span className="w-3 border-b-2 border-dashed border-indigo-500 inline-block" />
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-lg shadow-2xs">
+                      <span className="w-3 border-b-2 border-dashed border-blue-500 inline-block" />
                       Media: {safeAverageKmPerUnit.toFixed(1)} km/{unitLabel}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Evoluzione giorno per giorno tra i vari rifornimenti a pieno
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Evoluzione dei consumi e delle percorrenze tra i vari pieni consecutivi
                 </p>
               </div>
 
               {/* Metric Selector Toggle */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/60 text-xs font-bold">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl self-start sm:self-auto border border-slate-200/60 dark:border-slate-700 text-xs font-bold">
                 <button
                   type="button"
                   onClick={() => setChartMetric('efficiency')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     chartMetric === 'efficiency'
-                      ? 'bg-white text-indigo-700 shadow-2xs font-extrabold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-extrabold'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Efficienza (km/{unitLabel})
+                  Consumo (km/{unitLabel})
                 </button>
                 <button
                   type="button"
                   onClick={() => setChartMetric('distance')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     chartMetric === 'distance'
-                      ? 'bg-white text-indigo-700 shadow-2xs font-extrabold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-extrabold'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Distanza (km)
@@ -254,10 +254,10 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setChartMetric('spent')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                     chartMetric === 'spent'
-                      ? 'bg-white text-indigo-700 shadow-2xs font-extrabold'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs font-extrabold'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Spesa ({settings.currency})
@@ -267,30 +267,30 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
             {/* Visual Enhanced Timeline Bar/Chart */}
             <div className="w-full pt-6 pb-2 overflow-x-auto">
-              <div className="h-48 sm:h-56 min-w-[340px] w-full flex items-end gap-2.5 sm:gap-4 px-3 sm:px-6 border-b border-slate-200 relative bg-gradient-to-b from-slate-50/50 to-transparent rounded-t-2xl">
+              <div className="h-48 sm:h-56 min-w-[340px] w-full flex items-end gap-2.5 sm:gap-4 px-3 sm:px-6 border-b border-slate-200 dark:border-slate-800 relative bg-slate-50/50 dark:bg-slate-950/30 rounded-t-2xl">
                 
                 {/* Horizontal grid lines for scale */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-4 px-1 opacity-40 z-0">
-                  <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-4 px-1 opacity-50 z-0">
+                  <div className="w-full border-b border-dashed border-slate-200 dark:border-slate-800 flex justify-end">
                     <span className="text-[9px] font-mono text-slate-400 -mt-2">
                       {chartMetric === 'efficiency' ? `${chartHeadroomEfficiency.toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(chartHeadroomDistance)} km` : `${settings.currency} ${Math.round(chartHeadroomSpent)}`)}
                     </span>
                   </div>
-                  <div className="w-full border-b border-dashed border-slate-200 flex justify-end">
+                  <div className="w-full border-b border-dashed border-slate-200 dark:border-slate-800 flex justify-end">
                     <span className="text-[9px] font-mono text-slate-400 -mt-2">
                       {chartMetric === 'efficiency' ? `${(chartHeadroomEfficiency * 0.5).toFixed(0)} km/${unitLabel}` : (chartMetric === 'distance' ? `${Math.round(chartHeadroomDistance * 0.5)} km` : `${settings.currency} ${Math.round(chartHeadroomSpent * 0.5)}`)}
                     </span>
                   </div>
-                  <div className="w-full border-b border-slate-200" />
+                  <div className="w-full border-b border-slate-200 dark:border-slate-800" />
                 </div>
 
                 {/* Horizontal reference dashed line for average (clean line without overlapping badge on bars) */}
                 {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
                   <div 
-                    className="absolute left-0 right-0 border-b-2 border-dashed border-indigo-400/80 pointer-events-none z-10 transition-all duration-300"
+                    className="absolute left-0 right-0 border-b-2 border-dashed border-blue-400 dark:border-blue-500 pointer-events-none z-10 transition-all duration-300 opacity-85"
                     style={{ bottom: `${Math.min(80, Math.max(10, (safeAverageKmPerUnit / chartHeadroomEfficiency) * 100))}%` }}
                   >
-                    <span className="absolute -top-4 left-2 text-[9px] font-bold text-indigo-600 bg-white/95 px-1.5 py-0.2 rounded border border-indigo-100 shadow-2xs">
+                    <span className="absolute -top-4 left-2 text-[9px] font-bold text-blue-700 dark:text-blue-300 bg-white dark:bg-slate-900 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-800 shadow-2xs">
                       Media {safeAverageKmPerUnit.toFixed(1)}
                     </span>
                   </div>
@@ -319,7 +319,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                   const isExpanded = expandedTripId === trip.id;
                   const dateFormatted = trip.endDate 
                     ? new Date(trip.endDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-                    : `Trip #${trip.tripIndex}`;
+                    : `Ciclo #${trip.tripIndex}`;
 
                   const usageObj = USAGE_PRESETS.find(u => u.id === trip.usageCategory);
                   const isBest = trip.isBest && chartMetric === 'efficiency';
@@ -334,11 +334,11 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                     >
                       {/* Floating Tooltip Card */}
                       {isHovered && (
-                        <div className="absolute -top-24 z-30 bg-slate-950/95 backdrop-blur text-white text-xs p-2.5 rounded-2xl shadow-xl whitespace-nowrap pointer-events-none flex flex-col gap-1 border border-slate-700 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="absolute -top-24 z-30 bg-slate-900 text-white text-xs p-2.5 rounded-2xl shadow-xl whitespace-nowrap pointer-events-none flex flex-col gap-1 border border-slate-700 animate-in fade-in zoom-in-95 duration-150">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="font-extrabold text-indigo-300 text-[11px]">Trip #{trip.tripIndex} • {dateFormatted}</span>
+                            <span className="font-extrabold text-blue-300 text-[11px]">Ciclo #{trip.tripIndex} • {dateFormatted}</span>
                             {usageObj && (
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded bg-indigo-900/80 text-indigo-200 border border-indigo-700">
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-blue-300 border border-slate-700">
                                 {usageObj.id}
                               </span>
                             )}
@@ -356,30 +356,27 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                       )}
 
                       {/* Top Value Tag */}
-                      <span className={`text-[10px] font-extrabold transition-all duration-150 mb-1.5 ${
+                      <span className={`text-[10px] font-black transition-all duration-150 mb-1.5 ${
                         isHovered || isExpanded 
-                          ? 'text-indigo-700 scale-110 font-black' 
-                          : (isBest ? 'text-emerald-600 font-black' : 'text-slate-500')
+                          ? 'text-blue-600 dark:text-blue-400 scale-105' 
+                          : (isBest ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400')
                       }`}>
                         {valueDisplay}
                       </span>
 
                       {/* Bar Pillar */}
                       <div 
-                        className={`w-full max-w-[48px] rounded-t-xl transition-all duration-200 relative overflow-hidden shadow-2xs ${
+                        className={`w-full max-w-[42px] rounded-t-xl transition-all duration-200 relative overflow-hidden ${
                           isHovered 
-                            ? 'bg-gradient-to-t from-indigo-700 to-indigo-500 shadow-md ring-2 ring-indigo-400 scale-y-[1.02]' 
+                            ? 'bg-blue-600 dark:bg-blue-500 shadow-md ring-2 ring-blue-300 dark:ring-blue-600 scale-y-[1.02]' 
                             : (isBest 
-                                ? 'bg-gradient-to-t from-emerald-600 to-teal-400 shadow-emerald-200' 
+                                ? 'bg-emerald-600 dark:bg-emerald-500 shadow-xs' 
                                 : (trip.usageCategory 
-                                    ? 'bg-gradient-to-t from-indigo-600 to-blue-500' 
-                                    : 'bg-gradient-to-t from-slate-400 to-slate-300 hover:from-indigo-500 hover:to-indigo-400'))
+                                    ? 'bg-blue-600/90 dark:bg-blue-500/90' 
+                                    : 'bg-slate-300 dark:bg-slate-700 hover:bg-blue-500/70 transition-colors'))
                         }`}
                         style={{ height: `${heightPercent}%` }}
                       >
-                        {/* Shimmer line on top */}
-                        <div className="w-full h-1 bg-white/40 absolute top-0 left-0 right-0" />
-
                         {/* Optional small category icon on bar */}
                         {usageObj && (
                           <div className="absolute top-1.5 left-1/2 -translate-x-1/2 text-white/90">
@@ -390,7 +387,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
                       {/* X-Axis Date Label */}
                       <span className={`text-[10px] font-bold transition-colors mt-2 text-center truncate max-w-[54px] ${
-                        isHovered ? 'text-indigo-700 font-extrabold' : 'text-slate-500'
+                        isHovered ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-500 dark:text-slate-400'
                       }`}>
                         {dateFormatted}
                       </span>
@@ -401,31 +398,31 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
             </div>
 
             {/* Chart Legend / Notes */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-3 flex-wrap font-medium">
                 {chartMetric === 'efficiency' && safeAverageKmPerUnit > 0 && (
-                  <span className="flex items-center gap-1.5 font-bold text-indigo-700">
-                    <span className="w-4 border-b-2 border-dashed border-indigo-500 inline-block" />
+                  <span className="flex items-center gap-1.5 font-bold text-blue-600 dark:text-blue-400">
+                    <span className="w-4 border-b-2 border-dashed border-blue-500 inline-block" />
                     <span>Media ({safeAverageKmPerUnit.toFixed(1)} km/{unitLabel})</span>
                   </span>
                 )}
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500" />
-                  <span>Con Categoria Utilizzo</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-500" />
+                  <span>Con Categoria</span>
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>Standard</span>
                 </span>
                 {metrics.bestTrip && (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400" />
-                    <span className="font-bold text-emerald-700">Migliore Efficienza</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 dark:bg-emerald-500" />
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">Migliore Efficienza</span>
                   </span>
                 )}
               </div>
-              <span className="text-[10.5px] italic text-slate-400">
-                Clicca su una colonna per espandere il dettaglio del ciclo
+              <span className="text-[10.5px] text-slate-400 dark:text-slate-500">
+                Tocca una colonna per espandere il dettaglio del ciclo
               </span>
             </div>
           </section>
@@ -434,12 +431,12 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
         {/* USAGE CLASSIFICATION FILTER BAR */}
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-slate-400" />
               Filtra per Classificazione Utilizzo:
             </span>
-            <span className="text-xs text-slate-400">
-              {filteredTrips.length} di {allTrips.length} trip
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              {filteredTrips.length} di {allTrips.length} cicli
             </span>
           </div>
 
@@ -449,8 +446,8 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
               onClick={() => setSelectedUsageFilter('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
                 selectedUsageFilter === 'all'
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xs'
+                  : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800'
               }`}
             >
               Tutti ({allTrips.length})
@@ -468,14 +465,14 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                   onClick={() => setSelectedUsageFilter(preset.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
                     selectedUsageFilter === preset.id
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   <Icon className="w-3 h-3" />
                   <span>{preset.label.split(' / ')[0]}</span>
-                  <span className={`text-[10px] px-1 rounded-md font-bold ${
-                    selectedUsageFilter === preset.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold ${
+                    selectedUsageFilter === preset.id ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                   }`}>
                     {count}
                   </span>
@@ -488,50 +485,50 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
         {/* DETAILED TRIPS LIST WITH INLINE USAGE CLASSIFIER */}
         <section className="space-y-3 pb-8 flex-1">
           {filteredTrips.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-10 text-center flex flex-col items-center justify-center shadow-2xs">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-10 text-center flex flex-col items-center justify-center shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 border border-blue-100 dark:border-blue-900/50">
                 <Route className="w-6 h-6" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Nessun trip trovato</h3>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Nessun ciclo trovato</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1">
                 {selectedUsageFilter !== 'all' 
-                  ? 'Nessun trip associato a questa categoria di utilizzo. Seleziona "Tutti" o assegna la categoria a uno dei tuoi cicli di rifornimento.'
-                  : 'Registra almeno due rifornimenti con "Pieno" per calcolare i tuoi trip di bordo.'}
+                  ? 'Nessun ciclo associato a questa categoria di utilizzo. Seleziona "Tutti" o assegna la categoria a uno dei tuoi cicli.'
+                  : 'Registra almeno due rifornimenti con tipo "Pieno" per calcolare i tuoi cicli di consumo reale.'}
               </p>
             </div>
           ) : (
             filteredTrips.map((trip) => {
               const isExpanded = expandedTripId === trip.id;
-              const isEditingUsage = editingUsageTripId === trip.id;
               const currentUsagePreset = USAGE_PRESETS.find(u => u.id === trip.usageCategory);
               const UsageIcon = currentUsagePreset ? currentUsagePreset.icon : Tag;
 
               return (
                 <div 
                   key={trip.id}
-                  className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs ${
+                  className={`bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs ${
                     trip.isBest 
-                      ? 'border-emerald-300/80 hover:border-emerald-400' 
-                      : 'border-slate-200/70 hover:border-indigo-300'
+                      ? 'border-emerald-300 dark:border-emerald-700/80 hover:border-emerald-500' 
+                      : 'border-slate-200/80 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600'
                   }`}
                 >
                   {/* Trip Summary Row */}
                   <div 
                     onClick={() => toggleExpand(trip.id)}
-                    className="p-4 sm:p-4.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/50 transition-colors"
+                    className="p-4 sm:p-4.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors select-none"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 font-extrabold text-xs ${
+                      <div className={`w-10 h-10 rounded-xl border flex flex-col items-center justify-center shrink-0 font-black text-xs ${
                         trip.isBest 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                          : 'bg-slate-100 text-slate-700 border-slate-200'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' 
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                       }`}>
-                        #{trip.tripIndex}
+                        <span className="text-[9px] uppercase font-bold opacity-60">Ciclo</span>
+                        <span className="leading-tight font-black">#{trip.tripIndex}</span>
                       </div>
 
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-extrabold text-slate-900">
+                          <span className="text-sm font-extrabold text-slate-900 dark:text-white">
                             +{trip.distanceKm.toLocaleString('it-IT')} km
                           </span>
                           
@@ -542,29 +539,29 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                               <span>{currentUsagePreset.label.split(' / ')[0]}</span>
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-medium italic">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium italic">
                               Utilizzo non specificato
                             </span>
                           )}
 
                           {trip.isBest && (
-                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md border border-emerald-200">
+                            <span className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-1.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                               Miglior Efficienza
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 flex-wrap">
-                          <span className="font-semibold text-slate-600">
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                          <span className="font-semibold text-slate-600 dark:text-slate-300">
                             {trip.startDate ? new Date(trip.startDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }) : ''} 
                             {' → '}
                             {new Date(trip.endDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </span>
-                          <span className="text-slate-300">•</span>
-                          <span className="font-bold text-indigo-600">
+                          <span className="text-slate-300 dark:text-slate-600">•</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">
                             {trip.kmPerUnit.toFixed(1)} km/{unitLabel}
                           </span>
-                          <span className="text-slate-400">
+                          <span className="text-slate-400 dark:text-slate-500">
                             ({trip.unitPer100Km.toFixed(2)} {unitLabel}/100km)
                           </span>
                         </div>
@@ -573,15 +570,15 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
                     <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                       <div className="text-right block">
-                        <span className="text-xs sm:text-sm font-black text-slate-900 block">
+                        <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white block">
                           {settings.currency} {trip.totalSpent.toFixed(2)}
                         </span>
-                        <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 block">
+                        <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 dark:text-slate-500 block">
                           {trip.costPerKm} {settings.currency}/km
                         </span>
                       </div>
 
-                      <div className="p-1 rounded-lg text-slate-400 hover:text-slate-600 bg-slate-100">
+                      <div className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800">
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </div>
                     </div>
@@ -589,13 +586,13 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
                   {/* Expanded Breakdown & Utilizzo Picker */}
                   {isExpanded && (
-                    <div className="px-4 sm:px-5 pb-4 pt-2 border-t border-slate-100 bg-slate-50/40 space-y-3.5">
+                    <div className="px-4 sm:px-5 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 space-y-3.5">
                       
                       {/* USAGE ASSIGNMENT / CLASSIFICATION BAR */}
-                      <div className="p-3 bg-white rounded-xl border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                         <div className="flex items-center gap-2">
-                          <Tag className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                          <span className="text-xs font-bold text-slate-700">Classifica l&apos;utilizzo di questo viaggio:</span>
+                          <Tag className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Classifica l&apos;utilizzo di questo ciclo:</span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -612,8 +609,8 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                                 }}
                                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
                                   isSelected
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs font-extrabold'
-                                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs font-extrabold'
+                                    : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                                 }`}
                               >
                                 <Icon className="w-3 h-3" />
@@ -626,7 +623,7 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
 
                       {/* Associated Refuels for this Trip */}
                       <div>
-                        <h4 className="text-[10.5px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">
+                        <h4 className="text-[10.5px] font-extrabold uppercase text-slate-400 dark:text-slate-500 tracking-wider mb-2">
                           Rifornimenti del Ciclo ({trip.refuels.length}):
                         </h4>
 
@@ -634,24 +631,24 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
                           {trip.refuels.map((r, rIdx) => (
                             <div 
                               key={r.id || rIdx}
-                              className="bg-white p-2.5 rounded-xl border border-slate-200/60 flex items-center justify-between text-xs"
+                              className="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800">
+                                <span className="font-bold text-slate-800 dark:text-slate-200">
                                   {r.date ? new Date(r.date).toLocaleDateString('it-IT') : 'Data n.d.'}
                                 </span>
-                                <span className="text-slate-300">•</span>
-                                <span className="font-medium text-slate-600">
+                                <span className="text-slate-300 dark:text-slate-600">•</span>
+                                <span className="font-medium text-slate-600 dark:text-slate-400">
                                   {Number(r.km).toLocaleString('it-IT')} km
                                 </span>
                                 <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded ${
-                                  r.type === 'full' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  r.type === 'full' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                                 }`}>
                                   {r.type === 'full' ? 'Pieno' : 'Parziale'}
                                 </span>
                               </div>
 
-                              <div className="text-right font-bold text-slate-800">
+                              <div className="text-right font-bold text-slate-800 dark:text-slate-200">
                                 {r.quantity} {unitLabel} • {settings.currency} {Number(r.price).toFixed(2)}
                               </div>
                             </div>

@@ -26,9 +26,12 @@ import {
   Send,
   Mail,
   MessageSquare,
-  ExternalLink
+  ExternalLink,
+  User,
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
-import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage, UserTier, ProFeatureName } from '../../types';
+import { AppSettings, Vehicle, AppThemeColor, AppThemeMode, AppLanguage, UserTier, ProFeatureName, UserAccount } from '../../types';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 import { 
   exportAllVehiclesToJSON, 
@@ -57,11 +60,14 @@ interface SettingsModalProps {
   settings: AppSettings;
   vehicles: Vehicle[];
   userTier?: UserTier;
+  account?: UserAccount;
+  initialSection?: 'general' | 'feedback' | 'account';
   onSaveSettings: (newSettings: AppSettings) => void;
   onResetGarage: () => void;
   onImportGarage: (importedVehicles: Vehicle[]) => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onToggleUserTier?: () => void;
+  onOpenAccount?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -70,11 +76,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   vehicles,
   userTier = 'FREE',
+  account,
+  initialSection = 'general',
   onSaveSettings,
   onResetGarage,
   onImportGarage,
   onOpenUpgradeModal,
-  onToggleUserTier
+  onToggleUserTier,
+  onOpenAccount
 }) => {
   const [unitDistance, setUnitDistance] = useState<'km' | 'mi'>(settings.unitDistance);
   const [currency, setCurrency] = useState<'€' | '$' | '£'>(settings.currency);
@@ -85,6 +94,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [themeColor, setThemeColor] = useState<AppThemeColor>(settings.themeColor || 'indigo');
   const [themeMode, setThemeMode] = useState<AppThemeMode>(settings.themeMode || 'light');
   const [language, setLanguage] = useState<AppLanguage>(settings.language || 'it');
+
+  // Scroll to section when requested
+  useEffect(() => {
+    if (isOpen && initialSection === 'feedback') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById('section-feedback');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, initialSection]);
 
   // Feedback state for application improvements & reports to owner (my360garage@gmail.com)
   const [feedbackType, setFeedbackType] = useState<'improvement' | 'bug' | 'feature' | 'other'>('improvement');
@@ -715,8 +735,71 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
 
-          {/* SECTION 5: SEGNALAZIONI & MIGLIORAMENTI PER IL PROPRIETARIO */}
+          {/* SECTION 5: ACCOUNT & CLOUD SYNC */}
           <div className="flex flex-col gap-3.5 border-t border-[#e2e8f0] pt-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 shadow-2xs mt-0.5">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center gap-2">
+                    <span>Account & Cloud Sync</span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                      account?.isLoggedIn 
+                        ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
+                        : 'text-purple-700 bg-purple-50 border border-purple-200'
+                    }`}>
+                      {account?.isLoggedIn ? 'Cloud Connesso' : 'Profilo Locale'}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
+                    Gestione profilo conducente, credenziali di accesso e sincronizzazione dei dati del garage su cloud.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-sm text-purple-700 shrink-0 shadow-2xs">
+                  {account?.name ? account.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-extrabold text-slate-900 truncate">
+                      {account?.name || 'Utente My360Garage'}
+                    </span>
+                    <span className={`text-[9.5px] font-black px-1.5 py-0.2 rounded uppercase ${
+                      userTier === 'PRO' ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {userTier === 'PRO' ? 'PRO ATTIVO' : 'FREE'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {account?.email || 'Nessun account cloud collegato (salvataggio locale offline)'}
+                  </p>
+                </div>
+              </div>
+
+              {onOpenAccount && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAccount();
+                  }}
+                  className="px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer active:scale-95"
+                >
+                  <span>Gestisci</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* SECTION 6: SEGNALAZIONI & MIGLIORAMENTI PER IL PROPRIETARIO (POSIZIONATO DOPO ACCOUNT & CLOUD SYNC) */}
+          <div id="section-feedback" className="flex flex-col gap-3.5 border-t border-[#e2e8f0] pt-4 scroll-mt-6">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 shadow-2xs mt-0.5">
@@ -730,7 +813,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </span>
                   </h4>
                   <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
-                    Hai un suggerimento per migliorare My360Garage o hai riscontrato un'anomalia? Scrivi direttamente a me proprietario dell'applicazione (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 font-bold hover:underline">{OWNER_EMAIL}</a>).
+                    Hai un suggerimento per migliorare My360Garage o hai riscontrato un&apos;anomalia? Scrivi direttamente a me proprietario dell&apos;applicazione (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 font-bold hover:underline">{OWNER_EMAIL}</a>).
                   </p>
                 </div>
               </div>
