@@ -152,8 +152,8 @@ export const MaintenancesRegistryModal: React.FC<MaintenancesRegistryModalProps>
       className="fixed inset-0 z-[70] bg-[#f8fafc] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150"
     >
       
-      {/* STICKY TOP APP BAR - Clean & Minimal with ONLY the Top-Left Back Arrow */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs px-4 sm:px-8 py-3.5 flex items-center justify-between gap-3 shrink-0">
+      {/* STICKY TOP APP BAR - Clean, Solid & Minimal with safe area padding */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-2xs px-3 sm:px-8 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2.5 sm:pb-3 flex items-center justify-between gap-3 shrink-0 select-none">
         <div className="flex items-center gap-3 min-w-0">
           {/* Top-Left Indietro Button */}
           <button

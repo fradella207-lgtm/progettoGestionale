@@ -36,6 +36,7 @@ import { formatVinForDisplay } from '../utils/vinValidator';
 import { exportVehiclePassportCSV, openPrintableDigitalPassport } from '../utils/digitalPassportExport';
 import { ProBadge } from './common/ProBadge';
 import { useSwipeBack } from '../hooks/useSwipeBack';
+import { VehicleSubModal } from '../utils/navigation';
 
 interface VehicleDetailProps {
   vehicle: Vehicle;
@@ -43,6 +44,8 @@ interface VehicleDetailProps {
   settings: AppSettings;
   userTier?: UserTier;
   initialTab?: 'overview' | 'documents' | 'ai';
+  activeSubModal?: VehicleSubModal | null;
+  onOpenSubModal?: (modal: VehicleSubModal | null) => void;
   onSelectVehicle?: (vehicleId: string) => void;
   onBackToGarage?: () => void;
   onUpdateVehicle?: (updated: Vehicle) => void;
@@ -63,6 +66,8 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   settings,
   userTier = 'FREE',
   initialTab = 'overview',
+  activeSubModal,
+  onOpenSubModal,
   onBackToGarage,
   onUpdateVehicle,
   onOpenEditCar,
@@ -129,10 +134,19 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   const [activeRegistryTab, setActiveRegistryTab] = useState<'refuels' | 'maintenances'>('refuels');
   const [selectedDetailData, setSelectedDetailData] = useState<DetailModalData | null>(null);
 
-  // Modals for Registries and Board Trips
-  const [isBoardTripsModalOpen, setIsBoardTripsModalOpen] = useState(false);
-  const [isRefuelsRegistryOpen, setIsRefuelsRegistryOpen] = useState(false);
-  const [isMaintenancesRegistryOpen, setIsMaintenancesRegistryOpen] = useState(false);
+  // Modals for Registries and Board Trips synchronized with browser history and gesture back
+  const [internalSubModal, setInternalSubModal] = useState<'trips' | 'refuels' | 'maintenances' | null>(null);
+
+  const effectiveSubModal = activeSubModal !== undefined ? activeSubModal : internalSubModal;
+  const setEffectiveSubModal = (modal: 'trips' | 'refuels' | 'maintenances' | null) => {
+    setInternalSubModal(modal);
+    onOpenSubModal?.(modal);
+  };
+
+  const isBoardTripsModalOpen = effectiveSubModal === 'trips';
+  const isRefuelsRegistryOpen = effectiveSubModal === 'refuels';
+  const isMaintenancesRegistryOpen = effectiveSubModal === 'maintenances';
+
   const [tripsReturnSource, setTripsReturnSource] = useState<'detail' | 'refuels'>('detail');
   const [copiedVin, setCopiedVin] = useState(false);
   const [showPassportMenu, setShowPassportMenu] = useState(false);
@@ -140,23 +154,29 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
   // Swipe back to garage when in vehicle detail and no modal is active
   useSwipeBack({
     onBack: () => {
-      if (onBackToGarage) onBackToGarage();
+      if (selectedDetailData) {
+        setSelectedDetailData(null);
+      } else if (effectiveSubModal) {
+        setEffectiveSubModal(null);
+      } else if (onBackToGarage) {
+        onBackToGarage();
+      }
     },
-    enabled: Boolean(onBackToGarage) && !isBoardTripsModalOpen && !isRefuelsRegistryOpen && !isMaintenancesRegistryOpen && !selectedDetailData
+    enabled: Boolean(onBackToGarage || effectiveSubModal || selectedDetailData)
   });
 
   const handleCloseBoardTrips = () => {
-    setIsBoardTripsModalOpen(false);
     if (tripsReturnSource === 'refuels') {
-      setIsRefuelsRegistryOpen(true);
+      setEffectiveSubModal('refuels');
       setTripsReturnSource('detail');
+    } else {
+      setEffectiveSubModal(null);
     }
   };
 
   const handleOpenBoardTripsFromRefuels = () => {
     setTripsReturnSource('refuels');
-    setIsRefuelsRegistryOpen(false);
-    setIsBoardTripsModalOpen(true);
+    setEffectiveSubModal('trips');
   };
 
   const handleCopyVin = (vinStr: string) => {
@@ -599,7 +619,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               </div>
 
               <div 
-                onClick={() => setIsRefuelsRegistryOpen(true)}
+                onClick={() => setEffectiveSubModal('refuels')}
                 className="bg-blue-50/60 hover:bg-blue-50 p-3 rounded-2xl transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between">
@@ -615,7 +635,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
               </div>
 
               <div 
-                onClick={() => setIsMaintenancesRegistryOpen(true)}
+                onClick={() => setEffectiveSubModal('maintenances')}
                 className="bg-emerald-50/60 hover:bg-emerald-50 p-3 rounded-2xl transition-colors cursor-pointer"
               >
                 <div className="flex items-center justify-between">
@@ -634,7 +654,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             {/* Cicli Pieno-Pieno (se disponibili) */}
             {metrics.boardTrips.length > 0 && (
               <div 
-                onClick={() => setIsBoardTripsModalOpen(true)}
+                onClick={() => setEffectiveSubModal('trips')}
                 className="mt-3 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between gap-3 text-xs cursor-pointer hover:bg-slate-100 transition-colors"
               >
                 <div className="flex items-center gap-2">
@@ -652,42 +672,42 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
           {/* SEZIONE STORICO MOVIMENTI (CON TOGGLE TRA RIFORNIMENTI E MANUTENZIONI) */}
           <div className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-2xs">
-            <div className="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
+            <div className="p-3 sm:p-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setActiveRegistryTab('refuels')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeRegistryTab === 'refuels'
                       ? 'bg-slate-900 text-white'
                       : 'bg-white text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  Ultimi Rifornimenti ({vehicle.refuels?.length || 0})
+                  <span>Rifornimenti <span className="text-[10.5px] opacity-75">({vehicle.refuels?.length || 0})</span></span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setActiveRegistryTab('maintenances')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeRegistryTab === 'maintenances'
                       ? 'bg-slate-900 text-white'
                       : 'bg-white text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  Ultime Manutenzioni ({vehicle.maintenances?.length || 0})
+                  <span>Manutenzioni <span className="text-[10.5px] opacity-75">({vehicle.maintenances?.length || 0})</span></span>
                 </button>
               </div>
 
               <button
                 type="button"
                 onClick={() => {
-                  if (activeRegistryTab === 'refuels') setIsRefuelsRegistryOpen(true);
-                  else setIsMaintenancesRegistryOpen(true);
+                  if (activeRegistryTab === 'refuels') setEffectiveSubModal('refuels');
+                  else setEffectiveSubModal('maintenances');
                 }}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer"
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 cursor-pointer shrink-0"
               >
-                <span>Registro completo</span>
+                <span>Registro <span className="hidden xs:inline">completo</span></span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -837,7 +857,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
       <RefuelsRegistryModal
         isOpen={isRefuelsRegistryOpen}
-        onClose={() => setIsRefuelsRegistryOpen(false)}
+        onClose={() => setEffectiveSubModal(null)}
         vehicle={vehicle}
         metrics={metrics}
         settings={settings}
@@ -856,7 +876,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
 
       <MaintenancesRegistryModal
         isOpen={isMaintenancesRegistryOpen}
-        onClose={() => setIsMaintenancesRegistryOpen(false)}
+        onClose={() => setEffectiveSubModal(null)}
         vehicle={vehicle}
         settings={settings}
         onOpenAddMaintenance={onOpenAddMaintenance}

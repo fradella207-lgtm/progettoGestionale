@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Vehicle, RefuelRecord, MaintenanceRecord, AppNotification, AppSettings, UserAccount, EnergySourceType, Station, UserTier, ProFeatureName } from './types';
 import { SEED_GARAGE } from './data/seedGarage';
 import { Header } from './components/Header';
@@ -24,6 +24,8 @@ import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './fi
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
 import { syncSharedVehicleToCloud, leaveOrRevokeSharedGarage, subscribeToSharedGarage } from './utils/sharedGarageService';
+import { parseCurrentRoute, pushAppRoute, VehicleSubModal } from './utils/navigation';
+import { App as CapApp } from '@capacitor/app';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Helper to generate dynamic notifications strictly based on the user's real vehicles
@@ -162,11 +164,13 @@ export default function App() {
     return [];
   });
 
-  // 2. VIEW NAVIGATION STATE: 'garage' | 'my_car' | 'detail' | 'stations'
-  const [currentView, setCurrentView] = useState<'garage' | 'my_car' | 'detail' | 'stations'>('garage');
+  // 2. VIEW NAVIGATION STATE: 'garage' | 'my_car' | 'detail' | 'stations' with URL & Multi-Page Routing
+  const initialRoute = useMemo(() => parseCurrentRoute(vehicles[0]?.id), []);
+  const [currentView, setCurrentView] = useState<'garage' | 'my_car' | 'detail' | 'stations'>(initialRoute.view || 'garage');
   const [selectedCarId, setSelectedCarId] = useState<string>(() => {
-    return vehicles[0]?.id || '';
+    return initialRoute.vehicleId || vehicles[0]?.id || '';
   });
+  const [activeSubModal, setActiveSubModal] = useState<VehicleSubModal | null>(initialRoute.subModal || null);
 
   // 3. APP SETTINGS STATE
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -565,6 +569,83 @@ export default function App() {
     }
   }, []);
 
+  // Multi-page route synchronization from browser hash / history popstate
+  const syncRouteFromLocation = useCallback(() => {
+    const route = parseCurrentRoute(vehicles[0]?.id);
+    if (route.view) {
+      setCurrentView(route.view);
+    }
+    if (route.vehicleId) {
+      setSelectedCarId(route.vehicleId);
+    }
+    setActiveSubModal(route.subModal || null);
+    if (route.globalModal === 'settings') setIsSettingsModalOpen(true);
+    else if (route.globalModal === 'notifications') setIsNotificationsModalOpen(true);
+    else if (route.globalModal === 'account') setIsAccountModalOpen(true);
+    else if (route.globalModal === 'add-car') setIsAddCarModalOpen(true);
+  }, [vehicles]);
+
+  useEffect(() => {
+    window.addEventListener('popstate', syncRouteFromLocation);
+    window.addEventListener('hashchange', syncRouteFromLocation);
+    window.addEventListener('app-route-change', syncRouteFromLocation);
+    return () => {
+      window.removeEventListener('popstate', syncRouteFromLocation);
+      window.removeEventListener('hashchange', syncRouteFromLocation);
+      window.removeEventListener('app-route-change', syncRouteFromLocation);
+    };
+  }, [syncRouteFromLocation]);
+
+  // Native Android Hardware & Gesture Back Button listener via Capacitor
+  useEffect(() => {
+    let listenerHandle: any = null;
+    try {
+      CapApp.addListener('backButton', () => {
+        if (isAddCarModalOpen) {
+          setIsAddCarModalOpen(false);
+        } else if (isSettingsModalOpen) {
+          setIsSettingsModalOpen(false);
+        } else if (isNotificationsModalOpen) {
+          setIsNotificationsModalOpen(false);
+        } else if (isAccountModalOpen) {
+          setIsAccountModalOpen(false);
+        } else if (isAuthModalOpen) {
+          setIsAuthModalOpen(false);
+        } else if (isPaywallOpen) {
+          setIsPaywallOpen(false);
+        } else if (isRecapModalOpen) {
+          setIsRecapModalOpen(false);
+        } else if (isSharedGarageModalOpen) {
+          setIsSharedGarageModalOpen(false);
+        } else if (isRefuelModalOpen) {
+          setIsRefuelModalOpen(false);
+        } else if (isMaintenanceModalOpen) {
+          setIsMaintenanceModalOpen(false);
+        } else if (activeSubModal) {
+          setActiveSubModal(null);
+          pushAppRoute({ view: 'detail', vehicleId: selectedCarId }, true);
+        } else if (currentView !== 'garage') {
+          setCurrentView('garage');
+          pushAppRoute({ view: 'garage' }, true);
+        } else {
+          CapApp.minimizeApp();
+        }
+      }).then(handle => {
+        listenerHandle = handle;
+      }).catch(() => {});
+    } catch (e) {}
+
+    return () => {
+      if (listenerHandle?.remove) {
+        listenerHandle.remove();
+      }
+    };
+  }, [
+    isAddCarModalOpen, isSettingsModalOpen, isNotificationsModalOpen, isAccountModalOpen,
+    isAuthModalOpen, isPaywallOpen, isRecapModalOpen, isSharedGarageModalOpen,
+    isRefuelModalOpen, isMaintenanceModalOpen, activeSubModal, currentView, selectedCarId
+  ]);
+
   // Selected Active Vehicle
   const selectedVehicle = useMemo(() => {
     return vehicles.find(v => v.id === selectedCarId) || vehicles[0];
@@ -572,12 +653,37 @@ export default function App() {
 
   const [detailInitialTab, setDetailInitialTab] = useState<'overview' | 'documents' | 'ai'>('overview');
 
-  // Handler: Select vehicle and navigate to detail with optional initial tab
+  // Navigation handlers with URL history push
+  const handleNavigateGarage = () => {
+    setCurrentView('garage');
+    setActiveSubModal(null);
+    pushAppRoute({ view: 'garage' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectBottomTab = (tab: 'garage' | 'stations' | 'my_car') => {
+    setCurrentView(tab);
+    setActiveSubModal(null);
+    pushAppRoute({ view: tab });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSelectVehicle = (vehicleId: string, tab: 'overview' | 'documents' | 'ai' = 'overview') => {
     setSelectedCarId(vehicleId);
     setDetailInitialTab(tab);
     setCurrentView('detail');
+    setActiveSubModal(null);
+    pushAppRoute({ view: 'detail', vehicleId });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenSubModal = (modal: VehicleSubModal | null) => {
+    setActiveSubModal(modal);
+    if (modal) {
+      pushAppRoute({ view: 'detail', vehicleId: selectedCarId, subModal: modal });
+    } else {
+      pushAppRoute({ view: 'detail', vehicleId: selectedCarId });
+    }
   };
 
   // Handler: Open Add Car with Freemium Gate (1 vehicle max on FREE)
@@ -982,10 +1088,7 @@ export default function App() {
         settings={settings}
         account={account}
         userTier={userTier}
-        onNavigateGarage={() => {
-          setCurrentView('garage');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onNavigateGarage={handleNavigateGarage}
         onOpenAddCar={handleOpenAddCarRequest}
         onOpenEditCar={() => {
           setVehicleToEdit(selectedVehicle);
@@ -1081,8 +1184,10 @@ export default function App() {
                   settings={settings}
                   userTier={userTier}
                   initialTab={detailInitialTab}
+                  activeSubModal={activeSubModal}
+                  onOpenSubModal={handleOpenSubModal}
                   onSelectVehicle={(id) => setSelectedCarId(id)}
-                  onBackToGarage={() => setCurrentView('garage')}
+                  onBackToGarage={handleNavigateGarage}
                   onUpdateVehicle={handleDirectUpdateVehicle}
                   onOpenEditCar={() => {
                     if (selectedVehicle.isShared && selectedVehicle.sharedRole === 'member') {
@@ -1171,10 +1276,7 @@ export default function App() {
       {/* 3. BOTTOM NAVIGATION (SEZIONI IN BASSO) */}
       <BottomNavigation 
         activeTab={currentView === 'stations' ? 'stations' : 'garage'}
-        onSelectTab={(tab) => {
-          setCurrentView(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onSelectTab={handleSelectBottomTab}
         vehiclesCount={vehicles.length}
       />
 

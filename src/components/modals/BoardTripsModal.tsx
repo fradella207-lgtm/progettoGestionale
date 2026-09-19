@@ -128,8 +128,8 @@ export const BoardTripsModal: React.FC<BoardTripsModalProps> = ({
       className="fixed inset-0 z-[70] bg-slate-50 dark:bg-[#090d16] flex flex-col overflow-y-auto min-h-screen font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-150"
     >
       
-      {/* STICKY TOP APP BAR - Clean & Minimal with safe area padding */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs">
+      {/* STICKY TOP APP BAR - Clean & Solid with safe area padding, no blur */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2.5 sm:pb-3 flex items-center justify-between gap-2 shrink-0 shadow-2xs select-none">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
