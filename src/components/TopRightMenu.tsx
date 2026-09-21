@@ -15,7 +15,8 @@ import {
   Mail,
   HelpCircle,
   Lightbulb,
-  Bug
+  Bug,
+  MessageSquareHeart
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
@@ -335,9 +336,9 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               </button>
             )}
 
-            {/* 5. SEGNALA UN BUG / PROBLEMA TECNICO */}
+            {/* 5. SEGNALAZIONI & SUGGERIMENTI (UNICO COMANDO UNIFICATO) */}
             <button
-              id="menu-item-report-bug"
+              id="menu-item-feedback-hub"
               onClick={() => {
                 setIsOpen(false);
                 if (onOpenFeedback) {
@@ -346,50 +347,20 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
                   onOpenSettings();
                 }
               }}
-              className="w-full text-left p-3 rounded-xl hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-colors flex items-center justify-between group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-100 dark:border-rose-900/60 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/80 transition-colors">
-                  <Bug className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Segnala un Bug</span>
-                    <span className="text-[9px] font-black text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.2 rounded uppercase border border-rose-100 dark:border-rose-800">
-                      Supporto
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Errori o problemi tecnici riscontrati</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
-            </button>
-
-            {/* 6. PROPONI UN MIGLIORAMENTO */}
-            <button
-              id="menu-item-improvement"
-              onClick={() => {
-                setIsOpen(false);
-                if (onOpenFeedback) {
-                  onOpenFeedback('improvement');
-                } else {
-                  onOpenSettings();
-                }
-              }}
-              className="w-full text-left p-3 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors flex items-center justify-between group cursor-pointer"
+              className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/60 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/80 transition-colors">
-                  <Lightbulb className="w-4 h-4 text-amber-500" />
+                  <MessageSquareHeart className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Proponi Miglioramento</span>
-                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded uppercase border border-indigo-100 dark:border-indigo-800">
-                      Idee
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Segnalazioni & Suggerimenti</span>
+                    <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded uppercase border border-indigo-100 dark:border-indigo-800">
+                      Supporto
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Suggerisci nuove funzioni o grafica</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Segnala un problema o proponi un miglioramento</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />

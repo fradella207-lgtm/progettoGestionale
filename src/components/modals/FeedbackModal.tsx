@@ -140,16 +140,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               <span>Indietro</span>
             </button>
 
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${
-              activeMode === 'report'
-                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900'
-                : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900'
-            }`}>
-              {activeMode === 'report' ? <Bug className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
-                {activeMode === 'report' ? 'Segnala un Problema' : 'Proponi Miglioramento'}
+                Segnalazioni & Suggerimenti
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {activeMode === 'report' ? 'Assistenza tecnica & risoluzione bug' : 'Idee e suggerimenti per l\'app'}

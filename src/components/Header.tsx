@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="btn-back-to-garage"
               onClick={onNavigateGarage}
-              className="flex items-center gap-1 px-2.5 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 transition-all border border-slate-200 cursor-pointer shadow-2xs group shrink-0"
+              className="flex items-center gap-1 px-2.5 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 active:scale-95 transition-all border border-slate-200 dark:border-slate-700 cursor-pointer shadow-2xs group shrink-0"
               title={getTranslation(lang, 'btn_back_to_garage')}
             >
               <ArrowLeft className="w-3.5 h-3.5 text-theme-primary group-hover:-translate-x-0.5 transition-transform" />
@@ -141,14 +141,14 @@ export const Header: React.FC<HeaderProps> = ({
             id="btn-header-theme-toggle"
             type="button"
             onClick={onToggleThemeMode}
-            className="hidden md:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 border border-slate-200 items-center justify-center transition-all cursor-pointer shadow-2xs"
+            className="hidden md:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 items-center justify-center transition-all cursor-pointer shadow-2xs"
             title={isDark ? 'Passa a Tema Chiaro' : 'Passa a Tema Scuro'}
             aria-label="Toggle tema chiaro/scuro"
           >
             {isDark ? (
               <Sun className="w-4 h-4 text-amber-400 animate-in spin-in-180 duration-200" />
             ) : (
-              <Moon className="w-4 h-4 text-slate-700 animate-in spin-in-180 duration-200" />
+              <Moon className="w-4 h-4 text-slate-700 dark:text-slate-200 animate-in spin-in-180 duration-200" />
             )}
           </button>
         )}
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
             id="btn-header-lang-toggle"
             type="button"
             onClick={() => onChangeLanguage(lang === 'it' ? 'en' : 'it')}
-            className="hidden md:flex h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 border border-slate-200 items-center gap-1 text-xs font-black transition-all cursor-pointer shadow-2xs"
+            className="hidden md:flex h-8 sm:h-9 px-2 sm:px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 items-center gap-1 text-xs font-black transition-all cursor-pointer shadow-2xs"
             title={lang === 'it' ? 'Switch to English' : 'Passa a Italiano'}
             aria-label="Cambia lingua"
           >
@@ -172,9 +172,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             id="btn-edit-car-nav"
             onClick={onOpenEditCar}
-            className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 border border-slate-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+            className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
           >
-            <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
+            <Edit3 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span className="hidden xs:inline">{getTranslation(lang, 'btn_edit_vehicle')}</span>
           </button>
         )}

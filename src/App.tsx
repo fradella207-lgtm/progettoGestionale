@@ -1094,7 +1094,7 @@ export default function App() {
   // IF NOT LOGGED IN: SHOW AUTH GATE (LOGIN WALL)
   if (!account.isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased transition-colors duration-200">
         <AuthGate onLoginSuccess={handleLoginSuccess} />
         
         {/* STARTUP SPLASH SCREEN */}
@@ -1121,7 +1121,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased">
+    <div className="min-h-screen bg-slate-100/70 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 font-['Plus_Jakarta_Sans',sans-serif] flex flex-col antialiased transition-colors duration-200">
       
       {/* 1. TOP NAVIGATION & HUB MENU */}
       <Header 
@@ -1405,6 +1405,10 @@ export default function App() {
           setIsAccountModalOpen(true);
         }}
         onOpenTutorial={handleOpenTutorial}
+        onOpenFeedback={(mode) => {
+          setIsSettingsModalOpen(false);
+          handleOpenFeedback(mode);
+        }}
       />
 
       <NotificationsModal 
