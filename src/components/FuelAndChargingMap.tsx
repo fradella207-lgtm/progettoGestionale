@@ -1250,7 +1250,7 @@ export const FuelAndChargingMap: React.FC<FuelAndChargingMapProps> = ({
   // Eliminates overlapping clutter at all zoom levels while keeping 60 FPS performance
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!mapInstanceRef.current || !markersGroupRef.current) return;
+    if (!isActive || !mapInstanceRef.current || !markersGroupRef.current) return;
 
     const map = mapInstanceRef.current;
     const markersGroup = markersGroupRef.current;

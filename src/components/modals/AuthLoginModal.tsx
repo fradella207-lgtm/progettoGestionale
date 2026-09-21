@@ -27,9 +27,67 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  signOut,
+  db,
+  doc,
+  setDoc,
+  getDoc
 } from '../../firebase';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
+
+// Helpers to sanitize and query auth providers registry in Firestore
+const getEmailRegistryKey = (emailStr: string) => {
+  return emailStr.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+};
+
+const checkRegisteredProvider = async (emailStr: string): Promise<'google' | 'email' | null> => {
+  const cleanEmail = emailStr.toLowerCase().trim();
+  if (!cleanEmail) return null;
+  // 1. Check local device cache first for instant feedback
+  try {
+    const local = localStorage.getItem(`auth_provider_for_${cleanEmail}`);
+    if (local === 'google' || local === 'email') return local as 'google' | 'email';
+  } catch (e) {}
+
+  // 2. Query Firestore auth_providers_registry (cross-device & persistent)
+  try {
+    const docKey = getEmailRegistryKey(cleanEmail);
+    const snap = await getDoc(doc(db, 'auth_providers_registry', docKey));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data?.provider === 'google' || data?.provider === 'email') {
+        try {
+          localStorage.setItem(`auth_provider_for_${cleanEmail}`, data.provider);
+        } catch (e) {}
+        return data.provider as 'google' | 'email';
+      }
+    }
+  } catch (e) {
+    console.debug('Provider registry check note:', e);
+  }
+  return null;
+};
+
+const registerProvider = async (emailStr: string, provider: 'google' | 'email', uid: string) => {
+  const cleanEmail = emailStr.toLowerCase().trim();
+  if (!cleanEmail) return;
+  try {
+    localStorage.setItem(`auth_provider_for_${cleanEmail}`, provider);
+  } catch (e) {}
+
+  try {
+    const docKey = getEmailRegistryKey(cleanEmail);
+    await setDoc(doc(db, 'auth_providers_registry', docKey), {
+      email: cleanEmail,
+      provider,
+      uid,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (e) {
+    console.debug('Provider registry save note:', e);
+  }
+};
 
 interface AuthLoginModalProps {
   isOpen: boolean;
@@ -82,6 +140,19 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
       // Attempt real Firebase Google Auth Popup
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      const cleanEmail = (user.email || '').toLowerCase().trim();
+
+      // Check if this email was already registered manually with Email/Password
+      if (cleanEmail) {
+        const registeredProvider = await checkRegisteredProvider(cleanEmail);
+        if (registeredProvider === 'email') {
+          await signOut(auth);
+          setErrorMessage(`L'indirizzo email "${cleanEmail}" risulta registrato manualmente con Email e Password. Per evitare account duplicati, inserisci la tua password nella schermata di accesso.`);
+          setIsLoading(false);
+          return;
+        }
+        await registerProvider(cleanEmail, 'google', user.uid);
+      }
       
       const googleUser: UserAccount = {
         id: user.uid,
@@ -107,6 +178,8 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
         setErrorMessage('Selezione account Google annullata.');
       } else if (err.code === 'auth/popup-blocked') {
         setErrorMessage('Finestra popup bloccata dal browser. Consenti i popup per selezionare l\'account Google.');
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        setErrorMessage('Questa email è già registrata con password. Accedi inserendo email e password nella schermata di accesso per unificare i tuoi dati.');
       } else if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
         setIsUnauthorizedDomain(true);
         setErrorMessage(null);
@@ -123,7 +196,8 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!email.trim() || !password.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password.trim()) {
       setErrorMessage('Inserisci indirizzo email e password.');
       return;
     }
@@ -135,15 +209,25 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
 
     setIsLoading(true);
 
+    // Check if this email is already registered via Google
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const knownProvider = await checkRegisteredProvider(cleanEmail);
+      if (knownProvider === 'google') {
+        setErrorMessage(`L'indirizzo email "${cleanEmail}" risulta registrato tramite Account Google. Clicca su "Continua con Google" per accedere direttamente al tuo garage ed evitare account duplicati.`);
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
-      const derivedName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const derivedName = cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
       const loggedUser: UserAccount = {
         id: user.uid,
         name: user.displayName || name.trim() || derivedName || 'Utente Garage',
-        email: user.email || email.trim(),
+        email: user.email || cleanEmail,
         plan: 'Pro Garage Cloud (Firebase)',
         syncStatus: 'synced',
         memberSince: 'Agosto 2026',
@@ -151,33 +235,25 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
         isLoggedIn: true
       };
 
-      onLoginSuccess(loggedUser);
-      setSuccessMessage('Accesso Firebase effettuato con successo!');
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onClose();
-      }, 900);
-    } catch (err: any) {
-      console.warn('Firebase Email Auth:', err.message);
-      // If user not yet created or offline sandbox fallback
-      const derivedName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      const loggedUser: UserAccount = {
-        id: `user_${Date.now()}`,
-        name: name.trim() || derivedName || 'Utente Garage',
-        email: email.trim(),
-        plan: 'Pro Garage Cloud (Firebase)',
-        syncStatus: 'synced',
-        memberSince: 'Agosto 2026',
-        provider: 'email',
-        isLoggedIn: true
-      };
+      await registerProvider(cleanEmail, 'email', user.uid);
 
       onLoginSuccess(loggedUser);
       setSuccessMessage('Accesso effettuato con successo!');
       setTimeout(() => {
         setSuccessMessage(null);
         onClose();
-      }, 900);
+      }, 700);
+    } catch (err: any) {
+      console.warn('Firebase Email Auth:', err.code, err.message);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        setErrorMessage('Credenziali non valide. Se hai effettuato l\'accesso con Google in precedenza, clicca su "Continua con Google". Altrimenti controlla l\'indirizzo email e la password digitata.');
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        setErrorMessage('Questa email è registrata con Google. Clicca su "Continua con Google" per accedere al tuo garage.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setErrorMessage('Troppi tentativi falliti. Attendi qualche minuto o reimposta la password.');
+      } else {
+        setErrorMessage(err.message || 'Errore durante l\'accesso. Verifica le credenziali inserite.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -188,12 +264,13 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
+    const cleanEmail = email.trim().toLowerCase();
     if (!name.trim()) {
       setErrorMessage('Inserisci il tuo nome e cognome.');
       return;
     }
 
-    if (!email.trim() || !email.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMessage('Inserisci un indirizzo email valido.');
       return;
     }
@@ -210,14 +287,29 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
 
     setIsLoading(true);
 
+    // Check if user already registered with Google or Email using this email address
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const knownProvider = await checkRegisteredProvider(cleanEmail);
+      if (knownProvider === 'google') {
+        setErrorMessage(`L'indirizzo email "${cleanEmail}" è già associato a un Account Google! Clicca su "Continua con Google" per entrare nel tuo garage ed evitare la creazione di un account duplicato.`);
+        setIsLoading(false);
+        return;
+      }
+      if (knownProvider === 'email') {
+        setErrorMessage(`L'indirizzo email "${cleanEmail}" è già registrato! Passa alla schermata "Accedi" e inserisci la tua password.`);
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
       const newUser: UserAccount = {
         id: user.uid,
         name: name.trim(),
-        email: user.email || email.trim(),
+        email: user.email || cleanEmail,
         plan: 'Pro Garage Cloud (Firebase)',
         syncStatus: 'synced',
         memberSince: 'Agosto 2026',
@@ -225,31 +317,25 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
         isLoggedIn: true
       };
 
-      onLoginSuccess(newUser);
-      setSuccessMessage('Account Firebase creato con successo! Accesso effettuato.');
-      setTimeout(() => {
-        setSuccessMessage(null);
-        onClose();
-      }, 900);
-    } catch (err: any) {
-      console.warn('Firebase register notice:', err.message);
-      const newUser: UserAccount = {
-        id: `user_${Date.now()}`,
-        name: name.trim(),
-        email: email.trim(),
-        plan: 'Pro Garage Cloud (Firebase)',
-        syncStatus: 'synced',
-        memberSince: 'Agosto 2026',
-        provider: 'email',
-        isLoggedIn: true
-      };
+      await registerProvider(cleanEmail, 'email', user.uid);
 
       onLoginSuccess(newUser);
       setSuccessMessage('Account creato con successo! Accesso effettuato.');
       setTimeout(() => {
         setSuccessMessage(null);
         onClose();
-      }, 900);
+      }, 700);
+    } catch (err: any) {
+      console.warn('Firebase register notice:', err.code, err.message);
+      if (err.code === 'auth/email-already-in-use') {
+        setErrorMessage('Questa email è già registrata! Se avevi effettuato l\'accesso con Google in precedenza, clicca su "Continua con Google". Se avevi già una password, passa alla schermata "Accedi".');
+      } else if (err.code === 'auth/invalid-email') {
+        setErrorMessage('Indirizzo email non valido.');
+      } else if (err.code === 'auth/weak-password') {
+        setErrorMessage('La password è troppo debole. Usa almeno 6 caratteri.');
+      } else {
+        setErrorMessage(err.message || 'Impossibile completare la registrazione.');
+      }
     } finally {
       setIsLoading(false);
     }

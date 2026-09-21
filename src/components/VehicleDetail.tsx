@@ -231,12 +231,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
     <div className="w-full max-w-6xl mx-auto p-3.5 sm:p-6 flex flex-col gap-4 pb-20 font-['Plus_Jakarta_Sans',sans-serif]">
       
       {/* 1. TESTATA VEICOLO COMPATTA ED ELEGANTE */}
-      <section className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
+      <section className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
         
         {/* Foto Veicolo con cambio rapido */}
         <div 
           onClick={handleEditCarClick}
-          className="w-full sm:w-48 h-36 sm:h-32 rounded-2xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group border border-slate-200"
+          className="w-full sm:w-48 h-36 sm:h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center relative cursor-pointer group border border-slate-200 dark:border-slate-700"
           title={isSharedMember ? 'Modifica non consentita per membri invitati' : 'Modifica dati veicolo'}
         >
           {vehicle.photoUrl ? (
@@ -254,9 +254,9 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
             </>
           ) : (
             vehicle.vehicleType === 'moto' ? (
-              <Bike className="w-10 h-10 text-slate-300" />
+              <Bike className="w-10 h-10 text-slate-300 dark:text-slate-600" />
             ) : (
-              <Car className="w-10 h-10 text-slate-300" />
+              <Car className="w-10 h-10 text-slate-300 dark:text-slate-600" />
             )
           )}
         </div>
@@ -265,7 +265,7 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
         <div className="flex-1 min-w-0 flex flex-col gap-1.5 w-full">
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate">
                   {vehicle.brand} {vehicle.model}
                 </h1>
@@ -273,6 +273,12 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
                   <span className="text-[10px] bg-slate-900 dark:bg-slate-800 text-white font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 border border-slate-700">
                     <Bike className="w-3 h-3" />
                     <span>Moto</span>
+                  </span>
+                )}
+                {vehicle.isShared && (
+                  <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border border-indigo-200 dark:border-indigo-800 shadow-2xs">
+                    <Users className="w-3 h-3" />
+                    <span>Veicolo Condiviso</span>
                   </span>
                 )}
               </div>
@@ -521,21 +527,21 @@ export const VehicleDetail: React.FC<VehicleDetailProps> = ({
           {isSharedMember && (
             <div className={`p-3.5 rounded-2xl border flex items-start gap-3 text-xs ${
               isReadOnly 
-                ? 'bg-amber-50/90 border-amber-200 text-amber-900' 
+                ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200' 
                 : isRefuelOnly 
-                  ? 'bg-blue-50/90 border-blue-200 text-blue-900' 
-                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-900'
+                  ? 'bg-blue-50/90 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/80 text-blue-900 dark:text-blue-200' 
+                  : 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200'
             }`}>
               <Shield className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <span className="font-bold block">
+                <span className="font-black block text-slate-900 dark:text-white">
                   {isReadOnly 
                     ? 'Veicolo Condiviso: Accesso in Sola Lettura' 
                     : isRefuelOnly 
                       ? 'Veicolo Condiviso: Solo Rifornimenti' 
                       : 'Veicolo Condiviso: Accesso Completo'}
                 </span>
-                <span className="text-[11px] opacity-90 block mt-0.5 leading-relaxed">
+                <span className="text-[11px] block mt-0.5 leading-relaxed text-slate-700 dark:text-slate-200 font-medium">
                   {isReadOnly 
                     ? 'Il proprietario ha impostato il tuo accesso in sola lettura. I pulsanti per aggiungere o modificare rifornimenti e manutenzioni sono disattivati.' 
                     : isRefuelOnly 

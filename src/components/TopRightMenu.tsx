@@ -12,7 +12,10 @@ import {
   Database,
   LogOut,
   Crown,
-  Mail
+  Mail,
+  HelpCircle,
+  Lightbulb,
+  Bug
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
@@ -29,7 +32,8 @@ interface TopRightMenuProps {
   onOpenRecap?: () => void;
   onOpenUpgradeModal?: (feature?: ProFeatureName) => void;
   onLogout?: () => void;
-  onOpenFeedback?: () => void;
+  onOpenFeedback?: (mode?: 'report' | 'improvement') => void;
+  onOpenTutorial?: () => void;
 }
 
 export const TopRightMenu: React.FC<TopRightMenuProps> = ({
@@ -45,7 +49,8 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onOpenRecap,
   onOpenUpgradeModal,
   onLogout,
-  onOpenFeedback
+  onOpenFeedback,
+  onOpenTutorial
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -307,31 +312,84 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
             </button>
 
-            {/* 4. SEGNALAZIONI & MIGLIORAMENTI (MODALE SEPARATA DEDICATA) */}
+            {/* 4. GUIDA & TUTORIAL DELL'APP */}
+            {onOpenTutorial && (
+              <button
+                id="menu-item-tutorial"
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenTutorial();
+                }}
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/60 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/80 transition-colors">
+                    <HelpCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Guida & Tutorial App</span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Come leggere dati e usare le funzioni</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              </button>
+            )}
+
+            {/* 5. SEGNALA UN BUG / PROBLEMA TECNICO */}
             <button
-              id="menu-item-feedback"
+              id="menu-item-report-bug"
               onClick={() => {
                 setIsOpen(false);
                 if (onOpenFeedback) {
-                  onOpenFeedback();
+                  onOpenFeedback('report');
                 } else {
                   onOpenSettings();
                 }
               }}
-              className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between group cursor-pointer"
+              className="w-full text-left p-3 rounded-xl hover:bg-rose-50/50 dark:hover:bg-rose-950/30 transition-colors flex items-center justify-between group cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/60 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/80 transition-colors">
-                  <Mail className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center border border-rose-100 dark:border-rose-900/60 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/80 transition-colors">
+                  <Bug className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Segnalazioni & Miglioramenti</span>
-                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded uppercase border border-indigo-100 dark:border-indigo-800">
-                      Filo Diretto
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Segnala un Bug</span>
+                    <span className="text-[9px] font-black text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.2 rounded uppercase border border-rose-100 dark:border-rose-800">
+                      Supporto
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Suggerimenti e anomalie al proprietario</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Errori o problemi tecnici riscontrati</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors" />
+            </button>
+
+            {/* 6. PROPONI UN MIGLIORAMENTO */}
+            <button
+              id="menu-item-improvement"
+              onClick={() => {
+                setIsOpen(false);
+                if (onOpenFeedback) {
+                  onOpenFeedback('improvement');
+                } else {
+                  onOpenSettings();
+                }
+              }}
+              className="w-full text-left p-3 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors flex items-center justify-between group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/60 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/80 transition-colors">
+                  <Lightbulb className="w-4 h-4 text-amber-500" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Proponi Miglioramento</span>
+                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded uppercase border border-indigo-100 dark:border-indigo-800">
+                      Idee
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Suggerisci nuove funzioni o grafica</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />

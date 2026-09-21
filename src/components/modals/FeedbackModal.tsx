@@ -8,26 +8,37 @@ import {
   Lightbulb, 
   Bug, 
   Sparkles, 
-  MessageSquare, 
   ExternalLink,
-  Info
+  Info,
+  AlertTriangle,
+  FileQuestion
 } from 'lucide-react';
 import { UserAccount } from '../../types';
 import { submitAppFeedback, buildOwnerMailtoLink, OWNER_EMAIL, AppFeedbackData } from '../../utils/feedbackService';
 import { useSwipeBack } from '../../hooks/useSwipeBack';
 
+export type FeedbackMode = 'report' | 'improvement';
+
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   account?: UserAccount;
+  initialMode?: FeedbackMode;
 }
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   isOpen,
   onClose,
-  account
+  account,
+  initialMode = 'improvement'
 }) => {
-  const [feedbackType, setFeedbackType] = useState<'improvement' | 'bug' | 'feature' | 'other'>('improvement');
+  // Modal mode: separated cleanly between 'report' (Bug / Problemi tecnici) and 'improvement' (Idee / Suggerimenti)
+  const [activeMode, setActiveMode] = useState<FeedbackMode>(initialMode);
+  
+  // Specific category under active mode
+  const [reportSubCategory, setReportSubCategory] = useState<'bug' | 'crash' | 'sync_issue' | 'other_bug'>('bug');
+  const [improvementSubCategory, setImprovementSubCategory] = useState<'feature' | 'ui_ux' | 'data_calculation' | 'other_idea'>('feature');
+
   const [feedbackSubject, setFeedbackSubject] = useState<string>('');
   const [feedbackMessage, setFeedbackMessage] = useState<string>('');
   const [feedbackSenderEmail, setFeedbackSenderEmail] = useState<string>('');
@@ -41,12 +52,13 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
     if (isOpen) {
       setIsSuccess(false);
       setErrorMessage(null);
+      setActiveMode(initialMode);
       if (account) {
         if (!feedbackSenderName && account.name) setFeedbackSenderName(account.name);
         if (!feedbackSenderEmail && account.email) setFeedbackSenderEmail(account.email);
       }
     }
-  }, [isOpen, account]);
+  }, [isOpen, initialMode, account]);
 
   useSwipeBack({
     onBack: onClose,
@@ -55,26 +67,38 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
   if (!isOpen) return null;
 
+  const currentFeedbackType = activeMode === 'report' ? 'bug' : (improvementSubCategory === 'feature' ? 'feature' : 'improvement');
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!feedbackMessage.trim()) {
-      setErrorMessage('Inserisci una descrizione o il dettaglio del tuo suggerimento.');
+      setErrorMessage(
+        activeMode === 'report'
+          ? 'Inserisci una descrizione dell\'anomalia o del bug riscontrato.'
+          : 'Inserisci la tua idea o proposta di miglioramento per My360Garage.'
+      );
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    const fullSubject = feedbackSubject.trim() || (
+      activeMode === 'report' 
+        ? `[Segnalazione Bug] Problema su My360Garage (${reportSubCategory})` 
+        : `[Miglioramento] Proposta nuova funzione o UI (${improvementSubCategory})`
+    );
+
     try {
       const payload: AppFeedbackData = {
-        type: feedbackType,
-        subject: feedbackSubject.trim() || 'Suggerimento per My360Garage',
+        type: currentFeedbackType,
+        subject: fullSubject,
         message: feedbackMessage.trim(),
         senderName: feedbackSenderName.trim(),
         senderEmail: feedbackSenderEmail.trim(),
         deviceInfo: includeDiagnostics 
-          ? `${navigator.userAgent} | Screen: ${window.innerWidth}x${window.innerHeight}` 
-          : 'Non incluso'
+          ? `${navigator.userAgent} | Schermo: ${window.innerWidth}x${window.innerHeight} | Modalità: ${activeMode}` 
+          : 'Diagnostica non inclusa'
       };
 
       await submitAppFeedback(payload);
@@ -83,15 +107,15 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       setFeedbackSubject('');
     } catch (err) {
       console.error('Error submitting feedback:', err);
-      setErrorMessage('Si è verificato un errore durante l\'invio. Puoi comunque inviare l\'email diretta.');
+      setErrorMessage('Si è verificato un errore durante l\'invio. Puoi comunque inviare l\'email diretta al proprietario.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const currentPayload: AppFeedbackData = {
-    type: feedbackType,
-    subject: feedbackSubject.trim() || 'Segnalazione o miglioramento My360Garage',
+    type: currentFeedbackType,
+    subject: feedbackSubject.trim() || (activeMode === 'report' ? 'Segnalazione Problema Tecnico' : 'Proposta di Miglioramento'),
     message: feedbackMessage.trim() || 'Nessun messaggio specificato',
     senderName: feedbackSenderName.trim(),
     senderEmail: feedbackSenderEmail.trim()
@@ -116,15 +140,19 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               <span>Indietro</span>
             </button>
 
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900 shrink-0">
-              <Mail className="w-4 h-4" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 ${
+              activeMode === 'report'
+                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900'
+                : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900'
+            }`}>
+              {activeMode === 'report' ? <Bug className="w-4 h-4" /> : <Lightbulb className="w-4 h-4" />}
             </div>
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
-                Segnalazioni & Miglioramenti
+                {activeMode === 'report' ? 'Segnala un Problema' : 'Proponi Miglioramento'}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                Filo diretto con il proprietario dell&apos;app
+                {activeMode === 'report' ? 'Assistenza tecnica & risoluzione bug' : 'Idee e suggerimenti per l\'app'}
               </p>
             </div>
           </div>
@@ -139,7 +167,45 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         </div>
 
         {/* CONTENUTO MODALE */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex flex-col gap-5">
+        <div className="p-5 sm:p-6 overflow-y-auto flex flex-col gap-4">
+
+          {/* SEPARATORE TABS ESPLICITO */}
+          <div className="p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMode('report');
+                setIsSuccess(false);
+                setErrorMessage(null);
+              }}
+              className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeMode === 'report'
+                  ? 'bg-white dark:bg-slate-700 text-rose-700 dark:text-rose-300 shadow-2xs border border-rose-200 dark:border-rose-800/80'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Bug className="w-3.5 h-3.5 text-rose-500" />
+              <span>Segnala un Bug</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMode('improvement');
+                setIsSuccess(false);
+                setErrorMessage(null);
+              }}
+              className={`py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeMode === 'improvement'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-2xs border border-indigo-200 dark:border-indigo-800/80'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+              <span>Proponi Miglioramento</span>
+            </button>
+          </div>
+
           {isSuccess ? (
             <div className="py-6 px-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-center flex flex-col items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
@@ -147,10 +213,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               </div>
               <div>
                 <h4 className="text-base font-extrabold text-emerald-950 dark:text-emerald-200">
-                  Segnalazione Inviata con Successo!
+                  {activeMode === 'report' ? 'Segnalazione Ricevuta con Successo!' : 'Proposta Registrata con Successo!'}
                 </h4>
                 <p className="text-xs text-emerald-800 dark:text-emerald-300/90 mt-1 max-w-sm leading-relaxed">
-                  Grazie di cuore per il tuo contributo! Il tuo feedback è stato recapitato direttamente al proprietario per rendere My360Garage ancora migliore.
+                  {activeMode === 'report'
+                    ? 'Grazie per la segnalazione. Lo sviluppatore esaminerà il problema tecnico al più presto per rilasciare un fix.'
+                    : 'Grazie mille per il tuo suggerimento! Le migliori idee degli utenti vengono introdotte nei successivi aggiornamenti.'}
                 </p>
               </div>
 
@@ -160,7 +228,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                   onClick={() => setIsSuccess(false)}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
                 >
-                  Invia un&apos;altra segnalazione
+                  {activeMode === 'report' ? 'Invia un\'altra segnalazione' : 'Proponi un\'altra idea'}
                 </button>
                 <button
                   type="button"
@@ -173,78 +241,89 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {/* INTRO INFO CARD */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <Info className="w-4 h-4" />
+              
+              {/* BANNER INFORMATIVO CONTESTUALE */}
+              {activeMode === 'report' ? (
+                <div className="p-3.5 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 flex items-start gap-3 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div className="text-slate-700 dark:text-slate-300 leading-snug">
+                    <strong className="text-rose-950 dark:text-rose-200 block mb-0.5">Segnala un problema tecnico</strong>
+                    Hai riscontrato un errore di visualizzazione, un blocco o una discrepanza nei calcoli del carburante? Descrivilo qui sotto; la segnalazione arriverà direttamente allo sviluppatore (<a href={`mailto:${OWNER_EMAIL}`} className="text-rose-600 dark:text-rose-400 font-bold hover:underline">{OWNER_EMAIL}</a>).
+                  </div>
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-300 leading-snug">
-                  Hai notato un bug, desideri una funzione specifica o vuoi suggerire un miglioramento grafico? Le tue segnalazioni arrivano direttamente al proprietario (<a href={`mailto:${OWNER_EMAIL}`} className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">{OWNER_EMAIL}</a>).
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/60 flex items-start gap-3 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="text-slate-700 dark:text-slate-300 leading-snug">
+                    <strong className="text-indigo-950 dark:text-indigo-200 block mb-0.5">Suggerisci un miglioramento o funzione</strong>
+                    Hai un&apos;idea per arricchire My360Garage o vuoi proporre una modifica grafica? Scrivici: leggiamo personalmente ogni proposta.
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* SELETTORE TIPOLOGIA */}
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Tipologia di Messaggio
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackType('improvement')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      feedbackType === 'improvement'
-                        ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 shadow-2xs'
-                        : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-                    }`}
-                  >
-                    <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>Miglioramento</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackType('bug')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      feedbackType === 'bug'
-                        ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 shadow-2xs'
-                        : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-                    }`}
-                  >
-                    <Bug className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>Errore / Bug</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackType('feature')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      feedbackType === 'feature'
-                        ? 'bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 shadow-2xs'
-                        : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-                    }`}
-                  >
-                    <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
-                    <span>Nuova Funzione</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFeedbackType('other')}
-                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-                      feedbackType === 'other'
-                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white shadow-2xs'
-                        : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span>Altro Feedback</span>
-                  </button>
+              {/* SOTTO-CATEGORIE SPECIFICHE */}
+              {activeMode === 'report' ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Tipo di Anomalia
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: 'bug', label: 'Errore generico / Bug' },
+                      { id: 'crash', label: 'Blocco / Crash app' },
+                      { id: 'sync_issue', label: 'Problema Sincronizzazione' },
+                      { id: 'other_bug', label: 'Altra Anomalia' }
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setReportSubCategory(item.id as any)}
+                        className={`p-2 rounded-xl border text-xs font-bold transition-all cursor-pointer text-left truncate ${
+                          reportSubCategory === item.id
+                            ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-400 dark:border-rose-700 text-rose-800 dark:text-rose-200 shadow-2xs'
+                            : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Area di Miglioramento
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { id: 'feature', label: 'Nuova Funzionalità' },
+                      { id: 'ui_ux', label: 'Grafica & Navigazione' },
+                      { id: 'data_calculation', label: 'Statistiche & Dati' },
+                      { id: 'other_idea', label: 'Altra Proposta' }
+                    ].map(item => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setImprovementSubCategory(item.id as any)}
+                        className={`p-2 rounded-xl border text-xs font-bold transition-all cursor-pointer text-left truncate ${
+                          improvementSubCategory === item.id
+                            ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200 shadow-2xs'
+                            : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* DATI MITTENTE */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Il tuo Nome <span className="text-slate-400 font-normal">(facoltativo)</span>
@@ -253,20 +332,20 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     type="text"
                     value={feedbackSenderName}
                     onChange={(e) => setFeedbackSenderName(e.target.value)}
-                    placeholder="es. Mario Rossi"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder="es. Mario"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 font-medium"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    La tua Email <span className="text-slate-400 font-normal">(per risposta)</span>
+                    La tua Email <span className="text-slate-400 font-normal">(per eventuale risposta)</span>
                   </label>
                   <input
                     type="email"
                     value={feedbackSenderEmail}
                     onChange={(e) => setFeedbackSenderEmail(e.target.value)}
-                    placeholder="es. mario@email.it"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder="nome@email.com"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 font-medium"
                   />
                 </div>
               </div>
@@ -274,43 +353,56 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               {/* OGGETTO */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Oggetto Sintetico
+                  {activeMode === 'report' ? 'Oggetto del Problema' : 'Titolo dell\'Idea / Suggerimento'}
                 </label>
                 <input
                   type="text"
                   value={feedbackSubject}
                   onChange={(e) => setFeedbackSubject(e.target.value)}
-                  placeholder="es. Suggerimento grafica dark mode / Nuova funzione esportazione"
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  placeholder={
+                    activeMode === 'report'
+                      ? 'es. Errore durante l\'inserimento rifornimento metano'
+                      : 'es. Possibilità di registrare i cambi pneumatici stagionali'
+                  }
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 font-medium"
                 />
               </div>
 
               {/* MESSAGGIO DETTAGLIATO */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                  <span>Descrizione & Dettagli <span className="text-rose-500">*</span></span>
-                  <span className="text-[11px] font-normal text-slate-400">più dettagli fornisci, più rapida sarà l&apos;implementazione</span>
+                  <span>{activeMode === 'report' ? 'Descrizione del Bug' : 'Descrizione del Miglioramento'} <span className="text-rose-500">*</span></span>
+                  <span className="text-[11px] font-normal text-slate-400">obbligatorio</span>
                 </label>
                 <textarea
                   rows={4}
                   value={feedbackMessage}
-                  onChange={(e) => setFeedbackMessage(e.target.value)}
-                  placeholder="Descrivi qui cosa vorresti migliorare, quale comportamento anomalo hai notato, o quale nuova funzionalità desidereresti..."
-                  className="w-full p-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none leading-relaxed"
+                  onChange={(e) => {
+                    setFeedbackMessage(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder={
+                    activeMode === 'report'
+                      ? 'Spiega cosa stavi facendo, cosa è successo e se il problema si ripete...'
+                      : 'Descrivi la funzione che vorresti, come dovrebbe funzionare e perché sarebbe utile...'
+                  }
+                  className="w-full p-3 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed font-medium"
                   required
                 />
               </div>
 
-              {/* CHECKBOX DIAGNOSTICA */}
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
-                <input
-                  type="checkbox"
-                  checked={includeDiagnostics}
-                  onChange={(e) => setIncludeDiagnostics(e.target.checked)}
-                  className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>Includi informazioni diagnostiche di base (tipo dispositivo, risoluzione schermo)</span>
-              </label>
+              {/* CHECKBOX DIAGNOSTICA (per i report) */}
+              {activeMode === 'report' && (
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
+                  <input
+                    type="checkbox"
+                    checked={includeDiagnostics}
+                    onChange={(e) => setIncludeDiagnostics(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-slate-700 text-rose-600 focus:ring-rose-500"
+                  />
+                  <span>Allega dati tecnici dispositivo (browser, sistema operativo, risoluzione)</span>
+                </label>
+              )}
 
               {errorMessage && (
                 <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-semibold">
@@ -323,14 +415,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting || !feedbackMessage.trim()}
-                  className="w-full sm:flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 disabled:opacity-50 text-white rounded-xl text-xs font-black transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                  className={`w-full sm:flex-1 py-2.5 px-4 active:scale-95 disabled:opacity-50 text-white rounded-xl text-xs font-black transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer ${
+                    activeMode === 'report'
+                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
+                      : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20'
+                  }`}
                 >
                   {isSubmitting ? (
                     <span>Invio in corso...</span>
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>Invia Segnalazione Diretta</span>
+                      <span>{activeMode === 'report' ? 'Invia Segnalazione Bug' : 'Invia Proposta di Miglioramento'}</span>
                     </>
                   )}
                 </button>
@@ -343,7 +439,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
                   title="Invia tramite la tua app email predefinita"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Apri Email</span>
+                  <span>Apri Email Diretta</span>
                 </a>
               </div>
             </form>

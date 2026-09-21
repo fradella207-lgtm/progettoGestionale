@@ -209,35 +209,6 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               ))}
             </div>
 
-            {/* Pulsante Nuovo Veicolo Header Rapido */}
-            <button
-              type="button"
-              id="btn-add-vehicle-top"
-              onClick={() => onOpenAddCar('car')}
-              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
-              title="Aggiungi una nuova auto o moto al tuo garage"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Aggiungi Veicolo</span>
-              <span className="xs:hidden">Nuovo</span>
-              {userTier === 'FREE' && vehicles.length >= 1 && (
-                <ProBadge variant="mini" />
-              )}
-            </button>
-          </div>
-        </section>
-      )}
-                    <motion.div
-                      layoutId="garage-filter-active-pill"
-                      className="absolute inset-0 bg-white rounded-lg shadow-xs -z-10"
-                      transition={{ type: "spring", stiffness: 450, damping: 35 }}
-                    />
-                  )}
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
             {/* Separatore */}
             <div className="h-5 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block shrink-0" />
 
@@ -259,6 +230,22 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
               <span>Condividi un veicolo</span>
               {vehicles.some(v => v.isShared) && (
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </button>
+
+            {/* Pulsante Nuovo Veicolo Header Rapido */}
+            <button
+              type="button"
+              id="btn-add-vehicle-top"
+              onClick={() => onOpenAddCar('car')}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+              title="Aggiungi una nuova auto o moto al tuo garage"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Aggiungi Veicolo</span>
+              <span className="xs:hidden">Nuovo</span>
+              {userTier === 'FREE' && vehicles.length >= 1 && (
+                <ProBadge variant="mini" />
               )}
             </button>
           </div>
@@ -437,13 +424,19 @@ export const GarageHome: React.FC<GarageHomeProps> = ({
                         <h2 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
                           {car.brand} {car.model}
                         </h2>
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           <span className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                             {car.plate}
                           </span>
                           {car.registrationDate && (
                             <span className="text-[11px] text-slate-500 dark:text-slate-400">
                               Anno {car.registrationDate.split('-')[0]}
+                            </span>
+                          )}
+                          {car.isShared && (
+                            <span className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/80 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                              <Users className="w-2.5 h-2.5 text-indigo-600 dark:text-indigo-400" />
+                              <span>Veicolo Condiviso</span>
                             </span>
                           )}
                         </div>

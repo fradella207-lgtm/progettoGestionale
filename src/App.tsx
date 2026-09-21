@@ -21,6 +21,8 @@ import { SharedGarageModal } from './components/modals/SharedGarageModal';
 import { DigitalPassportModal } from './components/modals/DigitalPassportModal';
 import { StartupSplash } from './components/StartupSplash';
 import { PaymentPage } from './components/PaymentPage';
+import { FeedbackModal, FeedbackMode } from './components/modals/FeedbackModal';
+import { AppTutorialModal } from './components/modals/AppTutorialModal';
 import { auth, onAuthStateChanged, db, doc, setDoc, getDoc, signOut } from './firebase';
 import { searchAndRetrieveCarManual } from './utils/carManualService';
 import { getStoredUserTier, saveUserTier, simulateUpgradeToPro } from './utils/tierManager';
@@ -127,7 +129,7 @@ export default function App() {
     }
     const timer = setTimeout(() => {
       setIsAppStarting(false);
-    }, 750);
+    }, 400);
     return () => clearTimeout(timer);
   }, []);
 
@@ -280,10 +282,31 @@ export default function App() {
     setIsSettingsModalOpen(true);
   };
 
-  const handleOpenFeedback = () => {
-    setSettingsInitialSection('feedback');
-    setIsSettingsModalOpen(true);
+  // Feedback and Tutorial Modal states
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [feedbackInitialMode, setFeedbackInitialMode] = useState<FeedbackMode>('report');
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+
+  const handleOpenFeedback = (mode: FeedbackMode = 'report') => {
+    setFeedbackInitialMode(mode);
+    setIsFeedbackModalOpen(true);
   };
+
+  const handleOpenTutorial = () => {
+    setIsTutorialOpen(true);
+  };
+
+  // Check if tutorial should be triggered automatically on first launch
+  useEffect(() => {
+    const dontShow = localStorage.getItem('my360garage_tutorial_dont_show');
+    const seen = localStorage.getItem('my360garage_tutorial_seen');
+    if (dontShow !== 'true' && seen !== 'true' && !isAppStarting) {
+      const timer = setTimeout(() => {
+        setIsTutorialOpen(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAppStarting]);
 
   // 8. USER TIER & PAYWALL STATE (FREEMIUM: FREE vs PRO)
   const [userTier, setUserTier] = useState<UserTier>(() => getStoredUserTier());
@@ -1116,6 +1139,7 @@ export default function App() {
         }}
         onOpenSettings={handleOpenSettings}
         onOpenFeedback={handleOpenFeedback}
+        onOpenTutorial={handleOpenTutorial}
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenAccount={() => setIsAccountModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -1380,6 +1404,7 @@ export default function App() {
           setIsSettingsModalOpen(false);
           setIsAccountModalOpen(true);
         }}
+        onOpenTutorial={handleOpenTutorial}
       />
 
       <NotificationsModal 
@@ -1455,6 +1480,19 @@ export default function App() {
         initialVehicleId={passportInitialVehicleId || selectedCarId}
         userTier={userTier}
         onOpenUpgradeModal={() => handleOpenUpgradeModal('export_pdf')}
+      />
+
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        account={account}
+        initialMode={feedbackInitialMode}
+      />
+
+      <AppTutorialModal 
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+        settings={settings}
       />
 
       {/* STARTUP SPLASH SCREEN */}
