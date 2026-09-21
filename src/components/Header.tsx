@@ -135,13 +135,13 @@ export const Header: React.FC<HeaderProps> = ({
       {/* RIGHT SECTION: ACTIONS & FAST TOGGLES */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         
-        {/* FAST THEME TOGGLE (LIGHT / DARK) - Visibile da tablet in su per non sovrapporre elementi su smartphone */}
+        {/* FAST THEME TOGGLE (LIGHT / DARK) */}
         {onToggleThemeMode && (
           <button
             id="btn-header-theme-toggle"
             type="button"
             onClick={onToggleThemeMode}
-            className="hidden md:flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 items-center justify-center transition-all cursor-pointer shadow-2xs"
+            className="flex w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0"
             title={isDark ? 'Passa a Tema Chiaro' : 'Passa a Tema Scuro'}
             aria-label="Toggle tema chiaro/scuro"
           >
@@ -185,10 +185,10 @@ export const Header: React.FC<HeaderProps> = ({
             id="btn-header-recap"
             type="button"
             onClick={onOpenRecap}
-            className="hidden sm:flex h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 active:scale-95 text-indigo-900 border border-indigo-200/80 items-center gap-1 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
+            className="hidden sm:flex h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:to-indigo-950/80 dark:hover:from-slate-750 dark:hover:to-indigo-900 active:scale-95 text-indigo-900 dark:text-indigo-200 border border-indigo-200/80 dark:border-indigo-700/60 items-center gap-1 text-xs font-extrabold transition-all cursor-pointer shadow-2xs"
             title="Visualizza Recap Mensile & Annuale"
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span className="hidden md:inline">Recap</span>
           </button>
         )}
@@ -232,6 +232,7 @@ export const Header: React.FC<HeaderProps> = ({
           onLogout={onLogout}
           onOpenFeedback={onOpenFeedback}
           onOpenTutorial={onOpenTutorial}
+          onToggleThemeMode={onToggleThemeMode}
         />
       </div>
     </nav>

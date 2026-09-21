@@ -16,7 +16,9 @@ import {
   HelpCircle,
   Lightbulb,
   Bug,
-  MessageSquareHeart
+  MessageSquareHeart,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { AppNotification, AppSettings, UserAccount, UserTier, ProFeatureName } from '../types';
 
@@ -35,6 +37,7 @@ interface TopRightMenuProps {
   onLogout?: () => void;
   onOpenFeedback?: (mode?: 'report' | 'improvement') => void;
   onOpenTutorial?: () => void;
+  onToggleThemeMode?: () => void;
 }
 
 export const TopRightMenu: React.FC<TopRightMenuProps> = ({
@@ -51,7 +54,8 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
   onOpenUpgradeModal,
   onLogout,
   onOpenFeedback,
-  onOpenTutorial
+  onOpenTutorial,
+  onToggleThemeMode
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -291,6 +295,42 @@ export const TopRightMenu: React.FC<TopRightMenuProps> = ({
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </button>
+
+            {/* 2.5 TEMA RAPIDO (CHIARO / SCURO) - REATTIVO AL CLICK */}
+            {onToggleThemeMode && (
+              <button
+                id="menu-item-theme-toggle"
+                onClick={() => {
+                  onToggleThemeMode();
+                }}
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-colors ${
+                    settings.themeMode === 'dark'
+                      ? 'bg-amber-950/60 text-amber-400 border-amber-800/60'
+                      : 'bg-slate-100 text-slate-800 border-slate-200'
+                  }`}>
+                    {settings.themeMode === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {settings.themeMode === 'dark' ? 'Passa a Tema Chiaro' : 'Passa a Tema Scuro'}
+                    </span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {settings.themeMode === 'dark' ? 'Modalità notte attiva' : 'Modalità giorno attiva'}
+                    </p>
+                  </div>
+                </div>
+                <div className={`px-2.5 py-1 rounded-lg text-xs font-black shrink-0 transition-colors ${
+                  settings.themeMode === 'dark'
+                    ? 'bg-slate-800 text-amber-300 border border-slate-700'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}>
+                  {settings.themeMode === 'dark' ? '🌙 Notte' : '☀️ Giorno'}
+                </div>
+              </button>
+            )}
 
             {/* 3. ACCOUNT */}
             <button

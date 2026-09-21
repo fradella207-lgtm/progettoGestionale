@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* Enable class-based dark mode in Tailwind CSS v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
@@ -119,155 +122,40 @@
 
   /* EXPLICIT LIGHT MODE ENFORCEMENT - Prevents Mobile WebViews / Android Force-Dark from inverting text to white */
   html:not(.dark) {
-    color-scheme: light !important;
+    color-scheme: light;
   }
 
   /* DARK MODE STYLING (Refined, High-Contrast Cockpit Aesthetic) */
   html.dark {
-    color-scheme: dark !important;
+    color-scheme: dark;
   }
 
   html.dark,
   html.dark body,
   html.dark #root {
-    background-color: #090d16 !important;
-    color: #f8fafc !important;
+    background-color: #090d16;
+    color: #f8fafc;
   }
 
-  /* Solid & semi-transparent white backgrounds become deep dark */
-  html.dark .bg-white {
-    background-color: #111827 !important;
-  }
-
-  /* Backgrounds: slate-50, page canvas */
-  html.dark .bg-slate-50 {
-    background-color: #0b1120 !important;
-  }
-
-  /* Backgrounds: slate-100 (chips, buttons, search bars) */
-  html.dark .bg-slate-100 {
-    background-color: #162032 !important;
-  }
-
-  /* Backgrounds: slate-200 */
-  html.dark .bg-slate-200 {
-    background-color: #1f2d47 !important;
-  }
-
-  /* Backgrounds: slate-900 remains deep slate in dark mode */
-  html.dark .bg-slate-900 {
-    background-color: #0f172a !important;
-  }
-
-  /* Tinted light containers darkened to avoid white-on-light in dark mode */
-  html.dark .bg-indigo-50 {
-    background-color: #1e1b4b !important;
-  }
-
-  html.dark .bg-blue-50 {
-    background-color: #172554 !important;
-  }
-
-  html.dark .bg-emerald-50,
-  html.dark .bg-emerald-100 {
-    background-color: #064e3b !important;
-  }
-
-  html.dark .bg-amber-50,
-  html.dark .bg-amber-100 {
-    background-color: #451a03 !important;
-  }
-
-  html.dark .bg-rose-50 {
-    background-color: #4c0519 !important;
-  }
-
-  html.dark .hover\:bg-slate-50:hover {
-    background-color: #161f32 !important;
-  }
-
-  html.dark .hover\:bg-slate-100:hover {
-    background-color: #1f293d !important;
-  }
-
-  html.dark .hover\:bg-slate-200:hover {
-    background-color: #27354f !important;
-  }
-
-  /* Borders in dark mode */
-  html.dark .border-slate-200,
-  html.dark .border-slate-100,
-  html.dark .border-slate-300 {
-    border-color: #1e293b !important;
-  }
-
-  /* High contrast text hierarchy */
-  html.dark .text-slate-900,
-  html.dark .text-slate-950,
-  html.dark .text-\[\#0f172a\] {
-    color: #f8fafc !important;
-  }
-
-  html.dark .text-slate-800 {
-    color: #f1f5f9 !important;
-  }
-
-  html.dark .text-slate-700,
-  html.dark .text-slate-600 {
-    color: #cbd5e1 !important;
-  }
-
-  html.dark .text-slate-500,
-  html.dark .text-\[\#64748b\] {
-    color: #94a3b8 !important;
-  }
-
-  html.dark .text-slate-400 {
-    color: #64748b !important;
-  }
-
-  /* High-contrast brand & state accents in dark mode */
-  html.dark .text-indigo-700,
-  html.dark .text-indigo-800 {
-    color: #a5b4fc !important;
-  }
-
-  html.dark .text-blue-700,
-  html.dark .text-blue-800 {
-    color: #93c5fd !important;
-  }
-
-  html.dark .text-emerald-700,
-  html.dark .text-emerald-800 {
-    color: #6ee7b7 !important;
-  }
-
-  html.dark .text-amber-700,
-  html.dark .text-amber-800,
-  html.dark .text-amber-900,
-  html.dark .text-amber-950 {
-    color: #fcd34d !important;
-  }
-
-  /* Input fields & selects */
-  html.dark input,
+  /* Standard inputs, selects, and textareas in dark mode */
+  html.dark input:not([type="checkbox"]):not([type="radio"]),
   html.dark select,
   html.dark textarea {
-    background-color: #0d1322 !important;
-    border-color: #2a364f !important;
-    color: #f8fafc !important;
+    background-color: #0d1322;
+    border-color: #2a364f;
+    color: #f8fafc;
   }
 
   html.dark input::placeholder,
   html.dark textarea::placeholder {
-    color: #64748b !important;
+    color: #64748b;
   }
 
   html.dark input:focus,
   html.dark select:focus,
   html.dark textarea:focus {
-    border-color: #6366f1 !important;
-    background-color: #111827 !important;
+    border-color: #6366f1;
+    background-color: #111827;
   }
 
   h1, h2, h3, h4, h5, h6, p, span, button, input, select, textarea {
